@@ -10,6 +10,7 @@
 
 #include <driverlib.h>
 #include "msp.h"
+#include "DelfiPQcore.h"
 #include "PQ9Bus.h"
 #include "PQ9Frame.h"
 #include "DWire.h"
