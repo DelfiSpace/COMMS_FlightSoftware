@@ -16,22 +16,33 @@ ResetService reset( GPIO_PORT_P5, GPIO_PIN0 );
 SoftwareUpdateService SWUpdate;
 Service* services[] = { &hk, &ping, &reset, &SWUpdate };
 
-// command handler, dealing with all CDHS requests and responses
+// COMMS board tasks
 PQ9CommandHandler cmdHandler(pq9bus, services, 4);
+PeriodicTask timerTask(FCLOCK, periodicTask);
+Task* tasks[] = { &cmdHandler, &timerTask };
 
 // system uptime
 unsigned long uptime = 0;
-volatile int counter = 0;
 
-void acquireTelemetry(COMMSTelemetryContainer *tc)
+void periodicTask()
 {
+    // increase the timer, this happens every second
+    uptime++;
 
-}
+    // collect telemetry
+    COMMSTelemetryContainer *tc = static_cast<COMMSTelemetryContainer*>(hk.getContainerToWrite());
 
-void timerHandler(void)
-{
-    MAP_Timer32_clearInterruptFlag(TIMER32_0_BASE);
-    counter++;
+    // acquire the telemetry
+
+    // telemetry collected, store the values and prepare for next collection
+    hk.stageTelemetry();
+
+    // refresh the watch-dog configuration to make sure that, even in case of internal
+    // registers corruption, the watch-dog is capable of recovering from an error
+    reset.refreshConfiguration();
+
+    // kick hardware watch-dog after every telemetry collection happens
+    reset.kickExternalWatchDog();
 }
 
 /**
@@ -44,8 +55,8 @@ void main(void)
     // - clock tree
     DelfiPQcore::initMCU();
 
-    // init the reset handler:
-    // - prepare the watchdog
+    // initialize the reset handler:
+    // - prepare the watch-dog
     // - initialize the pins for the hardware watchdog
     // prepare the pin for power cycling the system
     reset.init();
@@ -58,46 +69,14 @@ void main(void)
     pq9bus.begin(115200, COMMS_ADDRESS);    // baud rate: 115200 bps
                                             // address COMMS (4)
 
-    // initialize the command handler: from now on, commands can be processed
-    cmdHandler.init();
+    // link the command handler to the PQ9 bus:
+    // every time a new command is received, it will be forwarded to the command handler
+    pq9bus.setReceiveHandler([](PQ9Frame &newFrame){ cmdHandler.received(newFrame); });
 
-    // Configuring Timer32 to FCLOCK (1s) of MCLK in periodic mode
-    MAP_Timer32_initModule(TIMER32_0_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT,
-            TIMER32_PERIODIC_MODE);
-    MAP_Timer32_registerInterrupt(TIMER32_0_INTERRUPT, &timerHandler);
-    MAP_Timer32_setCount(TIMER32_0_BASE, FCLOCK);
-    MAP_Timer32_startTimer(TIMER32_0_BASE, false);
+    // every time a command is correctly processed, call the watch-dog
+    cmdHandler.onValidCommand([]{ reset.kickInternalWatchDog(); });
 
-    serial.println("Hello World");
+    serial.println("COMMS booting...");
 
-    while(true)
-    {
-        if (cmdHandler.commandLoop())
-        {
-            // if a correct command has been received, clear the watchdog
-            reset.kickInternalWatchDog();
-        }
-
-        // hack to simulate timer to acquire telemetry approximately once per second
-        if (counter != 0)
-        {
-            uptime ++;
-
-            // collect telemetry
-            COMMSTelemetryContainer *tc = static_cast<COMMSTelemetryContainer*>(hk.getContainerToWrite());
-            acquireTelemetry(tc);
-
-            // telemetry collected, store the values and prepare for next collection
-            hk.stageTelemetry();
-
-            // watchdog time window
-            // t_win typ = 22.5s max = 28s min = 16.8s
-            // tb_min 182ms tb max 542ms
-            // kick hardware watchdog after every telemetry collection happens
-            reset.kickExternalWatchDog();
-        }
-
-        //MAP_PCM_gotoLPM0();
-
-    }
+    DelfiPQcore::startTaskManager(tasks, 2);
 }
