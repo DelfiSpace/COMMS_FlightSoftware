@@ -110,6 +110,7 @@
 				<externalSettings containerId="INA226;com.ti.ccstudio.buildDefinitions.MSP432.Debug.2134378591" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 				<externalSettings containerId="LTC2942;com.ti.ccstudio.buildDefinitions.MSP432.Debug.913661511" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 				<externalSettings containerId="DelfiPQcore;com.ti.ccstudio.buildDefinitions.MSP432.Debug.1175418372" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="TMP100;com.ti.ccstudio.buildDefinitions.MSP432.Debug.1175418372" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 			</storageModule>
 		</cconfiguration>
 		<cconfiguration id="com.ti.ccstudio.buildDefinitions.MSP432.Release.2110840172">
@@ -221,6 +222,7 @@
 				<externalSettings containerId="INA226;com.ti.ccstudio.buildDefinitions.MSP432.Release.845204607" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 				<externalSettings containerId="LTC2942;com.ti.ccstudio.buildDefinitions.MSP432.Release.1766142591" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 				<externalSettings containerId="DelfiPQcore;com.ti.ccstudio.buildDefinitions.MSP432.Release.657703763" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="TMP100;com.ti.ccstudio.buildDefinitions.MSP432.Release.657703763" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 			</storageModule>
 		</cconfiguration>
 	</storageModule>
