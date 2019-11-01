@@ -5,7 +5,7 @@
 DWire I2Cinternal(0);
 
 // CDHS bus handler
-PQ9Bus pq9bus(3, GPIO_PORT_P10, GPIO_PIN0);
+PQ9Bus pq9bus(3, GPIO_PORT_P9, GPIO_PIN0);
 
 // debug console handler
 DSerial serial;
