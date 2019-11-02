@@ -24,6 +24,17 @@ Task* tasks[] = { &cmdHandler, &timerTask };
 // system uptime
 unsigned long uptime = 0;
 
+// TODO: remove when bug in CCS has been solved
+void kickWatchdog(PQ9Frame &newFrame)
+{
+    cmdHandler.received(newFrame);
+}
+
+void validCmd(void)
+{
+    reset.kickInternalWatchDog();
+}
+
 void periodicTask()
 {
     // increase the timer, this happens every second
@@ -57,8 +68,8 @@ void main(void)
 
     // initialize the reset handler:
     // - prepare the watch-dog
-    // - initialize the pins for the hardware watchdog
-    // prepare the pin for power cycling the system
+    // - initialize the pins for the hardware watch-dog
+    // - prepare the pin for power cycling the system
     reset.init();
 
     // Initialize I2C masters
@@ -71,10 +82,14 @@ void main(void)
 
     // link the command handler to the PQ9 bus:
     // every time a new command is received, it will be forwarded to the command handler
-    pq9bus.setReceiveHandler([](PQ9Frame &newFrame){ cmdHandler.received(newFrame); });
+    // TODO: put back the lambda function after bug in CCS has been fixed
+    //pq9bus.setReceiveHandler([](PQ9Frame &newFrame){ cmdHandler.received(newFrame); });
+    pq9bus.setReceiveHandler(&kickWatchdog);
 
     // every time a command is correctly processed, call the watch-dog
-    cmdHandler.onValidCommand([]{ reset.kickInternalWatchDog(); });
+    // TODO: put back the lambda function after bug in CCS has been fixed
+    //cmdHandler.onValidCommand([]{ reset.kickInternalWatchDog(); });
+    cmdHandler.onValidCommand(&validCmd);
 
     serial.println("COMMS booting...");
 
