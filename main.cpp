@@ -44,6 +44,7 @@ void periodicTask()
     COMMSTelemetryContainer *tc = static_cast<COMMSTelemetryContainer*>(hk.getContainerToWrite());
 
     // acquire the telemetry
+    acquireTelemetry(tc);
 
     // telemetry collected, store the values and prepare for next collection
     hk.stageTelemetry();
@@ -54,6 +55,12 @@ void periodicTask()
 
     // kick hardware watch-dog after every telemetry collection happens
     reset.kickExternalWatchDog();
+}
+
+void acquireTelemetry(COMMSTelemetryContainer *tc)
+{
+    // set uptime in telemetry
+    tc->setUpTime(uptime);
 }
 
 /**
