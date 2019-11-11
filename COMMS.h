@@ -14,6 +14,7 @@
 #include "PQ9Bus.h"
 #include "PQ9Frame.h"
 #include "DWire.h"
+#include "DSPI.h"
 #include "DSerial.h"
 #include "CommandHandler.h"
 #include "Task.h"
@@ -23,8 +24,11 @@
 #include "COMMSHousekeepingService.h"
 #include "COMMSTelemetryContainer.h"
 #include "PingService.h"
+#include "COMMSTelemetryContainer.h"
+#include "TestService.h"
 #include "ResetService.h"
 #include "SoftwareUpdateService.h"
+#include "SX1276.h"
 
 #define FCLOCK 48000000
 

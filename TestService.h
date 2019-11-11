@@ -11,6 +11,8 @@
 #include "Service.h"
 #include "PQ9Frame.h"
 #include "DSerial.h"
+#include "DSPI.h"
+#include "SX1276.h"
 
 class TestService: public Service
 {

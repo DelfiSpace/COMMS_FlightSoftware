@@ -4,6 +4,9 @@
 // I2C busses
 DWire I2Cinternal(0);
 
+// SPI busses
+DSPI controlSPI(3);      // used EUSCI_B3
+
 // CDHS bus handler
 PQ9Bus pq9bus(3, GPIO_PORT_P9, GPIO_PIN0);
 
@@ -11,15 +14,21 @@ PQ9Bus pq9bus(3, GPIO_PORT_P9, GPIO_PIN0);
 DSerial serial;
 // services running in the system
 COMMSHousekeepingService hk;
+TestService tst;
 PingService ping;
 ResetService reset( GPIO_PORT_P5, GPIO_PIN0 );
 SoftwareUpdateService SWUpdate;
-Service* services[] = { &hk, &ping, &reset, &SWUpdate };
+Service* services[] = { &hk, &ping, &reset, &SWUpdate, &tst };
 
 // COMMS board tasks
-PQ9CommandHandler cmdHandler(pq9bus, services, 4);
+PQ9CommandHandler cmdHandler(pq9bus, services, 5);
 PeriodicTask timerTask(FCLOCK, periodicTask);
 Task* tasks[] = { &cmdHandler, &timerTask };
+
+SX1276Pins TXpins, RXpins;
+
+SX1276 tx(controlSPI, &TXpins);
+SX1276 rx(controlSPI, &RXpins);
 
 // system uptime
 unsigned long uptime = 0;
@@ -63,6 +72,16 @@ void acquireTelemetry(COMMSTelemetryContainer *tc)
     tc->setUpTime(uptime);
 }
 
+void txcallback()
+{
+    tx.GPIO_IRQHandler2();
+}
+
+void rxcallback()
+{
+    tx.GPIO_IRQHandler2();
+}
+
 /**
  * main.c
  */
@@ -83,6 +102,9 @@ void main(void)
     I2Cinternal.setFastMode();
     I2Cinternal.begin();
 
+    // Initialize SPI master
+    controlSPI.begin();
+
     serial.begin( );                        // baud rate: 9600 bps
     pq9bus.begin(115200, COMMS_ADDRESS);    // baud rate: 115200 bps
                                             // address COMMS (4)
@@ -97,6 +119,25 @@ void main(void)
     // TODO: put back the lambda function after bug in CCS has been fixed
     //cmdHandler.onValidCommand([]{ reset.kickInternalWatchDog(); });
     cmdHandler.onValidCommand(&validCmd);
+
+    TXpins.CSPort = GPIO_PORT_P10;
+    TXpins.CSPin = GPIO_PIN5;
+    TXpins.DIO0Port = GPIO_PORT_P6;
+    TXpins.DIO0Pin = GPIO_PIN1;
+    TXpins.RESETPort = GPIO_PORT_P6;
+    TXpins.RESETPin = GPIO_PIN0;
+    TXpins.callback = txcallback;
+
+    RXpins.CSPort = GPIO_PORT_P10;
+    RXpins.CSPin = GPIO_PIN4;
+    RXpins.DIO0Port = GPIO_PORT_P3;
+    RXpins.DIO0Pin = GPIO_PIN1;
+    RXpins.RESETPort = GPIO_PORT_P3;
+    RXpins.RESETPin = GPIO_PIN0;
+    RXpins.callback = rxcallback;
+
+    tx.init();
+    rx.init();
 
     serial.println("COMMS booting...");
 
