@@ -21,7 +21,6 @@
 #include "PeriodicTask.h"
 #include "TaskManager.h"
 #include "HousekeepingService.h"
-#include "COMMSHousekeepingService.h"
 #include "COMMSTelemetryContainer.h"
 #include "PingService.h"
 #include "COMMSTelemetryContainer.h"

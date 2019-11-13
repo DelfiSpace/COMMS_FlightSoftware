@@ -13,7 +13,7 @@ PQ9Bus pq9bus(3, GPIO_PORT_P9, GPIO_PIN0);
 // debug console handler
 DSerial serial;
 // services running in the system
-COMMSHousekeepingService hk;
+HousekeepingService<COMMSTelemetryContainer> hk;
 TestService tst;
 PingService ping;
 ResetService reset( GPIO_PORT_P5, GPIO_PIN0 );
@@ -50,13 +50,7 @@ void periodicTask()
     uptime++;
 
     // collect telemetry
-    COMMSTelemetryContainer *tc = static_cast<COMMSTelemetryContainer*>(hk.getContainerToWrite());
-
-    // acquire the telemetry
-    acquireTelemetry(tc);
-
-    // telemetry collected, store the values and prepare for next collection
-    hk.stageTelemetry();
+    hk.acquireTelemetry(acquireTelemetry);
 
     // refresh the watch-dog configuration to make sure that, even in case of internal
     // registers corruption, the watch-dog is capable of recovering from an error
@@ -113,12 +107,12 @@ void main(void)
     // every time a new command is received, it will be forwarded to the command handler
     // TODO: put back the lambda function after bug in CCS has been fixed
     //pq9bus.setReceiveHandler([](PQ9Frame &newFrame){ cmdHandler.received(newFrame); });
-    pq9bus.setReceiveHandler(&kickWatchdog);
+    pq9bus.setReceiveHandler(kickWatchdog);
 
     // every time a command is correctly processed, call the watch-dog
     // TODO: put back the lambda function after bug in CCS has been fixed
     //cmdHandler.onValidCommand([]{ reset.kickInternalWatchDog(); });
-    cmdHandler.onValidCommand(&validCmd);
+    cmdHandler.onValidCommand(validCmd);
 
     TXpins.CSPort = GPIO_PORT_P10;
     TXpins.CSPin = GPIO_PIN5;
