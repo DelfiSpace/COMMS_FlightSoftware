@@ -73,7 +73,7 @@ void txcallback()
 
 void rxcallback()
 {
-    tx.GPIO_IRQHandler2();
+    rx.GPIO_IRQHandler2();
 }
 
 /**
