@@ -68,12 +68,12 @@ void acquireTelemetry(COMMSTelemetryContainer *tc)
 
 void txcallback()
 {
-    tx.GPIO_IRQHandler2();
+    tx.GPIO_IRQHandler();
 }
 
 void rxcallback()
 {
-    rx.GPIO_IRQHandler2();
+    rx.GPIO_IRQHandler();
 }
 
 /**
