@@ -24,8 +24,9 @@ COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeS
 
 uint8_t COMMRadio::onTransmit()
 {
-    if(txReady && txCounter < txSize){
-        return txBuffer[txCounter++];
+    if(txReady && txIndex < txSize){
+        txIndex++;
+        return txBuffer[txIndex - 1];
     }else{
         txReady = false;
         return 0x00;
@@ -34,15 +35,23 @@ uint8_t COMMRadio::onTransmit()
 
 void COMMRadio::onReceive(uint8_t data)
 {
-    //TODO: replace rxArray by a push-pop construction
+    //Replace rxArray by a push-pop construction?
+    rxBuffer[rxIndex % 256] = data;
 
     //TODO: when sequence detected. forward bytes to 'packet' receival
+    //TODO: OPMODE?
+
+    rxIndex++;
+
 };
 
 void COMMRadio::init(){
-
     serial.println("COMMS booting...");
+    this->initTX();
+    this->initRX();
+};
 
+void COMMRadio::initTX(){
     // Initialise TX values
     // GMSK:
     // Modem set to FSK, deviation set to 1/2 datarate, gaussian filter enabled
@@ -50,10 +59,12 @@ void COMMRadio::init(){
 
         txConfig.modem = MODEM_FSK;
         txConfig.filtertype = BT_0_5;
+        txConfig.bandwidth = 15000;
         txConfig.power = 14;
         txConfig.fdev = 1200;
         txConfig.datarate = 2400;
 
+        txRadio->setFrequency(435);
         txRadio->setTxConfig(&txConfig);
 
         serial.println("TX Radio Settings Set");
@@ -63,7 +74,9 @@ void COMMRadio::init(){
     else{
         serial.println("TX Radio not Found");
     }
+};
 
+void COMMRadio::initRX(){
     // Initialise RX values
     // GMSK:
     // Modem set to FSK, deviation set to 1/2 datarate, gaussian filter enabled
@@ -75,6 +88,7 @@ void COMMRadio::init(){
         rxConfig.fdev = 1200;
         rxConfig.datarate = 2400;
 
+        rxRadio->setFrequency(435);
         rxRadio->setRxConfig(&rxConfig);
 
         serial.println("RX Radio Settings Set");
@@ -90,7 +104,9 @@ void COMMRadio::transmitData(uint8_t data[], uint8_t size){
     for(int i = 0; i < size; i++){
         txBuffer[i] = data[i];
     }
-    txCounter = 0;
+    txIndex = 0;
     txReady = true;
+
+    //TODO: OPMODE
 };
 

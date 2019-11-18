@@ -21,14 +21,17 @@ protected:
     uint8_t rxBuffer[256] = {0};
     uint8_t txSize = 0;
 
-    bool txReady = false;
-    bool rxReady = false;
+    volatile bool txReady = false;
+    volatile bool rxReady = false;
 
-    int txCounter = 0;
+    uint8_t txIndex = 0;
+    uint8_t rxIndex = 0;
 
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);
     void init();
+    void initTX();
+    void initRX();
     void onReceive(uint8_t data);
     uint8_t onTransmit();
 
