@@ -135,5 +135,5 @@ void main(void)
 
     serial.println("COMMS booting...");
 
-    DelfiPQcore::startTaskManager(tasks, 2);
+    TaskManager::start(tasks, 2);
 }
