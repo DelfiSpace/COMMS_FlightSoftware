@@ -4,11 +4,11 @@ extern DSerial serial;
 
 COMMRadio* radioStub;
 uint8_t onTransmitWrapper(){
-    serial.println("transmitter stub!");
+    //serial.println("transmitter stub!");
     return radioStub->onTransmit();
 };
 void onReceiveWrapper(uint8_t data){
-    serial.println("receiver stub!");
+    //serial.println("receiver stub!");
     radioStub->onReceive(data);
 };
 
@@ -22,8 +22,6 @@ COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeS
 
 uint8_t COMMRadio::onTransmit()
 {
-    return 0x55;
-    serial.println("TEST_TX");
     if(txReady && txIndex < txSize){
         txIndex++;
         return txBuffer[txIndex - 1];
@@ -45,7 +43,9 @@ void COMMRadio::onReceive(uint8_t data)
     rxIndex++;
 
     // Debug print for now:
-    serial.println("TEST_RX");
+    if(rxReady){
+        serial.print(data, HEX);
+    }
 };
 
 void COMMRadio::init(){
@@ -66,8 +66,8 @@ void COMMRadio::initTX(){
         txConfig.filtertype = BT_0_5;
         txConfig.bandwidth = 15000;
         txConfig.power = 14;
-        txConfig.fdev = 1200;
-        txConfig.datarate = 2400;
+        txConfig.fdev = 600;
+        txConfig.datarate = 1200;
 
         txRadio->setFrequency(435000000);
 
@@ -90,8 +90,8 @@ void COMMRadio::initRX(){
         rxConfig.filtertype = BT_0_5;
         rxConfig.bandwidth = 15000;
         rxConfig.bandwidthAfc = 83333;
-        rxConfig.fdev = 1200;
-        rxConfig.datarate = 2400;
+        rxConfig.fdev = 600;
+        rxConfig.datarate = 1200;
 
         rxRadio->setFrequency(435000000);
 
@@ -107,21 +107,24 @@ void COMMRadio::initRX(){
 };
 
 void COMMRadio::transmitData(uint8_t data[], uint8_t size){
-    //txSize = size;
-    //for(int i = 0; i < size; i++){
-    //    txBuffer[i] = data[i];
-    //}
-    //txIndex = 0;
-    //txReady = true;
+    txSize = 200;
+    for(int i = 0; i < txSize; i++){
+        txBuffer[i] = 0x55;
+    }
+    txIndex = 0;
+    txReady = true;
+
+    //serial.println(txBuffer[0]);
+    //serial.println("TRANSMITTER IDLE MODE SET: TRUE");
+
     txRadio->setIdleMode(true);
-    serial.println("TRANSMITTER IDLE MODE SET TRUE");
 };
 
 void COMMRadio::toggleReceivePrint(){
-    //rxReady = ~rxReady;
+    rxReady = ~rxReady;
 
     //TODO: OPMODE
-    serial.print(rxReady);
+    //serial.print(rxReady);
 };
 
 unsigned char COMMRadio::readRXReg(unsigned char address){

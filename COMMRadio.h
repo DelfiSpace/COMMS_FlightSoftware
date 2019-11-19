@@ -19,7 +19,7 @@ protected:
     TxConfig_t txConfig;
     RxConfig_t rxConfig;
 
-    uint8_t txBuffer[256] = {0};
+    uint8_t txBuffer[256] = {0x55};
     uint8_t rxBuffer[256] = {0};
     uint8_t txSize = 0;
 

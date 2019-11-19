@@ -10,7 +10,7 @@ bool RadioService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Frame &worki
 {
     if (command.getPayload()[0] == RADIO_SERVICE)
     {
-        serial.println("RadioService: Service started.");
+        // serial.println("RadioService: Service started.");
         // prepare response frame
         workingBuffer.setDestination(command.getSource());
         workingBuffer.setSource(interface.getAddress());
@@ -33,7 +33,7 @@ bool RadioService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Frame &worki
         }
         else if(command.getPayload()[1] == RADIO_CMD_TRANSMIT)
         {
-            serial.println("RadioService: Transmit Request");
+            //serial.println("RadioService: Transmit Request");
             // get packet size
             uint8_t packetSize = command.getPayload()[2];
             radio->transmitData(0,0);
@@ -44,18 +44,7 @@ bool RadioService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Frame &worki
         }
         else if(command.getPayload()[1] == RADIO_CMD_TOGGLE_RX)
         {
-            serial.println("RadioService: Toggle RX print request");
-            // respond to ping
-            serial.println("RX-Mode:");
-            serial.println("===");
-            serial.println(radio->readRXReg(0x31));
-            serial.println(radio->readRXReg(0x01));
-            serial.println("===");
-            serial.println("TX-Mode:");
-            serial.println("===");
-            serial.println(radio->readTXReg(0x31));
-            serial.println(radio->readTXReg(0x01));
-            serial.println("===");
+            radio->toggleReceivePrint();
             workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
         }
         else if(command.getPayload()[1] == RADIO_CMD_SET_REG1)
