@@ -12,6 +12,7 @@
 #define RADIO_CMD_INIT_TX        1
 #define RADIO_CMD_INIT_RX        2
 #define RADIO_CMD_TRANSMIT       3
+#define RADIO_CMD_TOGGLE_RX      4
 
 #define RADIO_CMD_ACCEPT        1
 #define RADIO_CMD_ERROR         2

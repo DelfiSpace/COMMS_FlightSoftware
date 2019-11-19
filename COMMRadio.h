@@ -36,5 +36,6 @@ public:
     uint8_t onTransmit();
 
     void transmitData(uint8_t data[], uint8_t size);
+    void toggleReceivePrint();
 
 };

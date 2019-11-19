@@ -29,6 +29,7 @@ uint8_t COMMRadio::onTransmit()
         return txBuffer[txIndex - 1];
     }else{
         txReady = false;
+        txRadio->setIdleMode(false);
         return 0x00;
     }
 };
@@ -38,10 +39,16 @@ void COMMRadio::onReceive(uint8_t data)
     //Replace rxArray by a push-pop construction?
     rxBuffer[rxIndex % 256] = data;
 
-    //TODO: when sequence detected. forward bytes to 'packet' receival
+    //TODO: when sequence detected. forward bytes to 'packet' array
     //TODO: OPMODE?
 
     rxIndex++;
+
+    // Debug print for now:
+    if(rxReady){
+        serial.println(data);
+    }
+
 
 };
 
@@ -106,7 +113,11 @@ void COMMRadio::transmitData(uint8_t data[], uint8_t size){
     }
     txIndex = 0;
     txReady = true;
+    txRadio->setIdleMode(true);
+};
 
+void COMMRadio::toggleReceivePrint(){
+    rxReady = ~rxReady;
     //TODO: OPMODE
 };
 
