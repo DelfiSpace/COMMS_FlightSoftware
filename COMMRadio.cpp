@@ -1,29 +1,29 @@
-#include<COMMRadio.h>
-#include "SX1276.h"
-#include "DSerial.h"
-#include <iostream>
-#include <queue>
+#include "COMMRadio.h"
 
 extern DSerial serial;
 
-COMMRadio* radio;
+COMMRadio* radioStub;
 uint8_t onTransmitWrapper(){
-    return radio->onTransmit();
+    serial.println("transmitter stub!");
+    return radioStub->onTransmit();
 };
 void onReceiveWrapper(uint8_t data){
-    radio->onReceive(data);
+    serial.println("receiver stub!");
+    radioStub->onReceive(data);
 };
 
 COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad):
     bitSPI_tx(&bitModeSPI_tx), bitSPI_rx(&bitModeSPI_rx), packetSPI(&packetModeSPI), txRadio(&txRad), rxRadio(&rxRad)
 {
-    radio = this;
+    radioStub = this;
 };
 
 
 
 uint8_t COMMRadio::onTransmit()
 {
+    return 0x55;
+    serial.println("TEST_TX");
     if(txReady && txIndex < txSize){
         txIndex++;
         return txBuffer[txIndex - 1];
@@ -45,11 +45,7 @@ void COMMRadio::onReceive(uint8_t data)
     rxIndex++;
 
     // Debug print for now:
-    if(rxReady){
-        serial.println(data);
-    }
-
-
+    serial.println("TEST_RX");
 };
 
 void COMMRadio::init(){
@@ -62,6 +58,8 @@ void COMMRadio::initTX(){
     // Initialise TX values
     // GMSK:
     // Modem set to FSK, deviation set to 1/2 datarate, gaussian filter enabled
+    txRadio->init();
+
     if(txRadio->ping()){
 
         txConfig.modem = MODEM_FSK;
@@ -71,12 +69,12 @@ void COMMRadio::initTX(){
         txConfig.fdev = 1200;
         txConfig.datarate = 2400;
 
-        txRadio->setFrequency(435);
+        txRadio->setFrequency(435000000);
+
+        txRadio->enableBitMode(*bitSPI_tx, 0, onTransmitWrapper);
         txRadio->setTxConfig(&txConfig);
 
         serial.println("TX Radio Settings Set");
-
-        txRadio->enableBitMode(*bitSPI_tx, 0, onTransmitWrapper);
     }
     else{
         serial.println("TX Radio not Found");
@@ -95,29 +93,49 @@ void COMMRadio::initRX(){
         rxConfig.fdev = 1200;
         rxConfig.datarate = 2400;
 
-        rxRadio->setFrequency(435);
-        rxRadio->setRxConfig(&rxConfig);
+        rxRadio->setFrequency(435000000);
 
-        serial.println("RX Radio Settings Set");
-
+        rxRadio->RxChainCalibration();
         rxRadio->enableBitMode(*bitSPI_rx, onReceiveWrapper, 0);
+
+        rxRadio->setRxConfig(&rxConfig);
+        rxRadio->startReceiver();
+        serial.println("RX Radio Settings Set");
     }else{
         serial.println("RX Radio not Found");
     }
 };
 
 void COMMRadio::transmitData(uint8_t data[], uint8_t size){
-    txSize = size;
-    for(int i = 0; i < size; i++){
-        txBuffer[i] = data[i];
-    }
-    txIndex = 0;
-    txReady = true;
+    //txSize = size;
+    //for(int i = 0; i < size; i++){
+    //    txBuffer[i] = data[i];
+    //}
+    //txIndex = 0;
+    //txReady = true;
     txRadio->setIdleMode(true);
+    serial.println("TRANSMITTER IDLE MODE SET TRUE");
 };
 
 void COMMRadio::toggleReceivePrint(){
-    rxReady = ~rxReady;
+    //rxReady = ~rxReady;
+
     //TODO: OPMODE
+    serial.print(rxReady);
 };
 
+unsigned char COMMRadio::readRXReg(unsigned char address){
+    return (rxRadio->readRegister(address));
+};
+
+unsigned char COMMRadio::readTXReg(unsigned char address){
+    return (txRadio->readRegister(address));
+};
+
+void COMMRadio::writeTXReg(unsigned char address, unsigned char value){
+    (txRadio->writeRegister(address,value));
+};
+
+void COMMRadio::writeRXReg(unsigned char address, unsigned char value){
+    (rxRadio->writeRegister(address,value));
+};

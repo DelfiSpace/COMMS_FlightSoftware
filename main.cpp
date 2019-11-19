@@ -6,6 +6,14 @@ DWire I2Cinternal(0);
 
 // SPI busses
 DSPI controlSPI(3);      // used EUSCI_B3
+DSPI lineTX(1);
+DSPI lineRX(2);
+
+SX1276Pins TXpins, RXpins;
+SX1276 tx(controlSPI, &TXpins);
+SX1276 rx(controlSPI, &RXpins);
+
+COMMRadio commRadio(lineTX, lineRX, controlSPI, tx, rx);
 
 // CDHS bus handler
 PQ9Bus pq9bus(3, GPIO_PORT_P9, GPIO_PIN0);
@@ -16,19 +24,19 @@ DSerial serial;
 HousekeepingService<COMMSTelemetryContainer> hk;
 TestService tst;
 PingService ping;
+
+RadioService radioService(commRadio);
+
 ResetService reset( GPIO_PORT_P5, GPIO_PIN0 );
+
+
 SoftwareUpdateService SWUpdate;
-Service* services[] = { &hk, &ping, &reset, &SWUpdate, &tst };
+Service* services[] = {&radioService, &hk, &ping, &reset, &SWUpdate, &tst };
 
 // COMMS board tasks
 PQ9CommandHandler cmdHandler(pq9bus, services, 5);
 PeriodicTask timerTask(FCLOCK, periodicTask);
 Task* tasks[] = { &cmdHandler, &timerTask };
-
-SX1276Pins TXpins, RXpins;
-
-SX1276 tx(controlSPI, &TXpins);
-SX1276 rx(controlSPI, &RXpins);
 
 // system uptime
 unsigned long uptime = 0;

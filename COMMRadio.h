@@ -1,8 +1,10 @@
-
 #include "SX1276.h"
 #include "DSPI.h"
 #include "sx1276Enums.h"
+#include "DSerial.h"
 
+#ifndef COMMRADIO_H_
+#define COMMRADIO_H_
 
 class COMMRadio
 {
@@ -37,5 +39,10 @@ public:
 
     void transmitData(uint8_t data[], uint8_t size);
     void toggleReceivePrint();
-
+    unsigned char COMMRadio::readRXReg(unsigned char address);
+    unsigned char COMMRadio::readTXReg(unsigned char address);
+    void COMMRadio::writeRXReg(unsigned char address, unsigned char value);
+    void COMMRadio::writeTXReg(unsigned char address, unsigned char value);
 };
+
+#endif

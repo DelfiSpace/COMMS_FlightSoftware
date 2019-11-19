@@ -28,6 +28,9 @@
 #include "ResetService.h"
 #include "SoftwareUpdateService.h"
 #include "SX1276.h"
+#include "RadioService.h"
+#include "COMMRadio.h"
+
 
 #define FCLOCK 48000000
 
