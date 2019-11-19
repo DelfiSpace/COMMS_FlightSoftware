@@ -121,7 +121,9 @@ void COMMRadio::transmitData(uint8_t data[], uint8_t size){
 };
 
 void COMMRadio::toggleReceivePrint(){
-    rxReady = ~rxReady;
+    //serial.print("Toggle RX Print: ");
+    //serial.println(rxReady);
+    rxReady = !rxReady;
 
     //TODO: OPMODE
     //serial.print(rxReady);

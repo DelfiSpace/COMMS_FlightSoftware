@@ -142,6 +142,8 @@ void main(void)
     rx.init();
 
     serial.println("COMMS booting...");
+    commRadio.init();
+    serial.println("COMMS Booted.");
 
     TaskManager::start(tasks, 2);
 }
