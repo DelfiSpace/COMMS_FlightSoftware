@@ -14,7 +14,7 @@ void onReceiveWrapper(uint8_t data){
 void sendPacketWrapper(){
     serial.println("SEND PACKET (stub)!");
     MAP_Timer32_clearInterruptFlag(TIMER32_1_BASE);
-    radioStub->sendPacket();
+    radioStub->sendPacketAX25();
 }
 
 COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad):
@@ -216,22 +216,21 @@ void COMMRadio::sendPacketAX25(){
     }
 
     //Create UpRamp:
-    for(int i = 0; i < this->UPRAMP_BYTES; i++){
-        this->txRFMessageBuffer[i] = ax25Frame.AX25_FLAG;
+    for(int i = 0; i < UPRAMP_BYTES; i++){
+        this->txRFMessageBuffer[i] = encoder.AX25_FLAG;
     }
     //Fill RF Message(TODO: PROTOCOL + FEC)
     for(int i = 0; i < PACKET_SIZE; i++){
         this->txRFMessageBuffer[UPRAMP_BYTES+i] = txPacketBuffer[i];
     }
     //Create DownRamp
-    for(int i = 0; i < PACKET_SIZE; i++){
-        this->txRFMessageBuffer[UPRAMP_BYTES+PACKET_SIZE+i] = ax25Frame.AX25_FLAG;
+    for(int i = 0; i < RF_MSG_SIZE; i++){
+        this->txRFMessageBuffer[UPRAMP_BYTES+PACKET_SIZE+i] = encoder.AX25_FLAG;
     }
-
 
     //Scramble RF message
     for(int i = 0; i < RF_MSG_SIZE; i++){
-        txRFMessageBuffer[i] = ax25Frame.scrambleByte(txRFMessageBuffer[i]);
+        txRFMessageBuffer[i] = encoder.NRZIencodeByte(encoder.scrambleByte(txRFMessageBuffer[i]));
     }
 
     // Print RF Packet for Debug
