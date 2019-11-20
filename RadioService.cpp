@@ -36,11 +36,12 @@ bool RadioService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Frame &worki
             //serial.println("RadioService: Transmit Request");
             // get packet size
             uint8_t packetSize = command.getPayload()[2];
-            radio->transmitData(0,0);
-            //uint8_t dataPacket[packetSize]
-            //TODO
-            //radio->transmitData(dataPacket, packetSize);
-            workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
+            if(radio->transmitData(&command.getPayload()[3], packetSize)){
+                workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
+            }else{
+                workingBuffer.getPayload()[1] = RADIO_CMD_ERROR;
+            }
+
         }
         else if(command.getPayload()[1] == RADIO_CMD_TOGGLE_RX)
         {
