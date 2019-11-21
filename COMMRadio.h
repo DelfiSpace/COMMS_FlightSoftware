@@ -3,13 +3,14 @@
 #include "DSPI.h"
 #include "sx1276Enums.h"
 #include "DSerial.h"
+#include "AX25Frame.h"
 
 #ifndef COMMRADIO_H_
 #define COMMRADIO_H_
 #define PACKET_SIZE    100
 #define RF_MSG_SIZE    200
-#define UPRAMP_BYTES   50
-#define DOWNRAMP_BYTES 50
+#define UPRAMP_BYTES   3
+#define DOWNRAMP_BYTES 3
 
 //July 14, 2009 Hallvard Furuseth
 static const unsigned char BitsSetTable256[256] =
@@ -34,7 +35,7 @@ protected:
     RxConfig_t rxConfig;
 
     uint8_t txPacketBuffer[PACKET_SIZE] = {0};
-    uint8_t txRFMessageBuffer[RF_MSG_SIZE] = {0};
+    uint8_t* txRFMessageBuffer = txPacketBuffer;
     uint8_t countBits[256];
 
     uint8_t preamble[10] = {0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55};
@@ -54,6 +55,7 @@ protected:
     uint8_t countSimilarBitsInverted(uint8_t value1[], uint8_t value2[], int size, int value1Offset);
 
     AX25Encoder encoder;
+    AX25Frame TXFrame;
 
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);
@@ -71,6 +73,9 @@ public:
     void writeTXReg(unsigned char address, unsigned char value);
     void sendPacket();
     void sendPacketAX25();
+
+    uint8_t TXDestination[7] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+    uint8_t TXSource[7]      = {0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,0xAA};
 };
 
 #endif

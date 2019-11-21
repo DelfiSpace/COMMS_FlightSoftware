@@ -71,3 +71,19 @@ uint8_t AX25Encoder::NRZIdecodeByte(uint8_t inByte){
     return outputByte;
 }
 
+uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing, bool scrambling, bool NRZIencoding){
+
+    uint8_t outBit = inBit;
+
+    if(bitStuffing){
+
+    }
+    if(scrambling){
+
+    }
+    if(NRZIencoding){
+
+    }
+
+    return outBit;
+}
