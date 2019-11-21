@@ -6,7 +6,7 @@
 #ifndef AX25FRAME_H_
 #define AX25FRAME_H_
 
-#define MAX_PACKET_SIZE 10
+#define MAX_PACKET_SIZE 100
 #define AX25_CRC        0x1021
 
 class AX25Frame

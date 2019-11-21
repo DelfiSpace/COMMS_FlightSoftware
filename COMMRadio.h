@@ -9,8 +9,8 @@
 #define COMMRADIO_H_
 #define PACKET_SIZE    100
 #define RF_MSG_SIZE    200
-#define UPRAMP_BYTES   3
-#define DOWNRAMP_BYTES 3
+#define UPRAMP_BYTES   2
+#define DOWNRAMP_BYTES 2
 
 //July 14, 2009 Hallvard Furuseth
 static const unsigned char BitsSetTable256[256] =
@@ -44,6 +44,11 @@ protected:
     uint8_t txSize = 0;
 
     volatile bool txReady = false;
+
+    volatile bool txUprampSend = false;
+    volatile bool txDownrampSend = false;
+    volatile bool txPacketSend = false;
+
     volatile bool rxReady = false;
     volatile bool rxPrint = false;
 
@@ -74,8 +79,8 @@ public:
     void sendPacket();
     void sendPacketAX25();
 
-    uint8_t TXDestination[7] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
-    uint8_t TXSource[7]      = {0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,0xAA};
+    uint8_t TXDestination[7] = {' ',' ',' ',' ',' ',' ',0xFF};
+    uint8_t TXSource[7]      = {' ',' ',' ',' ',' ',' ',0xFF};
 };
 
 #endif

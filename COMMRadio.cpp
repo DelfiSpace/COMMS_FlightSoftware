@@ -67,7 +67,7 @@ COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeS
 
 uint8_t COMMRadio::onTransmit()
 {
-    uint8_t outputByte;
+    uint8_t outputByte = 0;
     if(txIndex < (txSize + UPRAMP_BYTES + DOWNRAMP_BYTES) ){
         if(txIndex < UPRAMP_BYTES){
             outputByte = encoder.AX25_FLAG;
@@ -77,26 +77,21 @@ uint8_t COMMRadio::onTransmit()
             outputByte = encoder.AX25_FLAG;
         }
 
+
+
         txIndex++;
         if(txIndex >= (txSize + UPRAMP_BYTES + DOWNRAMP_BYTES) ){
             txRadio->setIdleMode(false);
             txSize = 0;
             txReady = true;
         }
-
-    }else{
-        txRadio->setIdleMode(false);
-        txSize = 0;
-        outputByte = 0x00;
-        txReady = true;
     }
-    serial.print(outputByte, HEX);
-    serial.print("|");
 
     //Prepare outputByte using bitwise operations
+    outputByte = encoder.txByte(outputByte, false, false, false);
 
-
-
+    serial.print(outputByte, HEX);
+    serial.print("|");
     return outputByte;
 };
 
@@ -275,6 +270,8 @@ void COMMRadio::sendPacketAX25(){
         txPacketBuffer[i] = 0;
     }
 
+    TXDestination[6] = (('A' & 0x0F) << 1) | 0xE0;
+    TXSource[6] = (('B' & 0x0F) << 1) | 0x61;
     TXFrame.setAdress(TXDestination, TXSource);
     TXFrame.setControl(false);
     TXFrame.setPacket(txPacketBuffer, txSize);

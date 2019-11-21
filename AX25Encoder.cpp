@@ -72,8 +72,13 @@ uint8_t AX25Encoder::NRZIdecodeByte(uint8_t inByte){
 }
 
 uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing, bool scrambling, bool NRZIencoding){
-
-    uint8_t outBit = inBit;
+    uint8_t outBit;
+    if(bitsInBuffer == 0){
+        outBit = inBit;
+    }else{
+        //take bit from buffer
+        outBit = inBit;
+    }
 
     if(bitStuffing){
 
@@ -82,8 +87,19 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing, bool scrambling, boo
 
     }
     if(NRZIencoding){
-
+        outBit = this->NRZIencodeBit(inBit);
     }
 
-    return outBit;
+    return (outBit > 0 ? 0x01 : 0x00);;
+}
+
+uint8_t AX25Encoder::txByte(uint8_t inByte, bool bitStuffing, bool scrambling, bool NRZIencoding){
+
+    uint8_t outByte = 0;
+
+    for(int i = 0; i < 8; i++){
+        outByte = outByte | (this->txBit((inByte >> i)&0x01, bitStuffing, scrambling, NRZIencoding) << i);
+    }
+
+    return outByte;
 }

@@ -38,6 +38,7 @@ public:
     uint8_t NRZIdecodeByte(uint8_t inbyte);
 
     uint8_t txBit(uint8_t inBit, bool bitStuff, bool NRZI, bool scrambling);
+    uint8_t txByte(uint8_t inByte, bool bitStuff, bool NRZI, bool scrambling);
 };
 
 #endif
