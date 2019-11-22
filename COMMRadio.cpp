@@ -2,22 +2,7 @@
 
 extern DSerial serial;
 
-COMMRadio* radioStub;
-uint8_t onTransmitWrapper(){
-    //serial.println("transmitter stub!");
-    return radioStub->onTransmit();
-};
-void onReceiveWrapper(uint8_t data){
-    //serial.println("receiver stub!");
-    radioStub->onReceive(data);
-};
-void sendPacketWrapper(){
-    serial.println("SEND PACKET (stub)!");
-    MAP_Timer32_clearInterruptFlag(TIMER32_1_BASE);
-    radioStub->sendPacketAX25();
-}
-
-unsigned char reverseByte(unsigned char x)
+unsigned char reverseByteOrder(unsigned char x)
 {
     static const unsigned char table[] = {
         0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
@@ -56,6 +41,20 @@ unsigned char reverseByte(unsigned char x)
     return table[x];
 }
 
+COMMRadio* radioStub;
+uint8_t onTransmitWrapper(){
+    //serial.println("transmitter stub!");
+    return radioStub->onTransmit();
+};
+void onReceiveWrapper(uint8_t data){
+    //serial.println("receiver stub!");
+    radioStub->onReceive(data);
+};
+void sendPacketWrapper(){
+    //serial.println("SEND PACKET (stub)!");
+    MAP_Timer32_clearInterruptFlag(TIMER32_1_BASE);
+    radioStub->sendPacketAX25();
+}
 
 COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad):
     bitSPI_tx(&bitModeSPI_tx), bitSPI_rx(&bitModeSPI_rx), packetSPI(&packetModeSPI), txRadio(&txRad), rxRadio(&rxRad)
@@ -65,58 +64,122 @@ COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeS
 
 
 
-uint8_t COMMRadio::onTransmit()
-{
+uint8_t COMMRadio::onTransmit(){
+    //NOTE, SPI Bus is configured to MSB_first, meaning that the bit transmitted first should be the MSB.
+
     uint8_t outputByte = 0;
-    if(txIndex < (txSize + UPRAMP_BYTES + DOWNRAMP_BYTES) ){
-        if(txIndex < UPRAMP_BYTES){
-            outputByte = encoder.AX25_FLAG;
-        }else if(txIndex < (UPRAMP_BYTES + txSize)){
-            outputByte = txRFMessageBuffer[txIndex - UPRAMP_BYTES];
-        }else{
-            outputByte = encoder.AX25_FLAG;
+    if(txPacketReady){
+        for(int i = 0; i < 8; i++){// Send 8bits per call
+            //Start Sending
+            if(!txUprampSend){ //First Check the UpRamp!!
+                if(encoder.bitsInBuffer == 0){  //check if no more bits in send buffer
+                    uint8_t inBit = (0x7E >> txBitIndex) & 0x01;
+                    outputByte = outputByte | (encoder.txBit( inBit , false, false, true) << (7-i));
+                    txBitIndex++;
+                }else{
+                    //send the Buffered Bit
+                    outputByte = outputByte | (encoder.txBit(0, false, false, true) << (7-i));
+                }
+
+                //check if txBitIndex is high enough to roll over to next byte
+                if(txBitIndex>=8){
+                    txBitIndex = 0;
+                    txIndex++;
+                }
+
+                //check if we're done sending Upramp
+                if(txIndex >= UPRAMP_BYTES){
+                    txUprampSend = true;
+                    txIndex = 0;
+                }
+            } else if(!txPacketSend){
+                if(encoder.bitsInBuffer == 0){
+                    //tx is ready for next bit
+                        uint8_t inBit = (txRFMessageBuffer[txIndex] >> txBitIndex) & 0x01;
+                        outputByte = outputByte | (encoder.txBit( inBit , true, false, true) << (7-i));
+                        txBitIndex++;
+                }else{
+                    //out of bytes, pad the last parts with zero
+                    outputByte = outputByte | (encoder.txBit(0, true, false, true) << (7-i));
+                    //serial.print("[P]");
+                }
+                if(txBitIndex >= 8){
+                    txIndex++;
+                    txBitIndex = 0;
+                }
+                if(txIndex >= txSize){
+                    txIndex = 0;
+                    txPacketSend = true;
+                }
+            }else if(!txDownrampSend){ //Lastly, check DownRamp
+                if(encoder.bitsInBuffer == 0){  //check if no more bits in send buffer
+                    uint8_t inBit = (0x7E >> txBitIndex) & 0x01;
+                    outputByte = outputByte | (encoder.txBit( inBit , false, false, true) << (7-i));
+                    txBitIndex++;
+                }else{
+                    //send the Buffered Bit
+                    outputByte = outputByte | (encoder.txBit(0, false, false, true) << (7-i));
+                }
+
+                //check if txBitIndex is high enough to roll over to next byte
+                if(txBitIndex>=8){
+                    txBitIndex = 0;
+                    txIndex++;
+                }
+
+                //check if we're done sending Downramp
+                if(txIndex >= DOWNRAMP_BYTES){
+                    txDownrampSend = true;
+                    txIndex = 0;
+                }
+            }else {
+                //no more data available, so stuff byte with zeros for transmission
+                outputByte = outputByte | (encoder.txBit(0, false, false, true) << (7-i));
+            }
+
+            //serial.print(txBitIndex, HEX);
         }
 
-
-
-        txIndex++;
-        if(txIndex >= (txSize + UPRAMP_BYTES + DOWNRAMP_BYTES) ){
+        if(txPacketSend && txUprampSend && txDownrampSend){
+            //end of transmission
             txRadio->setIdleMode(false);
             txSize = 0;
             txReady = true;
+            txPacketReady = false;
         }
+
+        if(false){
+            for(int i = 0; i < 8; i++){
+                serial.print((outputByte >> (7-i)) & 0x01, DEC);
+            }
+            serial.print("|");
+        }
+        //serial.print(outputByte, HEX);
+        return outputByte;
+    }else{
+        txRadio->setIdleMode(false);
+        txSize = 0;
+        txReady = true;
+        txPacketReady = false;
+        return 0x00;
     }
-
-    //Prepare outputByte using bitwise operations
-    outputByte = encoder.txByte(outputByte, false, false, false);
-
-    serial.print(outputByte, HEX);
-    serial.print("|");
-    return outputByte;
 };
 
 void COMMRadio::onReceive(uint8_t data)
 {
+    //Note: SPI Bus is configured MSB First, meaning that from the received Byte, the MSB was the first received Bit
     if(rxReady){
-        //Replace rxArray by a push-pop construction?
-        rxPreambleDetectBuffer[rxIndex % 10] = reverseByte(data);//encoder.NRZIdecodeByte(data);
-
-        //TODO: when sequence detected. forward bytes to 'packet' array
-        //preAmble detection
-        //if(countSimilarBits(rxPreambleDetectBuffer, preamble, 10, rxIndex) > 78 || countSimilarBitsInverted(rxPreambleDetectBuffer, preamble, 10, rxIndex) > 78){
-        //    serial.println("RX DETECTED~!");
-        //    serial.print("====  ");
-        //    serial.println("");
-        //}else{
-        //    //serial.println("No preamble found");
-        //}
-
-        //TODO: OPMODE?
-        rxIndex++;
-
+        uint8_t inBits = 0;
+        for(int i = 0; i < 8; i++){
+            inBits |= (encoder.NRZIdecodeBit((data >> (7-i))& 0x01) << (7-i));
+        }
         // Debug print for now:
         if(rxPrint){
-            serial.print(reverseByte(data), HEX);
+            //for(int i = 0; i < 8; i++){
+            //    serial.print((inBits >> (7-i)) & 0x01, DEC); //print MSB first for correct ordering
+            //}
+            serial.print(inBits, HEX);
+            serial.print("|");
         }
     }
 };
@@ -270,8 +333,8 @@ void COMMRadio::sendPacketAX25(){
         txPacketBuffer[i] = 0;
     }
 
-    TXDestination[6] = (('A' & 0x0F) << 1) | 0xE0;
-    TXSource[6] = (('B' & 0x0F) << 1) | 0x61;
+    TXDestination[6] = 0xE0;//(('A' & 0x0F) << 1) | 0xE0;
+    TXSource[6] = 0x61;//(('B' & 0x0F) << 1) | 0x61;
     TXFrame.setAdress(TXDestination, TXSource);
     TXFrame.setControl(false);
     TXFrame.setPacket(txPacketBuffer, txSize);
@@ -289,8 +352,14 @@ void COMMRadio::sendPacketAX25(){
     serial.println("");
     serial.println("============================");
 
+    txPacketReady = true;
     txIndex = 0;
+    txBitIndex = 0;
+    txPacketSend = false;
+    txUprampSend = false;
+    txDownrampSend = false;
     txRadio->setIdleMode(true);
+    //rxPrint = true;
 }
 
 void COMMRadio::toggleReceivePrint(){

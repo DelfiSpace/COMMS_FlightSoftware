@@ -15,13 +15,13 @@ protected:
     uint16_t DESCRAMBLE_BYTES = 0;
     uint8_t DESCRAMBLE_BIT = 0;
 
-    uint8_t bitStuffingBuffer[100];
+    uint8_t bitStuffingBuffer[100] = {0x00, 0x00};
 
-    bool NRZI_ENCODER = false;
+    bool NRZI_ENCODER = true;
     bool NRZI_DECODER = true;
 
-    uint8_t bufferEmpty = true;
-    uint8_t bitsInBuffer = 0;
+    uint8_t bitCounter = 0;
+
 public:
     uint8_t AX25_FLAG = 0x7E;
 
@@ -39,6 +39,8 @@ public:
 
     uint8_t txBit(uint8_t inBit, bool bitStuff, bool NRZI, bool scrambling);
     uint8_t txByte(uint8_t inByte, bool bitStuff, bool NRZI, bool scrambling);
+    uint8_t bitsInBuffer = 0;
+
 };
 
 #endif

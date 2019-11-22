@@ -77,11 +77,26 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing, bool scrambling, boo
         outBit = inBit;
     }else{
         //take bit from buffer
-        outBit = inBit;
+        outBit = bitStuffingBuffer[bitsInBuffer-1];
+        bitsInBuffer--;
+        //serial.print("[s]");
     }
 
     if(bitStuffing){
-
+        //serial.print(outBit, HEX);
+        if(inBit > 0){
+            bitCounter++;
+            //serial.print("1");
+        }else{
+            bitCounter = 0;
+            //serial.print("0");
+        }
+        if(bitCounter >= 5){
+            bitStuffingBuffer[bitsInBuffer] = 0x00;
+            bitsInBuffer++;
+            bitCounter = 0;
+            //serial.print("[stuffing!]");
+        }
     }
     if(scrambling){
 
@@ -90,7 +105,8 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing, bool scrambling, boo
         outBit = this->NRZIencodeBit(inBit);
     }
 
-    return (outBit > 0 ? 0x01 : 0x00);;
+    //serial.print((outBit > 0 ? 0x01 : 0x00), HEX);
+    return (outBit > 0 ? 0x01 : 0x00);
 }
 
 uint8_t AX25Encoder::txByte(uint8_t inByte, bool bitStuffing, bool scrambling, bool NRZIencoding){
