@@ -4,7 +4,7 @@
 #define AX25FRAME_H_
 
 #define MAX_PACKET_SIZE 100
-#define AX25_CRC        0x1021
+#define AX25_CRC        0x8408
 
 
 
@@ -20,9 +20,11 @@ protected:
     uint8_t packetField[MAX_PACKET_SIZE]; //'info' field
     uint8_t packetSize;
 
-    uint8_t FCSBuffer[MAX_PACKET_SIZE+14+4];
+    uint8_t FCSBuffer[17];
     uint8_t FrameBytes[MAX_PACKET_SIZE+14+4];
     uint8_t FrameSize;
+
+    uint8_t crc16[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0};
 
     void updateCRCByte(uint8_t inByte);
 

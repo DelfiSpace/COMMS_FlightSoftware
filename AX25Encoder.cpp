@@ -102,7 +102,7 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing, bool scrambling, boo
 
     }
     if(NRZIencoding){
-        outBit = this->NRZIencodeBit(inBit);
+        outBit = this->NRZIencodeBit(inBit > 0 ? 0x00 : 0x01);
     }
 
     //serial.print((outBit > 0 ? 0x01 : 0x00), HEX);

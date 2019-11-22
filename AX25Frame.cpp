@@ -73,39 +73,75 @@ void AX25Frame::setPacket(uint8_t packet[], uint8_t size){
 
 void AX25Frame::calculateFCS(){
     //fcs poly: 1 0001 0000 0010 0001  (17bits);
-    this->FCSField=0xFFFF;
     //Fill FCSBuffer with packet
     for(int i = 0; i < 14; i++){
-        this->FCSBuffer[i] = this->addressField[i];
-
+        this->FrameBytes[i] = this->addressField[i];
     }
-    this->FCSBuffer[14] = this->controlField;
-    this->FCSBuffer[14+1] = this->PIDField;
     this->FrameBytes[14] = this->controlField;
     this->FrameBytes[14+1] = this->PIDField;
-
     for(int i = 0; i < this->packetSize; i++){
-        this->FCSBuffer[16+i] = this->packetField[i];
         this->FrameBytes[16+i] = this->packetField[i];
     }
-
     for(int i = 0; i < 2; i++){
-            this->FCSBuffer[16+this->packetSize+i] = 0x00;
-            this->FrameBytes[16+this->packetSize+i] = 0x00;
+        this->FrameBytes[16+this->packetSize+i] = 0x00;
     }
-
     this->FrameSize = this->packetSize + 18;
 
     //calculate CRC
-    for(int i = 0; i < ((this->FrameSize - 2 )); i++){
-        updateCRCByte(FCSBuffer[i]);
+    //for(int i = 0; i < ((this->FrameSize - 2 )); i++){
+    //    updateCRCByte(FCSBuffer[i]);
+    //}
+
+    //PKT -> FrameBytes
+    bool guard;
+    //fcs -> FCSBuffer[17]
+    int tg;
+    bool bit;
+
+    for(int i = 0; i < 17; i++){
+        FCSBuffer[i] = 1;
+    }
+
+    for(int k = 0; k < (this->FrameSize - 2 ); k++)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            guard = (FCSBuffer[15] != 0);
+            for (tg = 14; tg > -1; tg--)
+            {
+                FCSBuffer[tg + 1] = FCSBuffer[tg];      // shift right
+            }
+
+            FCSBuffer[0] = 0;
+
+            bit = (FrameBytes[k] & (1 << i)) != 0;
+            if (bit != guard)
+            {
+                for (tg = 0; tg < 16; tg++)
+                {
+                    FCSBuffer[tg] = FCSBuffer[tg] ^ crc16[tg];
+                }
+            }
+        }
+    }
+    serial.println("CalculatedCRC: ");
+    for (tg = 0; tg < 16; tg++)
+    {
+        FCSBuffer[tg] = 1 - FCSBuffer[tg];              // 1 -> 0 and 0 -> 1
+        serial.print(FCSBuffer[tg],DEC);
+    }
+
+    FCSField = 0;
+    for (int y = 0; y < 16; y++)
+    {
+        FCSField |= (FCSBuffer[8 + y] << (7 - y)) << 8;
+        FCSField |= FCSBuffer[y] << (7 - y);
     }
 
     //Since FCS is send bit 15 first, and all other is send in octets with lsb first, the byte order is changed and the bytes are reversed
-    this->FCSBuffer[16+this->packetSize+1] = this->reverseByteOrder(this->FCSField & 0xFF);
-    this->FCSBuffer[16+this->packetSize] = this->reverseByteOrder(this->FCSField >> 8);
-    this->FrameBytes[16+this->packetSize+1] = this->reverseByteOrder(this->FCSField & 0xFF);
-    this->FrameBytes[16+this->packetSize] = this->reverseByteOrder(this->FCSField >> 8);
+    this->FrameBytes[16+this->packetSize+1] = (this->FCSField & 0xFF);
+    this->FrameBytes[16+this->packetSize] = (this->FCSField >> 8);
+
 };
 
 void AX25Frame::updateCRCByte(uint8_t inByte){
