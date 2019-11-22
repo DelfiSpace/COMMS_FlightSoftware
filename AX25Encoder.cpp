@@ -38,7 +38,7 @@ uint8_t AX25Encoder::NRZIencodeBit(uint8_t bit){
 
     //(bit & 0x01) == 0x01 -> bit is 1
     //(bit & 0x01) != 0x01 -> bit is 0
-    bool isHigh = ((bit & 0x01) == 0x01);
+    bool isHigh = !((bit & 0x01) == 0x01);
     NRZI_ENCODER = NRZI_ENCODER != isHigh;
     return (NRZI_ENCODER ? 0x01 : 0x00);
 }
@@ -50,7 +50,7 @@ uint8_t AX25Encoder::NRZIdecodeBit(uint8_t bit){
     bool isHigh = ((bit & 0x01) == 0x01);
     bool tmp = NRZI_DECODER;
     NRZI_DECODER = isHigh;
-    return (isHigh != tmp ? 0x01 : 0x00);
+    return (isHigh != tmp ? 0x00 : 0x01);
 }
 
 uint8_t AX25Encoder::NRZIencodeByte(uint8_t inByte){
@@ -99,10 +99,11 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing, bool scrambling, boo
         }
     }
     if(scrambling){
+        outBit = this->scrambleBit(outBit);
 
     }
     if(NRZIencoding){
-        outBit = this->NRZIencodeBit(inBit > 0 ? 0x00 : 0x01);
+        outBit = this->NRZIencodeBit(outBit);
     }
 
     //serial.print((outBit > 0 ? 0x01 : 0x00), HEX);

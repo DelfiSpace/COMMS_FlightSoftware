@@ -171,7 +171,7 @@ void COMMRadio::onReceive(uint8_t data)
     if(rxReady){
         uint8_t inBits = 0;
         for(int i = 0; i < 8; i++){
-            uint8_t inBit = (encoder.NRZIdecodeBit((data >> (7-i))& 0x01) == 0x01 ? 0x00 : 0x01);
+            uint8_t inBit = encoder.NRZIdecodeBit((data >> (7-i))& 0x01);
             if(!rxPacket){
                 //no incoming packet, so detect for sequence
                 inBits |= inBit << (7-i);

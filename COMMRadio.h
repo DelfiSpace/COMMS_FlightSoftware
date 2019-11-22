@@ -10,7 +10,7 @@
 #define PACKET_SIZE    100
 #define RF_MSG_SIZE    200
 #define UPRAMP_BYTES   70
-#define DOWNRAMP_BYTES 2
+#define DOWNRAMP_BYTES 6
 #define RX_PACKET_BUF 120
 
 //July 14, 2009 Hallvard Furuseth
