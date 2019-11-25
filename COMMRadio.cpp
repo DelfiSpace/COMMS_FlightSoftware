@@ -172,47 +172,8 @@ void COMMRadio::onReceive(uint8_t data)
         uint8_t inBits = 0;
         for(int i = 0; i < 8; i++){
             uint8_t inBit = encoder.NRZIdecodeBit((data >> (7-i))& 0x01);
-            if(!rxPacket){
-                //no incoming packet, so detect for sequence
-                inBits |= inBit << (7-i);
-
-
-                rxDetectBuffer[rxDetectBitIndex] = inBit;
-                bool isDetected = true;
-                for(int k = 0; k < 32; k++){
-                    if(rxDetectBuffer[(rxDetectBitIndex + k) % 32] != rxDetectSequence[k]){
-                        isDetected = false;
-                    }
-                }
-                rxDetectBitIndex = (rxDetectBitIndex + 1) % 32;
-                if(isDetected){
-                    serial.println("FLAG DETECTED!");
-                    rxPacket = true;
-                    rxIndex = 0;
-                    rxBitIndex = 1;
-                }
-            }else{
-                //incoming packet TODO, for now, store packet for big print
-                rxPacketBuffer[rxIndex] |= inBit << (rxBitIndex);
-                rxBitIndex++;
-                if(rxBitIndex >= 8){
-                    rxBitIndex = 0;
-                    rxIndex++;
-                }
-                if(rxIndex >= RX_PACKET_BUF){
-                    rxPacket = false;
-                    serial.println("RECEIVED DATA:");
-                    for(int k = 0; k < RX_PACKET_BUF; k++){
-                        serial.print(rxPacketBuffer[k], HEX);
-                        serial.print("|");
-                        rxPacketBuffer[k] = 0;
-                    }
-                    serial.println("");
-                }
-
-            }
+            AX25Sync.rxBit(inBit);
         }
-
         // Debug print for now:
         if(rxPrint){
             //for(int i = 0; i < 8; i++){

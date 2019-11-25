@@ -95,7 +95,7 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing){
             //serial.print("[stuffing!]");
         }
     }
-    outBit = this->NRZIencodeBit(scrambleBit(outBit));
+    outBit = this->NRZIencodeBit(outBit);//scrambleBit(outBit));
 
     return outBit;
 }

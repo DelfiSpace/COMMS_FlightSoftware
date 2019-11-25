@@ -4,13 +4,14 @@
 #include "sx1276Enums.h"
 #include "DSerial.h"
 #include "AX25Frame.h"
+#include "AX25Synchronizer.h"
 
 #ifndef COMMRADIO_H_
 #define COMMRADIO_H_
 #define PACKET_SIZE    100
 #define RF_MSG_SIZE    200
-#define UPRAMP_BYTES   50
-#define DOWNRAMP_BYTES 6
+#define UPRAMP_BYTES   20
+#define DOWNRAMP_BYTES 20
 #define RX_PACKET_BUF 160
 
 //July 14, 2009 Hallvard Furuseth
@@ -70,6 +71,7 @@ protected:
 
     AX25Encoder encoder;
     AX25Frame TXFrame;
+    AX25Synchronizer AX25Sync;
 
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);
