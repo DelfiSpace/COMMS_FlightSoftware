@@ -9,16 +9,17 @@
 class AX25Encoder
 {
 protected:
-    uint16_t SCRAMBLE_BYTES = 0;
-    uint8_t SCRAMBLE_BIT = 0;
-
-    uint16_t DESCRAMBLE_BYTES = 0;
-    uint8_t DESCRAMBLE_BIT = 0;
-
-    uint8_t bitStuffingBuffer[100] = {0x00, 0x00};
+    uint8_t bitStuffingBuffer[10] = {0};
 
     bool NRZI_ENCODER = true;
     bool NRZI_DECODER = true;
+
+    int G3RUHscramble = 0;
+    int G3RUHscramble_bit = 0;
+    int descrambler = 0;
+
+    bool G3RUH_SCRAMBLER = false;
+    bool G3RUH_DESCRAMBLER = false;
 
     uint8_t bitCounter = 0;
 
@@ -37,8 +38,7 @@ public:
     uint8_t NRZIencodeByte(uint8_t inbyte);
     uint8_t NRZIdecodeByte(uint8_t inbyte);
 
-    uint8_t txBit(uint8_t inBit, bool bitStuff, bool NRZI, bool scrambling);
-    uint8_t txByte(uint8_t inByte, bool bitStuff, bool NRZI, bool scrambling);
+    uint8_t txBit(uint8_t inBit, bool bitStuff);
     uint8_t bitsInBuffer = 0;
 
 };

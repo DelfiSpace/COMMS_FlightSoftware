@@ -9,9 +9,9 @@
 #define COMMRADIO_H_
 #define PACKET_SIZE    100
 #define RF_MSG_SIZE    200
-#define UPRAMP_BYTES   70
+#define UPRAMP_BYTES   50
 #define DOWNRAMP_BYTES 6
-#define RX_PACKET_BUF 120
+#define RX_PACKET_BUF 160
 
 //July 14, 2009 Hallvard Furuseth
 static const unsigned char BitsSetTable256[256] =
@@ -61,8 +61,8 @@ protected:
     int rxBitIndex = 0;
     int rxDetectBitIndex = 0;
     uint8_t rxPacketBuffer[RX_PACKET_BUF] = {0};
-    uint8_t rxDetectBuffer[16] = {0};
-    uint8_t rxDetectSequence[16] = {0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0};
+    uint8_t rxDetectBuffer[32] = {0};
+    uint8_t rxDetectSequence[32] = {0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0};
 
     uint8_t countNumberOfBits(uint8_t value);
     uint8_t countSimilarBits(uint8_t value1[], uint8_t value2[], int size, int value1Offset);

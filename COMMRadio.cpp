@@ -74,11 +74,11 @@ uint8_t COMMRadio::onTransmit(){
             if(!txUprampSend){ //First Check the UpRamp!!
                 if(encoder.bitsInBuffer == 0){  //check if no more bits in send buffer
                     uint8_t inBit = (0x7E >> txBitIndex) & 0x01;
-                    outputByte = outputByte | (encoder.txBit( inBit , false, false, true) << (7-i));
+                    outputByte = outputByte | (encoder.txBit( inBit , false) << (7-i));
                     txBitIndex++;
                 }else{
                     //send the Buffered Bit
-                    outputByte = outputByte | (encoder.txBit(0, false, false, true) << (7-i));
+                    outputByte = outputByte | (encoder.txBit(0, false) << (7-i));
                 }
 
                 //check if txBitIndex is high enough to roll over to next byte
@@ -96,11 +96,11 @@ uint8_t COMMRadio::onTransmit(){
                 if(encoder.bitsInBuffer == 0){
                     //tx is ready for next bit
                         uint8_t inBit = (txRFMessageBuffer[txIndex] >> txBitIndex) & 0x01;
-                        outputByte = outputByte | (encoder.txBit( inBit , true, false, true) << (7-i));
+                        outputByte = outputByte | (encoder.txBit( inBit , true) << (7-i));
                         txBitIndex++;
                 }else{
                     //out of bytes, pad the last parts with zero
-                    outputByte = outputByte | (encoder.txBit(0, true, false, true) << (7-i));
+                    outputByte = outputByte | (encoder.txBit(0, true) << (7-i));
                     //serial.print("[P]");
                 }
                 if(txBitIndex >= 8){
@@ -114,11 +114,11 @@ uint8_t COMMRadio::onTransmit(){
             }else if(!txDownrampSend){ //Lastly, check DownRamp
                 if(encoder.bitsInBuffer == 0){  //check if no more bits in send buffer
                     uint8_t inBit = (0x7E >> txBitIndex) & 0x01;
-                    outputByte = outputByte | (encoder.txBit( inBit , false, false, true) << (7-i));
+                    outputByte = outputByte | (encoder.txBit( inBit , false) << (7-i));
                     txBitIndex++;
                 }else{
                     //send the Buffered Bit
-                    outputByte = outputByte | (encoder.txBit(0, false, false, true) << (7-i));
+                    outputByte = outputByte | (encoder.txBit(0, false) << (7-i));
                 }
 
                 //check if txBitIndex is high enough to roll over to next byte
@@ -134,7 +134,7 @@ uint8_t COMMRadio::onTransmit(){
                 }
             }else {
                 //no more data available, so stuff byte with zeros for transmission
-                outputByte = outputByte | (encoder.txBit(0, false, false, true) << (7-i));
+                outputByte = outputByte | (encoder.txBit(0, false) << (7-i));
             }
 
             //serial.print(txBitIndex, HEX);
@@ -179,12 +179,12 @@ void COMMRadio::onReceive(uint8_t data)
 
                 rxDetectBuffer[rxDetectBitIndex] = inBit;
                 bool isDetected = true;
-                for(int k = 0; k < 16; k++){
-                    if(rxDetectBuffer[(rxDetectBitIndex + k) % 16] != rxDetectSequence[k]){
+                for(int k = 0; k < 32; k++){
+                    if(rxDetectBuffer[(rxDetectBitIndex + k) % 32] != rxDetectSequence[k]){
                         isDetected = false;
                     }
                 }
-                rxDetectBitIndex = (rxDetectBitIndex + 1) % 16;
+                rxDetectBitIndex = (rxDetectBitIndex + 1) % 32;
                 if(isDetected){
                     serial.println("FLAG DETECTED!");
                     rxPacket = true;
@@ -271,8 +271,8 @@ void COMMRadio::initTX(){
         txConfig.filtertype = BT_0_5;
         txConfig.bandwidth = 15000;
         txConfig.power = 14;
-        txConfig.fdev = 600;
-        txConfig.datarate = 1200;
+        txConfig.fdev = 1200;
+        txConfig.datarate = 2400;
 
         txRadio->setFrequency(435000000);
 
@@ -297,8 +297,8 @@ void COMMRadio::initRX(){
         rxConfig.filtertype = BT_0_5;
         rxConfig.bandwidth = 15000;
         rxConfig.bandwidthAfc = 83333;
-        rxConfig.fdev = 600;
-        rxConfig.datarate = 1200;
+        rxConfig.fdev = 1200;
+        rxConfig.datarate = 2400;
 
         rxRadio->setFrequency(435000000);
 
@@ -400,6 +400,7 @@ void COMMRadio::sendPacketAX25(){
     txDownrampSend = false;
     txRadio->setIdleMode(true);
     //rxPrint = true;
+    //rxReady = false;
 }
 
 void COMMRadio::toggleReceivePrint(){

@@ -3,27 +3,24 @@
 extern DSerial serial;
 
 uint8_t AX25Encoder::scrambleBit(uint8_t bit){
-    SCRAMBLE_BIT = ((SCRAMBLE_BYTES >> 11) & 0x01) ^ ((SCRAMBLE_BYTES >> 16) & 0x01) ^ (bit & 0x01);
-    SCRAMBLE_BYTES <<= 1;
-    SCRAMBLE_BYTES |= SCRAMBLE_BIT & 0x01;
-    SCRAMBLE_BYTES &= 0x01FFFF;
-    return SCRAMBLE_BIT;
-}
+    int isHigh = (bit >= 0x01) ? 0x01:0x00;
+    G3RUHscramble_bit = (((G3RUHscramble >> 11) & 0x01) ^ ((G3RUHscramble >> 16) & 0x01)) ^ (isHigh & 0x01);
+    G3RUHscramble <<= 1;
+    G3RUHscramble = G3RUHscramble | (G3RUHscramble_bit & 0x01);
+    G3RUHscramble &= 0x01FFFF;
 
-uint8_t AX25Encoder::scrambleByte(uint8_t inByte){
-    uint8_t outputByte = 0;
-    for(int i = 0; i < 8; i++){
-        outputByte |= (scrambleBit(inByte >> i) << i);
-    }
-    return outputByte;
+    return G3RUHscramble_bit;
 }
 
 uint8_t AX25Encoder::descrambleBit(uint8_t bit){
-    DESCRAMBLE_BIT = ((DESCRAMBLE_BYTES >> 11) & 0x01) ^ ((DESCRAMBLE_BYTES >> 16) & 0x01) ^ (bit & 0x01);
-    DESCRAMBLE_BYTES <<= 1;
-    DESCRAMBLE_BYTES |= bit & 0x01;
-    DESCRAMBLE_BYTES &= 0x01FFFF;
-    return DESCRAMBLE_BIT;
+
+    int isHigh = (bit > 0x01) ? 0x01:0x00;
+
+    G3RUHscramble_bit = ((G3RUHscramble >> 11) & 0x01) ^ ((G3RUHscramble >> 16) & 0x01) ^ (isHigh & 0x01);
+    G3RUHscramble <<= 1;
+    G3RUHscramble |= G3RUHscramble_bit & 0x01;
+    G3RUHscramble &= 0x01FFFF;
+    return G3RUHscramble_bit;
 }
 
 uint8_t AX25Encoder::descrambleByte(uint8_t inByte){
@@ -38,8 +35,8 @@ uint8_t AX25Encoder::NRZIencodeBit(uint8_t bit){
 
     //(bit & 0x01) == 0x01 -> bit is 1
     //(bit & 0x01) != 0x01 -> bit is 0
-    bool isHigh = !((bit & 0x01) == 0x01);
-    NRZI_ENCODER = NRZI_ENCODER != isHigh;
+    bool isHigh = ((bit & 0x01) == 0x01);
+    NRZI_ENCODER = NRZI_ENCODER != !isHigh;
     return (NRZI_ENCODER ? 0x01 : 0x00);
 }
 
@@ -71,7 +68,7 @@ uint8_t AX25Encoder::NRZIdecodeByte(uint8_t inByte){
     return outputByte;
 }
 
-uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing, bool scrambling, bool NRZIencoding){
+uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing){
     uint8_t outBit;
     if(bitsInBuffer == 0){
         outBit = inBit;
@@ -98,25 +95,8 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing, bool scrambling, boo
             //serial.print("[stuffing!]");
         }
     }
-    if(scrambling){
-        outBit = this->scrambleBit(outBit);
+    outBit = this->NRZIencodeBit(scrambleBit(outBit));
 
-    }
-    if(NRZIencoding){
-        outBit = this->NRZIencodeBit(outBit);
-    }
-
-    //serial.print((outBit > 0 ? 0x01 : 0x00), HEX);
-    return (outBit > 0 ? 0x01 : 0x00);
+    return outBit;
 }
 
-uint8_t AX25Encoder::txByte(uint8_t inByte, bool bitStuffing, bool scrambling, bool NRZIencoding){
-
-    uint8_t outByte = 0;
-
-    for(int i = 0; i < 8; i++){
-        outByte = outByte | (this->txBit((inByte >> i)&0x01, bitStuffing, scrambling, NRZIencoding) << i);
-    }
-
-    return outByte;
-}
