@@ -53,10 +53,32 @@ uint8_t COMMRadio::onTransmit(){
                     txUprampSend = true;
                     txIndex = 0;
                 }
+            } else if(txInsertFlag) {
+                if(encoder.bitsInBuffer == 0){  //check if no more bits in send buffer
+                    uint8_t inBit = (0x7E >> txBitIndex) & 0x01;
+                    outputByte = outputByte | (encoder.txBit( inBit , false) << (7-i));
+                    txBitIndex++;
+                }else{
+                    //send the Buffered Bit
+                    outputByte = outputByte | (encoder.txBit(0, false) << (7-i));
+                }
+
+                //check if txBitIndex is high enough to roll over to next byte
+                if(txBitIndex>=8){
+                    txBitIndex = 0;
+                    txIndex++;
+                }
+
+                //check if we're done sending flags
+                if(txIndex > 5){
+                    txInsertFlag = false;
+                    txIndex = 0;
+                    //serial.println("INSERTED!");
+                }
             } else if(!txPacketSend){
                 if(encoder.bitsInBuffer == 0){
                     //tx is ready for next bit
-                        uint8_t inBit = (AX25TXFrameBuffer[0].getBytes()[txIndex] >> txBitIndex) & 0x01;
+                        uint8_t inBit = (AX25TXFrameBuffer[(AX25TXbufferIndex - AX25TXframesInBuffer) % AX25_TX_FRAME_BUFFER].getBytes()[txIndex] >> txBitIndex) & 0x01;
                         outputByte = outputByte | (encoder.txBit( inBit , true) << (7-i));
                         txBitIndex++;
                 }else{
@@ -68,9 +90,14 @@ uint8_t COMMRadio::onTransmit(){
                     txIndex++;
                     txBitIndex = 0;
                 }
-                if(txIndex >= AX25TXFrameBuffer[0].getSize()){
+                if(txIndex >= AX25TXFrameBuffer[(AX25TXbufferIndex - AX25TXframesInBuffer) % AX25_TX_FRAME_BUFFER].getSize()){
                     txIndex = 0;
-                    txPacketSend = true;
+                    AX25TXframesInBuffer = AX25TXframesInBuffer - 1;
+                    txInsertFlag = true;
+                    //serial.println("Sent Packet");
+                    if(AX25TXframesInBuffer == 0){
+                        txPacketSend = true;
+                    }
                 }
             }else if(!txDownrampSend){ //Lastly, check DownRamp
                 if(encoder.bitsInBuffer == 0){  //check if no more bits in send buffer
@@ -104,7 +131,7 @@ uint8_t COMMRadio::onTransmit(){
         if(txPacketSend && txUprampSend && txDownrampSend){
             //end of transmission
             txRadio->setIdleMode(false);
-            txReady = true;
+            //txReady = true;
             txPacketReady = false;
         }
 
@@ -118,7 +145,7 @@ uint8_t COMMRadio::onTransmit(){
         return outputByte;
     }else{
         txRadio->setIdleMode(false);
-        txReady = true;
+        //txReady = true;
         txPacketReady = false;
         return 0x00;
     }
@@ -249,26 +276,35 @@ void COMMRadio::sendPacket(){
 
 bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
     //Zero stuff the information Packet
+    txReady = false;
 
     TXDestination[6] = 0xE0;//(('A' & 0x0F) << 1) | 0xE0;
     TXSource[6] = 0x61;//(('B' & 0x0F) << 1) | 0x61;
-    AX25TXFrameBuffer[0].setAdress(TXDestination, TXSource);
-    AX25TXFrameBuffer[0].setControl(false);
-    AX25TXFrameBuffer[0].setPID(0xF0);
-    AX25TXFrameBuffer[0].setPacket(data, size);
-    AX25TXFrameBuffer[0].calculateFCS();
+    AX25TXFrameBuffer[AX25TXbufferIndex].setAdress(TXDestination, TXSource);
+    AX25TXFrameBuffer[AX25TXbufferIndex].setControl(false);
+    AX25TXFrameBuffer[AX25TXbufferIndex].setPID(0xF0);
+    AX25TXFrameBuffer[AX25TXbufferIndex].setPacket(data, size);
+    AX25TXFrameBuffer[AX25TXbufferIndex].calculateFCS();
 
     //txSize = AX25TXFrameBuffer[0].getSize();
-    txRFMessageBuffer = AX25TXFrameBuffer[0].getBytes();
+    //txRFMessageBuffer = AX25TXFrameBuffer[AX25TXbufferIndex].getBytes();
     // Print RF Packet for Debug
     serial.println("============================");
-    serial.println("PACKET:: ");
-    for(int i = 0; i < AX25TXFrameBuffer[0].getSize(); i++){
-        serial.print(this->AX25TXFrameBuffer[0].getBytes()[i], HEX);
+    serial.print("PACKETIndex : ");
+    serial.print(AX25TXbufferIndex, DEC);
+    serial.print("  == AVAILABLE : ");
+    serial.print(AX25TXframesInBuffer+1, DEC);
+    serial.println();
+    for(int i = 0; i < AX25TXFrameBuffer[AX25TXbufferIndex].getSize(); i++){
+        serial.print(this->AX25TXFrameBuffer[AX25TXbufferIndex].getBytes()[i], HEX);
         serial.print("|");
     }
     serial.println("");
     serial.println("============================");
+    AX25TXbufferIndex++;
+    AX25TXframesInBuffer++;
+
+    txReady = true;
     return true;
 }
 

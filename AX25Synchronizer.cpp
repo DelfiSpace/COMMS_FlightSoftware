@@ -72,14 +72,14 @@ bool AX25Synchronizer::rxBit(uint8_t inBit){
             }
             int packetBits = bitCounter - destuffs - 8 - 16;
 
-            if(packetBits % 8 == 0 && destuffBuffer[0] == 0x82){ // 'correct' packets are always whole bytes
+            if(packetBits % 8 == 0){ // 'correct' packets are always whole bytes
                 this->receivedFrame.setData(destuffBuffer, packetBits/8);
                 this->receivedFrame.calculateFCS();
                 if( ((uint8_t) (this->receivedFrame.FCSField >> 8)) == destuffBuffer[packetBits/8] &&
                         ((uint8_t) (this->receivedFrame.FCSField & 0xFF)) == destuffBuffer[packetBits/8 + 1]    ){
                     this->hasReceivedFrame = true;
                     packetReceived = true;
-                    serial.println("!");
+                    //serial.println("!");
                 }
             }
 

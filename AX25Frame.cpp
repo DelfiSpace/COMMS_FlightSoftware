@@ -144,6 +144,7 @@ void AX25Frame::calculateFCS(){
     this->FrameBytes[16+this->packetSize] = (this->FCSField >> 8);
 };
 
+
 uint8_t * AX25Frame::getBytes(){
     return this->FrameBytes;
 };

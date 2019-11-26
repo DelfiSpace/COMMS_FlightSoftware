@@ -45,6 +45,7 @@ protected:
     volatile bool txDownrampSend = false;
     volatile bool txPacketSend = false;
     volatile bool txPacketReady = false;
+    volatile bool txInsertFlag = false;
 
     volatile bool rxReady = false;
     volatile bool rxReceived = false;
@@ -65,8 +66,8 @@ protected:
     uint8_t AX25RXbufferIndex = 0;
 
     AX25Frame AX25TXFrameBuffer[AX25_TX_FRAME_BUFFER];
-    uint8_t AX25TXframesInBuffer = 0;
-    uint8_t AX25TXbufferIndex = 0;
+    int AX25TXframesInBuffer = 0;
+    int AX25TXbufferIndex = 0;
 
 
 public:
