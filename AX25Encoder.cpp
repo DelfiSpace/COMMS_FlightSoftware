@@ -20,14 +20,6 @@ uint8_t AX25Encoder::descrambleBit(uint8_t bit){
     return G3RUHdescramble_bit;
 }
 
-uint8_t AX25Encoder::descrambleByte(uint8_t inByte){
-    uint8_t outputByte = 0;
-    for(int i = 0; i < 8; i++){
-        outputByte |= (descrambleBit(inByte >> i) << i);
-    }
-    return outputByte;
-}
-
 uint8_t AX25Encoder::NRZIencodeBit(uint8_t bit){
 
     //(bit & 0x01) == 0x01 -> bit is 1
@@ -71,7 +63,7 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing){
         outBit = inBit;
     }else{
         //take bit from buffer
-        outBit = bitStuffingBuffer[bitsInBuffer-1];
+        outBit = 0x00;
         bitsInBuffer--;
         //serial.print("[s]");
     }
@@ -86,7 +78,6 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing){
             //serial.print("0");
         }
         if(bitCounter >= 5){
-            bitStuffingBuffer[bitsInBuffer] = 0x00;
             bitsInBuffer++;
             bitCounter = 0;
             //serial.print("[stuffing!]");

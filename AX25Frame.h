@@ -25,8 +25,6 @@ protected:
 
     uint8_t crc16[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0};
 
-    void updateCRCByte(uint8_t inByte);
-
 public:
      uint16_t FCSField;
      unsigned char reverseByteOrder(unsigned char x);

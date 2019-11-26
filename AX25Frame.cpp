@@ -92,25 +92,6 @@ void AX25Frame::setPacket(uint8_t packet[], uint8_t size){
 
 void AX25Frame::calculateFCS(){
     //fcs poly: 1 0001 0000 0010 0001  (17bits);
-    //Fill FCSBuffer with packet
-//    for(int i = 0; i < 14; i++){
-//        this->FrameBytes[i] = this->addressField[i];
-//    }
-//    this->FrameBytes[14] = this->controlField;
-//    this->FrameBytes[14+1] = this->PIDField;
-//    for(int i = 0; i < this->packetSize; i++){
-//        this->FrameBytes[16+i] = this->packetField[i];
-//    }
-//    for(int i = 0; i < 2; i++){
-//        this->FrameBytes[16+this->packetSize+i] = 0x00;
-//    }
-
-//    this->FrameSize = this->packetSize + 18;
-
-    //calculate CRC
-    //for(int i = 0; i < ((this->FrameSize - 2 )); i++){
-    //    updateCRCByte(FCSBuffer[i]);
-    //}
 
     //PKT -> FrameBytes
     bool guard;

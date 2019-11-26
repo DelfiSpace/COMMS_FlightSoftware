@@ -9,10 +9,10 @@
 #ifndef COMMRADIO_H_
 #define COMMRADIO_H_
 #define PACKET_SIZE    100
-#define RF_MSG_SIZE    200
 #define UPRAMP_BYTES   70
 #define DOWNRAMP_BYTES 20
-#define RX_PACKET_BUF 160
+#define AX25_RX_FRAME_BUFFER 20
+#define AX25_TX_FRAME_BUFFER 20
 
 //July 14, 2009 Hallvard Furuseth
 static const unsigned char BitsSetTable256[256] =
@@ -37,12 +37,7 @@ protected:
     RxConfig_t rxConfig;
 
     uint8_t txPacketBuffer[PACKET_SIZE] = {0};
-    uint8_t* txRFMessageBuffer = txPacketBuffer;
-    uint8_t countBits[256];
-
-    uint8_t preamble[10] = {0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55};
-
-    uint8_t txSize = 0;
+    uint8_t* txRFMessageBuffer;
 
     volatile bool txReady = false;
 
@@ -58,23 +53,21 @@ protected:
 
     int txIndex = 0;
     int txBitIndex = 0;
-    int rxIndex = 0;
     int rxBitIndex = 0;
     int rxDetectBitIndex = 0;
-    uint8_t rxPacketBuffer[RX_PACKET_BUF] = {0};
-    uint8_t rxDetectBuffer[32] = {0};
-    uint8_t rxDetectSequence[32] = {0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0};
-
-    uint8_t countNumberOfBits(uint8_t value);
-    uint8_t countSimilarBits(uint8_t value1[], uint8_t value2[], int size, int value1Offset);
-    uint8_t countSimilarBitsInverted(uint8_t value1[], uint8_t value2[], int size, int value1Offset);
 
     AX25Encoder encoder;
     AX25Frame TXFrame;
     AX25Synchronizer AX25Sync;
 
-    AX25Frame AX25RXFrameBuffer[20];
-    uint8_t AX25FramesInBuffer = 0;
+    AX25Frame AX25RXFrameBuffer[AX25_RX_FRAME_BUFFER];
+    uint8_t AX25RXframesInBuffer = 0;
+    uint8_t AX25RXbufferIndex = 0;
+
+    AX25Frame AX25TXFrameBuffer[AX25_TX_FRAME_BUFFER];
+    uint8_t AX25TXframesInBuffer = 0;
+    uint8_t AX25TXbufferIndex = 0;
+
 
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);
@@ -86,11 +79,9 @@ public:
 
     bool transmitData(uint8_t data[], uint8_t size);
     void toggleReceivePrint();
-    unsigned char readRXReg(unsigned char address);
-    unsigned char readTXReg(unsigned char address);
-    void writeRXReg(unsigned char address, unsigned char value);
-    void writeTXReg(unsigned char address, unsigned char value);
+
     void sendPacket();
+    bool quePacketAX25(uint8_t dataIn[], uint8_t size);
     void sendPacketAX25();
 
     uint8_t TXDestination[7] = {0x82,0x98,0x98,0x40,0x40,0x40,0xFF};

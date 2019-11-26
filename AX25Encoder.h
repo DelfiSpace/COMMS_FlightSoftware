@@ -9,7 +9,7 @@
 class AX25Encoder
 {
 protected:
-    uint8_t bitStuffingBuffer[10] = {0};
+    //uint8_t bitStuffingBuffer[10] = {0};
 
     bool NRZI_ENCODER = true;
     bool NRZI_DECODER = true;

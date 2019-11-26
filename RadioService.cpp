@@ -45,7 +45,7 @@ bool RadioService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Frame &worki
         }
         else if(command.getPayload()[1] == RADIO_CMD_TOGGLE_RX)
         {
-            serial.println("TOGGLE RX PRINTING");
+            //serial.println("TOGGLE RX PRINTING");
             radio->toggleReceivePrint();
             workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
         }
@@ -54,8 +54,8 @@ bool RadioService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Frame &worki
             serial.println("RadioService: SET REG DEBUG 1");
             // respond to ping
             //radio->initRX();
-            radio->writeTXReg(0x40, 0x10);
-            radio->writeTXReg(0x31, 0x40);
+            //radio->writeTXReg(0x40, 0x10);
+            //radio->writeTXReg(0x31, 0x40);
             workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
         }
         else if(command.getPayload()[1] == RADIO_CMD_SET_REG2)

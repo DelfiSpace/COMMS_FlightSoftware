@@ -17,20 +17,20 @@ bool AX25Synchronizer::rxBit(uint8_t inBit){
         serial.println("NOT A BIT?!");
     }
     bool packetReceived = false;
-    byteBuffer[byteBufferIndex] = inBit;
+    bitBuffer[byteBufferIndex] = inBit;
     bitCounter++;
     //for(int i = 7; i >= 0; i--){
     //    serial.print(byteBuffer[(byteBufferIndex - i)%BYTE_BUFFER_SIZE], DEC);
     //}
     //serial.println();
-    if(     byteBuffer[(byteBufferIndex - 7)%BYTE_BUFFER_SIZE] == 0 &&
-            byteBuffer[(byteBufferIndex - 6)%BYTE_BUFFER_SIZE] == 1 &&
-            byteBuffer[(byteBufferIndex - 5)%BYTE_BUFFER_SIZE] == 1 &&
-            byteBuffer[(byteBufferIndex - 4)%BYTE_BUFFER_SIZE] == 1 &&
-            byteBuffer[(byteBufferIndex - 3)%BYTE_BUFFER_SIZE] == 1 &&
-            byteBuffer[(byteBufferIndex - 2)%BYTE_BUFFER_SIZE] == 1 &&
-            byteBuffer[(byteBufferIndex - 1)%BYTE_BUFFER_SIZE] == 1 &&
-            byteBuffer[(byteBufferIndex - 0)%BYTE_BUFFER_SIZE] == 0
+    if(     bitBuffer[(byteBufferIndex - 7)%BYTE_BUFFER_SIZE] == 0 &&
+            bitBuffer[(byteBufferIndex - 6)%BYTE_BUFFER_SIZE] == 1 &&
+            bitBuffer[(byteBufferIndex - 5)%BYTE_BUFFER_SIZE] == 1 &&
+            bitBuffer[(byteBufferIndex - 4)%BYTE_BUFFER_SIZE] == 1 &&
+            bitBuffer[(byteBufferIndex - 3)%BYTE_BUFFER_SIZE] == 1 &&
+            bitBuffer[(byteBufferIndex - 2)%BYTE_BUFFER_SIZE] == 1 &&
+            bitBuffer[(byteBufferIndex - 1)%BYTE_BUFFER_SIZE] == 1 &&
+            bitBuffer[(byteBufferIndex - 0)%BYTE_BUFFER_SIZE] == 0
         ){
         //last received bit completed a flag, the tail of a transfer exists of flags, hence check byteBuffer for packet;
         //minimum frame length is 4 bytes, maximum bits is decided by Buffer.
@@ -46,15 +46,15 @@ bool AX25Synchronizer::rxBit(uint8_t inBit){
             //destuff Bits and Fix Ordering (every octet is received LSB first).
             this->destuffBuffer[0] = 0;
             for(int k = 0; k < bitCounter - 8; k++){
-                this->destuffBuffer[destuffIndex] |= ((byteBuffer[(byteBufferIndex - bitCounter + 1 + k)%BYTE_BUFFER_SIZE] & 0x01) << destuffBitIndex);
+                this->destuffBuffer[destuffIndex] |= ((bitBuffer[(byteBufferIndex - bitCounter + 1 + k)%BYTE_BUFFER_SIZE] & 0x01) << destuffBitIndex);
                 //serial.print(destuffBuffer[destuffIndex], HEX);
                 //serial.print(destuffIndex + destuffBitIndex, DEC);
                 //serial.println();
-                if(byteBuffer[(byteBufferIndex - bitCounter + 1 + k)%BYTE_BUFFER_SIZE] == 0x01){
+                if(bitBuffer[(byteBufferIndex - bitCounter + 1 + k)%BYTE_BUFFER_SIZE] == 0x01){
                     destuffCount++;
                     //serial.print("1");
                 }
-                if(byteBuffer[(byteBufferIndex - bitCounter + 1 + k)%BYTE_BUFFER_SIZE] == 0x00){
+                if(bitBuffer[(byteBufferIndex - bitCounter + 1 + k)%BYTE_BUFFER_SIZE] == 0x00){
                     destuffCount = 0;
                     //serial.print("0");
                 }
