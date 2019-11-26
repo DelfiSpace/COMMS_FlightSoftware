@@ -169,9 +169,9 @@ void COMMRadio::onReceive(uint8_t data)
 {
     //Note: SPI Bus is configured MSB First, meaning that from the received Byte, the MSB was the first received Bit
     if(rxReady){
-        uint8_t inBits = 0;
         for(int i = 0; i < 8; i++){
             uint8_t inBit = encoder.NRZIdecodeBit((data >> (7-i))& 0x01);
+            inBit = encoder.descrambleBit(inBit);
             if(AX25Sync.rxBit(inBit)){
                 this->AX25RXFrameBuffer[AX25FramesInBuffer] = AX25Sync.receivedFrame;
                 this->AX25FramesInBuffer++;
