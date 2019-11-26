@@ -41,6 +41,13 @@ unsigned char AX25Frame::reverseByteOrder(unsigned char x)
     return table[x];
 }
 
+void AX25Frame::setData(uint8_t data[], uint8_t size){
+    this->setAdress(&data[0], &data[7]);
+    this->setControl(data[14]);
+    this->setPID(data[15]);
+    this->setPacket(&data[16], size - 16);
+};
+
 void AX25Frame::setAdress(uint8_t Destination[], uint8_t Source[]){
     for(int i = 0; i < 7; i++){
         this->addressField[i] = Destination[i];
@@ -62,9 +69,21 @@ void AX25Frame::setControl(bool PF){
     this->FrameBytes[14] = controlField;
 };
 
+void AX25Frame::setControl(uint8_t controlByte){
+    this->controlField = controlByte; //000 1 00 11
+    this->FrameBytes[14] = controlField;
+};
+
+void AX25Frame::setPID(uint8_t PIDByte){
+    this->PIDField = PIDByte; //000 1 00 11
+    this->FrameBytes[15] = PIDByte;
+};
+
+
 void AX25Frame::setPacket(uint8_t packet[], uint8_t size){
     for(int i = 0; i < size; i++){
         this->packetField[i] = packet[i];
+        this->FrameBytes[16+i] = packet[i];
     }
 
     this->packetSize = size;
@@ -74,18 +93,19 @@ void AX25Frame::setPacket(uint8_t packet[], uint8_t size){
 void AX25Frame::calculateFCS(){
     //fcs poly: 1 0001 0000 0010 0001  (17bits);
     //Fill FCSBuffer with packet
-    for(int i = 0; i < 14; i++){
-        this->FrameBytes[i] = this->addressField[i];
-    }
-    this->FrameBytes[14] = this->controlField;
-    this->FrameBytes[14+1] = this->PIDField;
-    for(int i = 0; i < this->packetSize; i++){
-        this->FrameBytes[16+i] = this->packetField[i];
-    }
-    for(int i = 0; i < 2; i++){
-        this->FrameBytes[16+this->packetSize+i] = 0x00;
-    }
-    this->FrameSize = this->packetSize + 18;
+//    for(int i = 0; i < 14; i++){
+//        this->FrameBytes[i] = this->addressField[i];
+//    }
+//    this->FrameBytes[14] = this->controlField;
+//    this->FrameBytes[14+1] = this->PIDField;
+//    for(int i = 0; i < this->packetSize; i++){
+//        this->FrameBytes[16+i] = this->packetField[i];
+//    }
+//    for(int i = 0; i < 2; i++){
+//        this->FrameBytes[16+this->packetSize+i] = 0x00;
+//    }
+
+//    this->FrameSize = this->packetSize + 18;
 
     //calculate CRC
     //for(int i = 0; i < ((this->FrameSize - 2 )); i++){
@@ -124,11 +144,11 @@ void AX25Frame::calculateFCS(){
             }
         }
     }
-    serial.println("CalculatedCRC: ");
+    //serial.println("CalculatedCRC: ");
     for (tg = 0; tg < 16; tg++)
     {
         FCSBuffer[tg] = 1 - FCSBuffer[tg];              // 1 -> 0 and 0 -> 1
-        serial.print(FCSBuffer[tg],DEC);
+    //    serial.print(FCSBuffer[tg],DEC);
     }
 
     FCSField = 0;
@@ -141,20 +161,7 @@ void AX25Frame::calculateFCS(){
     //Since FCS is send bit 15 first, and all other is send in octets with lsb first, the byte order is changed and the bytes are reversed
     this->FrameBytes[16+this->packetSize+1] = (this->FCSField & 0xFF);
     this->FrameBytes[16+this->packetSize] = (this->FCSField >> 8);
-
 };
-
-void AX25Frame::updateCRCByte(uint8_t inByte){
-
-    FCSField ^= ((uint16_t)inByte << 8);
-    for(uint8_t i = 0; i < 8; i++){
-        if (FCSField & 0x8000){
-            FCSField = (FCSField << 1) ^ AX25_CRC;
-        }else{
-            FCSField <<= 1;
-        }
-    }
-}
 
 uint8_t * AX25Frame::getBytes(){
     return this->FrameBytes;

@@ -172,15 +172,10 @@ void COMMRadio::onReceive(uint8_t data)
         uint8_t inBits = 0;
         for(int i = 0; i < 8; i++){
             uint8_t inBit = encoder.NRZIdecodeBit((data >> (7-i))& 0x01);
-            AX25Sync.rxBit(inBit);
-        }
-        // Debug print for now:
-        if(rxPrint){
-            //for(int i = 0; i < 8; i++){
-            //    serial.print((inBits >> (7-i)) & 0x01, DEC); //print MSB first for correct ordering
-            //}
-            serial.print(inBits, HEX);
-            serial.print("|");
+            if(AX25Sync.rxBit(inBit)){
+                this->AX25RXFrameBuffer[AX25FramesInBuffer] = AX25Sync.receivedFrame;
+                this->AX25FramesInBuffer++;
+            }
         }
     }
 };
@@ -232,8 +227,8 @@ void COMMRadio::initTX(){
         txConfig.filtertype = BT_0_5;
         txConfig.bandwidth = 15000;
         txConfig.power = 14;
-        txConfig.fdev = 1200;
-        txConfig.datarate = 2400;
+        txConfig.fdev = 4800;
+        txConfig.datarate = 9600;
 
         txRadio->setFrequency(435000000);
 
@@ -258,8 +253,8 @@ void COMMRadio::initRX(){
         rxConfig.filtertype = BT_0_5;
         rxConfig.bandwidth = 15000;
         rxConfig.bandwidthAfc = 83333;
-        rxConfig.fdev = 1200;
-        rxConfig.datarate = 2400;
+        rxConfig.fdev = 4800;
+        rxConfig.datarate = 9600;
 
         rxRadio->setFrequency(435000000);
 
@@ -338,6 +333,7 @@ void COMMRadio::sendPacketAX25(){
     TXSource[6] = 0x61;//(('B' & 0x0F) << 1) | 0x61;
     TXFrame.setAdress(TXDestination, TXSource);
     TXFrame.setControl(false);
+    TXFrame.setPID(0xF0);
     TXFrame.setPacket(txPacketBuffer, txSize);
     TXFrame.calculateFCS();
 
@@ -367,8 +363,22 @@ void COMMRadio::sendPacketAX25(){
 void COMMRadio::toggleReceivePrint(){
     //serial.print("Toggle RX Print: ");
     //serial.println(rxReady);
-    rxPrint = !rxPrint;
 
+    serial.println();
+    serial.println(" ============ ");
+    serial.print("Amount of Frames in Buffer: ");
+    serial.print(this->AX25FramesInBuffer, DEC);
+    serial.println();
+    serial.println(" ============ ");
+    for(int k = 0; k < AX25FramesInBuffer; k++){
+        uint8_t* frameData = this->AX25RXFrameBuffer[k].getBytes();
+        for(int j = 0; j < this->AX25RXFrameBuffer[k].getSize(); j++){
+            serial.print(frameData[j], HEX);
+            serial.print("|");
+        }
+        serial.println();
+        serial.println(" ============ ");
+    }
     //TODO: OPMODE
     //serial.print(rxReady);
 };

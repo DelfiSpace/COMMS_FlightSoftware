@@ -10,7 +10,7 @@
 #define COMMRADIO_H_
 #define PACKET_SIZE    100
 #define RF_MSG_SIZE    200
-#define UPRAMP_BYTES   20
+#define UPRAMP_BYTES   70
 #define DOWNRAMP_BYTES 20
 #define RX_PACKET_BUF 160
 
@@ -72,6 +72,9 @@ protected:
     AX25Encoder encoder;
     AX25Frame TXFrame;
     AX25Synchronizer AX25Sync;
+
+    AX25Frame AX25RXFrameBuffer[20];
+    uint8_t AX25FramesInBuffer = 0;
 
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);

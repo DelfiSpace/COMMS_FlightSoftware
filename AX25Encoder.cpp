@@ -14,13 +14,12 @@ uint8_t AX25Encoder::scrambleBit(uint8_t bit){
 
 uint8_t AX25Encoder::descrambleBit(uint8_t bit){
 
-    int isHigh = (bit > 0x01) ? 0x01:0x00;
-
-    G3RUHscramble_bit = ((G3RUHscramble >> 11) & 0x01) ^ ((G3RUHscramble >> 16) & 0x01) ^ (isHigh & 0x01);
-    G3RUHscramble <<= 1;
-    G3RUHscramble |= G3RUHscramble_bit & 0x01;
-    G3RUHscramble &= 0x01FFFF;
-    return G3RUHscramble_bit;
+    int isHigh = (bit >= 0x01) ? 0x01:0x00;
+    G3RUHdescramble_bit = ((G3RUHdescramble >> 11) & 0x01) ^ ((G3RUHdescramble >> 16) & 0x01) ^ (bit & 0x01);
+    G3RUHdescramble <<= 1;
+    G3RUHdescramble |= bit & 0x01;
+    G3RUHdescramble &= 0x01FFFF;
+    return G3RUHdescramble_bit;
 }
 
 uint8_t AX25Encoder::descrambleByte(uint8_t inByte){
@@ -96,6 +95,7 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing){
         }
     }
     outBit = this->NRZIencodeBit(outBit);//scrambleBit(outBit));
+    //serial.print(outBit);
 
     return outBit;
 }

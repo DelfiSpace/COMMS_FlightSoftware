@@ -16,10 +16,8 @@ protected:
 
     int G3RUHscramble = 0;
     int G3RUHscramble_bit = 0;
-    int descrambler = 0;
-
-    bool G3RUH_SCRAMBLER = false;
-    bool G3RUH_DESCRAMBLER = false;
+    int G3RUHdescramble = 0;
+    int G3RUHdescramble_bit = 0;
 
     uint8_t bitCounter = 0;
 

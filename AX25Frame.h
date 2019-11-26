@@ -14,7 +14,6 @@ class AX25Frame
 protected:
     uint8_t controlField;
     uint8_t PIDField           =   0xF0;
-    uint16_t FCSField;
     uint8_t addressField[14];
 
     uint8_t packetField[MAX_PACKET_SIZE]; //'info' field
@@ -29,11 +28,15 @@ protected:
     void updateCRCByte(uint8_t inByte);
 
 public:
-
+     uint16_t FCSField;
      unsigned char reverseByteOrder(unsigned char x);
      void setAdress(uint8_t Destination[], uint8_t Source[]);
      void setControl(bool PF);
+     void setControl(uint8_t byte);
+     void setPID(uint8_t byte);
+
      void setPacket(uint8_t packet[], uint8_t size);
+     void setData(uint8_t data[], uint8_t size);
      void calculateFCS();
 
      uint8_t* getBytes();

@@ -4,7 +4,7 @@
 #ifndef AX25SYNC_H_
 #define AX25SYNC_H_
 
-#define BYTE_BUFFER_SIZE   100
+#define BYTE_BUFFER_SIZE   2048
 
 class AX25Synchronizer
 {
@@ -13,7 +13,6 @@ protected:
     uint8_t crc16[17] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1};
     uint8_t byteBuffer[BYTE_BUFFER_SIZE];
     uint8_t destuffBuffer[BYTE_BUFFER_SIZE];
-
     int byteBufferIndex = 0;
     int bitCounter = 0;
 
@@ -23,7 +22,7 @@ public:
     AX25Frame receivedFrame;
     bool rxBit(uint8_t inBit);
     int numberOfFlags = 0;
-
+    volatile bool hasReceivedFrame = false;
 };
 
 #endif
