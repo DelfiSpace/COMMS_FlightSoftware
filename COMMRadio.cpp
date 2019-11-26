@@ -70,7 +70,7 @@ uint8_t COMMRadio::onTransmit(){
                 }
 
                 //check if we're done sending flags
-                if(txIndex > 5){
+                if(txIndex > 10){
                     txInsertFlag = false;
                     txIndex = 0;
                     //serial.println("INSERTED!");
@@ -231,7 +231,9 @@ void COMMRadio::initRX(){
 
 bool COMMRadio::transmitData(uint8_t data[], uint8_t size){
     this->quePacketAX25(data, size);
-
+    //this->quePacketAX25(data, size);
+    //this->quePacketAX25(data, size);
+    //this->quePacketAX25(data, size);
     //serial.println(txBuffer[0]);
     serial.println("Setting Timer");
 

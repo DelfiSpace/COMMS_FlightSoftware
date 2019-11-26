@@ -32,10 +32,12 @@ public:
      void setControl(bool PF);
      void setControl(uint8_t byte);
      void setPID(uint8_t byte);
+     void AX25Frame::setFCS(uint8_t FCS[]);
 
      void setPacket(uint8_t packet[], uint8_t size);
      void setData(uint8_t data[], uint8_t size);
      void calculateFCS();
+     void calculateFCS(uint8_t data[], uint8_t size);
 
      uint8_t* getBytes();
      uint8_t getSize();

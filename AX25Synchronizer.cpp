@@ -35,7 +35,7 @@ bool AX25Synchronizer::rxBit(uint8_t inBit){
         //last received bit completed a flag, the tail of a transfer exists of flags, hence check byteBuffer for packet;
         //minimum frame length is 4 bytes, maximum bits is decided by Buffer.
 
-        if(bitCounter > 8*(14+2+2) && bitCounter < 1000){
+        if(bitCounter > 8*(14+2+2) && bitCounter < 8*(50)){
 
             //start destuffing bits:
             int destuffIndex = 0;
@@ -73,10 +73,11 @@ bool AX25Synchronizer::rxBit(uint8_t inBit){
             int packetBits = bitCounter - destuffs - 8 - 16;
 
             if(packetBits % 8 == 0){ // 'correct' packets are always whole bytes
-                this->receivedFrame.setData(destuffBuffer, packetBits/8);
-                this->receivedFrame.calculateFCS();
+                this->receivedFrame.calculateFCS(destuffBuffer, packetBits/8);
+                //serial.print(receivedFrame.FCSField, HEX);
                 if( ((uint8_t) (this->receivedFrame.FCSField >> 8)) == destuffBuffer[packetBits/8] &&
                         ((uint8_t) (this->receivedFrame.FCSField & 0xFF)) == destuffBuffer[packetBits/8 + 1]    ){
+                    this->receivedFrame.setData(destuffBuffer, packetBits/8 + 2);
                     this->hasReceivedFrame = true;
                     packetReceived = true;
                     //serial.println("!");
