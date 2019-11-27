@@ -5,13 +5,14 @@
 #include "DSerial.h"
 #include "AX25Frame.h"
 #include "AX25Synchronizer.h"
+#include "Task.h"
 
 #ifndef COMMRADIO_H_
 #define COMMRADIO_H_
 #define PACKET_SIZE    100
 #define UPRAMP_BYTES   70
 #define DOWNRAMP_BYTES 20
-#define AX25_RX_FRAME_BUFFER 20
+
 #define AX25_TX_FRAME_BUFFER 20
 
 //July 14, 2009 Hallvard Furuseth
@@ -23,7 +24,7 @@ static const unsigned char BitsSetTable256[256] =
     B6(0), B6(1), B6(1), B6(2)
 };
 
-class COMMRadio
+class COMMRadio : public Task
 {
 protected:
     DSPI *bitSPI_tx;
@@ -37,7 +38,7 @@ protected:
     RxConfig_t rxConfig;
 
     uint8_t txPacketBuffer[PACKET_SIZE] = {0};
-    uint8_t* txRFMessageBuffer;
+    //uint8_t* txRFMessageBuffer;
 
     volatile bool txReady = false;
 
@@ -57,21 +58,22 @@ protected:
     int rxBitIndex = 0;
     int rxDetectBitIndex = 0;
 
-    AX25Encoder encoder;
-    AX25Frame TXFrame;
-    AX25Synchronizer AX25Sync;
-
     AX25Frame AX25RXFrameBuffer[AX25_RX_FRAME_BUFFER];
-    uint8_t AX25RXframesInBuffer = 0;
-    uint8_t AX25RXbufferIndex = 0;
+    int AX25RXframesInBuffer = 0;
+    int AX25RXbufferIndex = 0;
 
     AX25Frame AX25TXFrameBuffer[AX25_TX_FRAME_BUFFER];
     int AX25TXframesInBuffer = 0;
     int AX25TXbufferIndex = 0;
 
+    AX25Encoder encoder;
+    AX25Frame TXFrame;
+    AX25Synchronizer AX25Sync = AX25Synchronizer(AX25RXFrameBuffer, AX25RXframesInBuffer, AX25RXbufferIndex);
+
 
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);
+    void runTask();
     void init();
     void initTX();
     void initRX();

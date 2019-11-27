@@ -36,7 +36,7 @@ Service* services[] = {&radioService, &hk, &ping, &reset, &SWUpdate, &tst };
 // COMMS board tasks
 PQ9CommandHandler cmdHandler(pq9bus, services, 5);
 PeriodicTask timerTask(FCLOCK, periodicTask);
-Task* tasks[] = { &cmdHandler, &timerTask };
+Task* tasks[] = { &cmdHandler, &timerTask, &commRadio };
 
 // system uptime
 unsigned long uptime = 0;
@@ -145,5 +145,5 @@ void main(void)
     commRadio.init();
     serial.println("COMMS Booted.");
 
-    TaskManager::start(tasks, 2);
+    TaskManager::start(tasks, 3);
 }

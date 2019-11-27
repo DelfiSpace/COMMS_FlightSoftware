@@ -3,6 +3,7 @@
 
 #ifndef AX25SYNC_H_
 #define AX25SYNC_H_
+#define AX25_RX_FRAME_BUFFER 20
 
 #define BYTE_BUFFER_SIZE   2048
 
@@ -17,9 +18,14 @@ protected:
     int bitCounter = 0;
 
     bool compareBitArrays(uint8_t array1[], uint8_t array[2], uint8_t size);
+    AX25Frame* receivedFrameBuffer;
+    int* AX25RXframesInBuffer;
+    int* AX25RXbufferIndex;
 
 public:
-    AX25Frame receivedFrame;
+    AX25Synchronizer(AX25Frame AX25FrameBuffer[], int &AX25RXframesInBuffer, int &AX25RXbufferIndex);
+
+    //AX25Frame receivedFrame;
     bool rxBit(uint8_t inBit);
     volatile bool hasReceivedFrame = false;
 };

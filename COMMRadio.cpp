@@ -16,14 +16,22 @@ void sendPacketWrapper(){
     MAP_Timer32_clearInterruptFlag(TIMER32_1_BASE);
     radioStub->sendPacketAX25();
 }
+void taskWrapper(){
+    radioStub->runTask();
+}
 
 COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad):
-    bitSPI_tx(&bitModeSPI_tx), bitSPI_rx(&bitModeSPI_rx), packetSPI(&packetModeSPI), txRadio(&txRad), rxRadio(&rxRad)
+       Task(taskWrapper), bitSPI_tx(&bitModeSPI_tx), bitSPI_rx(&bitModeSPI_rx), packetSPI(&packetModeSPI), txRadio(&txRad), rxRadio(&rxRad)
 {
     radioStub = this;
 };
 
-
+void COMMRadio::runTask(){
+//    if(AX25Sync.rxBit(inBit)){
+//        this->AX25RXFrameBuffer[AX25RXframesInBuffer] = AX25Sync.receivedFrame;
+//        this->AX25RXframesInBuffer++;
+//    }
+}
 
 uint8_t COMMRadio::onTransmit(){
     //NOTE, SPI Bus is configured to MSB_first, meaning that the bit transmitted first should be the MSB.
@@ -153,14 +161,14 @@ uint8_t COMMRadio::onTransmit(){
 
 void COMMRadio::onReceive(uint8_t data)
 {
+    this->notify();
     //Note: SPI Bus is configured MSB First, meaning that from the received Byte, the MSB was the first received Bit
     if(rxReady){
         for(int i = 0; i < 8; i++){
             uint8_t inBit = encoder.NRZIdecodeBit((data >> (7-i))& 0x01);
             inBit = encoder.descrambleBit(inBit);
             if(AX25Sync.rxBit(inBit)){
-                this->AX25RXFrameBuffer[AX25RXframesInBuffer] = AX25Sync.receivedFrame;
-                this->AX25RXframesInBuffer++;
+                //
             }
         }
     }
@@ -187,8 +195,8 @@ void COMMRadio::initTX(){
         txConfig.filtertype = BT_0_5;
         txConfig.bandwidth = 15000;
         txConfig.power = 14;
-        txConfig.fdev = 4800;
-        txConfig.datarate = 9600;
+        txConfig.fdev = 1200;
+        txConfig.datarate = 2400;
 
         txRadio->setFrequency(435000000);
 
@@ -213,8 +221,8 @@ void COMMRadio::initRX(){
         rxConfig.filtertype = BT_0_5;
         rxConfig.bandwidth = 15000;
         rxConfig.bandwidthAfc = 83333;
-        rxConfig.fdev = 4800;
-        rxConfig.datarate = 9600;
+        rxConfig.fdev = 1200;
+        rxConfig.datarate = 2400;
 
         rxRadio->setFrequency(435000000);
 
@@ -333,8 +341,8 @@ void COMMRadio::toggleReceivePrint(){
     serial.println();
     serial.println(" ============ ");
     for(int k = 0; k < AX25RXframesInBuffer; k++){
-        uint8_t* frameData = this->AX25RXFrameBuffer[k].getBytes();
-        for(int j = 0; j < this->AX25RXFrameBuffer[k].getSize(); j++){
+        uint8_t* frameData = this->AX25RXFrameBuffer[(AX25RXbufferIndex - AX25RXframesInBuffer + k)%AX25_RX_FRAME_BUFFER].getBytes();
+        for(int j = 0; j < this->AX25RXFrameBuffer[(AX25RXbufferIndex - AX25RXframesInBuffer + k)%AX25_RX_FRAME_BUFFER].getSize(); j++){
             serial.print(frameData[j], HEX);
             serial.print("|");
         }

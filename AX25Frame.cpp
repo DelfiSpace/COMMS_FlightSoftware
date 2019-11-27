@@ -103,108 +103,114 @@ void AX25Frame::calculateFCS(){
 
     //PKT -> FrameBytes
     bool guard;
-    //fcs -> FCSBuffer[17]
-    int tg;
     bool bit;
 
-    for(int i = 0; i < 17; i++){
-        FCSBuffer[i] = 1;
-    }
+    uint16_t FCSBuff = 0xFFFF;
 
-    for(int k = 0; k < (this->FrameSize - 2 ); k++)
+    for(int k = 0; k < (this->FrameSize-2); k++)
     {
         for (int i = 0; i < 8; i++)
         {
-            guard = (FCSBuffer[15] != 0);
-            for (tg = 14; tg > -1; tg--)
-            {
-                FCSBuffer[tg + 1] = FCSBuffer[tg];      // shift right
-            }
-
-            FCSBuffer[0] = 0;
-
-            bit = (FrameBytes[k] & (1 << i)) != 0;
+            guard = (FCSBuff & 0x01) != 0;
+            FCSBuff = FCSBuff >> 1;     //Shift right
+            FCSBuff = FCSBuff & 0x7FFF; //Set most left bit to zero;
+            bit = (this->FrameBytes[k] & (1 << i)) != 0;
             if (bit != guard)
             {
-                for (tg = 0; tg < 16; tg++)
-                {
-                    FCSBuffer[tg] = FCSBuffer[tg] ^ crc16[tg];
-                }
+                FCSBuff = FCSBuff ^ 0x8408;
             }
         }
     }
-    //serial.println("CalculatedCRC: ");
-    for (tg = 0; tg < 16; tg++)
-    {
-        FCSBuffer[tg] = 1 - FCSBuffer[tg];              // 1 -> 0 and 0 -> 1
-    //    serial.print(FCSBuffer[tg],DEC);
-    }
-
+    FCSBuff = FCSBuff ^ 0xFFFF;
+    uint8_t FCSByte1 = ((uint8_t) (FCSBuff & 0x00FF));
+    uint8_t FCSByte2 = ((uint8_t) ((FCSBuff & 0xFF00) >> 8));
     FCSField = 0;
-    for (int y = 0; y < 16; y++)
-    {
-        FCSField |= (FCSBuffer[8 + y] << (7 - y)) << 8;
-        FCSField |= FCSBuffer[y] << (7 - y);
-    }
-
+    FCSField |= FCSByte2;
+    FCSField |= FCSByte1 << 8;
     //Since FCS is send bit 15 first, and all other is send in octets with lsb first, the byte order is changed and the bytes are reversed
     this->FrameBytes[16+this->packetSize+1] = (this->FCSField & 0xFF);
     this->FrameBytes[16+this->packetSize] = (this->FCSField >> 8);
+
 };
 
 void AX25Frame::calculateFCS(uint8_t data[], uint8_t size){
     //fcs poly: 1 0001 0000 0010 0001  (17bits);
-
-    //PKT -> FrameBytes
     bool guard;
-    //fcs -> FCSBuffer[17]
-    int tg;
     bool bit;
 
-    for(int i = 0; i < 17; i++){
-        FCSBuffer[i] = 1;
-    }
+    uint16_t FCSBuff = 0xFFFF;
 
     for(int k = 0; k < (size); k++)
     {
         for (int i = 0; i < 8; i++)
         {
-            guard = (FCSBuffer[15] != 0);
-            for (tg = 14; tg > -1; tg--)
-            {
-                FCSBuffer[tg + 1] = FCSBuffer[tg];      // shift right
-            }
-
-            FCSBuffer[0] = 0;
-
+            guard = (FCSBuff & 0x01) != 0;
+            FCSBuff = FCSBuff >> 1;     //Shift right
+            FCSBuff = FCSBuff & 0x7FFF; //Set most left bit to zero;
             bit = (data[k] & (1 << i)) != 0;
             if (bit != guard)
             {
-                for (tg = 0; tg < 16; tg++)
-                {
-                    FCSBuffer[tg] = FCSBuffer[tg] ^ crc16[tg];
-                }
+                FCSBuff = FCSBuff ^ 0x8408;
             }
         }
     }
-    //serial.println("CalculatedCRC: ");
-    for (tg = 0; tg < 16; tg++)
-    {
-        FCSBuffer[tg] = 1 - FCSBuffer[tg];              // 1 -> 0 and 0 -> 1
-    //    serial.print(FCSBuffer[tg],DEC);
-    }
-
+    FCSBuff = FCSBuff ^ 0xFFFF;
+    uint8_t FCSByte1 = ((uint8_t) (FCSBuff & 0x00FF));
+    uint8_t FCSByte2 = ((uint8_t) ((FCSBuff & 0xFF00) >> 8));
     FCSField = 0;
-    for (int y = 0; y < 16; y++)
-    {
-        FCSField |= (FCSBuffer[8 + y] << (7 - y)) << 8;
-        FCSField |= FCSBuffer[y] << (7 - y);
-    }
+    FCSField |= FCSByte2;
+    FCSField |= FCSByte1 << 8;
     //Since FCS is send bit 15 first, and all other is send in octets with lsb first, the byte order is changed and the bytes are reversed
     this->FrameBytes[16+this->packetSize+1] = (this->FCSField & 0xFF);
     this->FrameBytes[16+this->packetSize] = (this->FCSField >> 8);
+    //serial.print(FrameBytes[16+this->packetSize], HEX);
+    //serial.print(FrameBytes[16+this->packetSize+1], HEX);
 };
 
+bool AX25Frame::checkFCS(){
+    //serial.println("calculating?");
+    //fcs poly: 1 0001 0000 0010 0001  (17bits);
+
+    //PKT -> FrameBytes
+    bool guard;
+    bool bit;
+
+    uint16_t FCSBuff = 0xFFFF;
+
+    for(int k = 0; k < (this->FrameSize-2); k++)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            guard = (FCSBuff & 0x01) != 0;
+            FCSBuff = FCSBuff >> 1;     //Shift right
+            FCSBuff = FCSBuff & 0x7FFF; //Set most left bit to zero;
+            bit = (this->FrameBytes[k] & (1 << i)) != 0;
+            if (bit != guard)
+            {
+                FCSBuff = FCSBuff ^ 0x8408;
+            }
+        }
+    }
+    FCSBuff = FCSBuff ^ 0xFFFF;
+    uint8_t FCSByte1 = ((uint8_t) (FCSBuff & 0x00FF));
+    uint8_t FCSByte2 = ((uint8_t) ((FCSBuff & 0xFF00) >> 8));
+    //FCSField = 0;
+    //FCSField |= FCSByte2;
+    //FCSField |= FCSByte1 << 8;
+//    serial.print("Calculated CRC: ");
+//    serial.print(FCSByte1, HEX);
+//    serial.print(FCSByte2, HEX);
+//    serial.println();
+//    serial.print("Received CRC: ");
+//    serial.print(FrameBytes[FrameSize-2], HEX);
+//    serial.print(FrameBytes[FrameSize-1], HEX);
+//    serial.println();
+    if( FCSByte1 == FrameBytes[FrameSize-2] && FCSByte2 == FrameBytes[FrameSize-1]){
+        return true;
+    }else{
+        return false;
+    }
+}
 uint8_t * AX25Frame::getBytes(){
     return this->FrameBytes;
 };
