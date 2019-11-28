@@ -49,6 +49,7 @@ protected:
     int txBitIndex = 0;
     int txFlagInsert = 0;
 
+
     AX25Frame AX25RXFrameBuffer[AX25_RX_FRAME_BUFFER];
     int AX25RXframesInBuffer = 0;
     int AX25RXbufferIndex = 0;
@@ -80,6 +81,7 @@ public:
 
     uint8_t TXDestination[7] = {0x82,0x98,0x98,0x40,0x40,0x40,0xFF};
     uint8_t TXSource[7]      = {0x40,0x40,0x40,0x40,0x40,0x40,0xFF};
+    volatile bool txTimeout = false;
 };
 
 #endif

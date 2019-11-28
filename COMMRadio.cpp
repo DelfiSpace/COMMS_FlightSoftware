@@ -20,6 +20,7 @@ void onReceiveWrapper(uint8_t data){
 void sendPacketWrapper(){
     //serial.println("SEND PACKET (stub)!");
     MAP_Timer32_clearInterruptFlag(TIMER32_1_BASE);
+    radioStub->txTimeout = false;
     radioStub->sendPacketAX25();
 }
 void taskWrapper(){
@@ -190,18 +191,15 @@ void COMMRadio::initRX(){
 
 bool COMMRadio::transmitData(uint8_t data[], uint8_t size){
     this->quePacketAX25(data, size);
-    //this->quePacketAX25(data, size);
-    //this->quePacketAX25(data, size);
-    //this->quePacketAX25(data, size);
-    //serial.println(txBuffer[0]);
-    serial.println("Setting Timer");
 
-    MAP_Timer32_registerInterrupt(TIMER32_1_INTERRUPT, &sendPacketWrapper);
-    MAP_Timer32_setCount(TIMER32_1_BASE, 48000000);
-    MAP_Timer32_startTimer(TIMER32_1_BASE, true);
+    if(!txTimeout){
+        serial.println("Setting Timer");
 
-    //MAP_Timer32_setCount(TIMER32_1_BASE, 48000000);
-    //MAP_Timer32_startTimer(TIMER32_1_BASE, true);
+        MAP_Timer32_registerInterrupt(TIMER32_1_INTERRUPT, &sendPacketWrapper);
+        MAP_Timer32_setCount(TIMER32_1_BASE, 2*48000000);
+        MAP_Timer32_startTimer(TIMER32_1_BASE, true);
+        txTimeout = true;
+    }
 
     return true;
 
