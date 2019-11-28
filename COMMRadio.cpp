@@ -51,7 +51,7 @@ uint8_t COMMRadio::onTransmit(){
     if(txPacketReady){
         for(int i = 0; i < 8; i++){// Send 8bits per call
             //Start Sending
-            if(!txUprampSend){ //First Check the UpRamp!!
+           if( txFlagInsert > 0) {
                 if(encoder.bitsInBuffer == 0){  //check if no more bits in send buffer
                     uint8_t inBit = (0x7E >> txBitIndex) & 0x01;
                     outputByte = outputByte | (encoder.txBit( inBit , false) << (7-i));
@@ -64,37 +64,9 @@ uint8_t COMMRadio::onTransmit(){
                 //check if txBitIndex is high enough to roll over to next byte
                 if(txBitIndex>=8){
                     txBitIndex = 0;
-                    txIndex++;
+                    txFlagInsert--;
                 }
-
-                //check if we're done sending Upramp
-                if(txIndex >= UPRAMP_BYTES){
-                    txUprampSend = true;
-                    txIndex = 0;
-                }
-            } else if(txInsertFlag) {
-                if(encoder.bitsInBuffer == 0){  //check if no more bits in send buffer
-                    uint8_t inBit = (0x7E >> txBitIndex) & 0x01;
-                    outputByte = outputByte | (encoder.txBit( inBit , false) << (7-i));
-                    txBitIndex++;
-                }else{
-                    //send the Buffered Bit
-                    outputByte = outputByte | (encoder.txBit(0, false) << (7-i));
-                }
-
-                //check if txBitIndex is high enough to roll over to next byte
-                if(txBitIndex>=8){
-                    txBitIndex = 0;
-                    txIndex++;
-                }
-
-                //check if we're done sending flags
-                if(txIndex > 2){
-                    txInsertFlag = false;
-                    txIndex = 0;
-                    //serial.println("INSERTED!");
-                }
-            } else if(!txPacketSend){
+            }else if(AX25TXframesInBuffer > 0){
                 if(encoder.bitsInBuffer == 0){
                     //tx is ready for next bit
                         uint8_t inBit = (AX25TXFrameBuffer[mod((AX25TXbufferIndex - AX25TXframesInBuffer), AX25_TX_FRAME_BUFFER)].getBytes()[txIndex] >> txBitIndex) & 0x01;
@@ -112,32 +84,11 @@ uint8_t COMMRadio::onTransmit(){
                 if(txIndex >= AX25TXFrameBuffer[mod((AX25TXbufferIndex - AX25TXframesInBuffer), AX25_TX_FRAME_BUFFER)].getSize()){
                     txIndex = 0;
                     AX25TXframesInBuffer = AX25TXframesInBuffer - 1;
-                    txInsertFlag = true;
-                    //serial.println("Sent Packet");
-                    if(AX25TXframesInBuffer == 0){
-                        txPacketSend = true;
+                    if(AX25TXframesInBuffer != 0){
+                        txFlagInsert += 2;
+                    }else{
+                        txFlagInsert += DOWNRAMP_BYTES;
                     }
-                }
-            }else if(!txDownrampSend){ //Lastly, check DownRamp
-                if(encoder.bitsInBuffer == 0){  //check if no more bits in send buffer
-                    uint8_t inBit = (0x7E >> txBitIndex) & 0x01;
-                    outputByte = outputByte | (encoder.txBit( inBit , false) << (7-i));
-                    txBitIndex++;
-                }else{
-                    //send the Buffered Bit
-                    outputByte = outputByte | (encoder.txBit(0, false) << (7-i));
-                }
-
-                //check if txBitIndex is high enough to roll over to next byte
-                if(txBitIndex>=8){
-                    txBitIndex = 0;
-                    txIndex++;
-                }
-
-                //check if we're done sending Downramp
-                if(txIndex >= DOWNRAMP_BYTES){
-                    txDownrampSend = true;
-                    txIndex = 0;
                 }
             }else {
                 //no more data available, so stuff byte with zeros for transmission
@@ -147,24 +98,15 @@ uint8_t COMMRadio::onTransmit(){
             //serial.print(txBitIndex, HEX);
         }
 
-        if(txPacketSend && txUprampSend && txDownrampSend){
+        if(txFlagInsert <= 0 && AX25TXframesInBuffer <= 0){
             //end of transmission
             txRadio->setIdleMode(false);
-            //txReady = true;
             txPacketReady = false;
-        }
-
-        if(false){
-            for(int i = 0; i < 8; i++){
-                serial.print((outputByte >> (7-i)) & 0x01, DEC);
-            }
-            serial.print("|");
         }
         //serial.print(outputByte, HEX);
         return outputByte;
     }else{
         txRadio->setIdleMode(false);
-        //txReady = true;
         txPacketReady = false;
         return 0x00;
     }
@@ -328,12 +270,8 @@ bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
 }
 
 void COMMRadio::sendPacketAX25(){
+    txFlagInsert += UPRAMP_BYTES;
     txPacketReady = true;
-    txIndex = 0;
-    txBitIndex = 0;
-    txPacketSend = false;
-    txUprampSend = false;
-    txDownrampSend = false;
     txRadio->setIdleMode(true);
     //rxPrint = true;
     //rxReady = false;

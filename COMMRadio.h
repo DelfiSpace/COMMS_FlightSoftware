@@ -41,22 +41,13 @@ protected:
     //uint8_t* txRFMessageBuffer;
 
     volatile bool txReady = false;
-
-    volatile bool txUprampSend = false;
-    volatile bool txDownrampSend = false;
-    volatile bool txPacketSend = false;
     volatile bool txPacketReady = false;
-    volatile bool txInsertFlag = false;
 
     volatile bool rxReady = false;
-    volatile bool rxReceived = false;
-    volatile bool rxPrint = false;
-    volatile bool rxPacket = false;
 
     int txIndex = 0;
     int txBitIndex = 0;
-    int rxBitIndex = 0;
-    int rxDetectBitIndex = 0;
+    int txFlagInsert = 0;
 
     AX25Frame AX25RXFrameBuffer[AX25_RX_FRAME_BUFFER];
     int AX25RXframesInBuffer = 0;

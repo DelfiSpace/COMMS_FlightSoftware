@@ -12,8 +12,6 @@
 class AX25Synchronizer
 {
 protected:
-    uint8_t FlagByte[8] = {0,1,1,1,1,1,1,0};
-    uint8_t crc16[17] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1};
     uint8_t bitBuffer[BYTE_BUFFER_SIZE];
     uint8_t byteQue[BYTE_BUFFER_SIZE];
     int byteQueIndex = 0;

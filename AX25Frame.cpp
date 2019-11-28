@@ -50,18 +50,18 @@ void AX25Frame::setData(uint8_t data[], uint8_t size){
 };
 
 void AX25Frame::setFCS(uint8_t FCS[]){
-    this->FrameBytes[16+packetSize] = FCS[0];
-    this->FrameBytes[16+packetSize + 1] = FCS[1];
-    this->FCSField = ( (uint16_t)  (FCS[1] << 8)) | FCS[0];
+    this->FrameBytes[FrameSize-2] = FCS[0];
+    this->FrameBytes[FrameSize-1] = FCS[1];
+    //this->FCSField = ( (uint16_t)  (FCS[1] << 8)) | FCS[0];
 };
 
 void AX25Frame::setAdress(uint8_t Destination[], uint8_t Source[]){
     for(int i = 0; i < 7; i++){
-        this->addressField[i] = Destination[i];
+        //this->addressField[i] = Destination[i];
         this->FrameBytes[i] = Destination[i];
     }
     for(int i = 0; i < 7; i++){
-        this->addressField[7+i] = Source[i];
+        //this->addressField[7+i] = Source[i];
         this->FrameBytes[7+i] = Source[i];
     }
 
@@ -69,31 +69,33 @@ void AX25Frame::setAdress(uint8_t Destination[], uint8_t Source[]){
 
 void AX25Frame::setControl(bool PF){
     if(PF){
-        this->controlField = 0x13; //000 1 00 11
+        //this->controlField = 0x13; //000 1 00 11
+        this->FrameBytes[14] = 0x13;
     }else{
-        this->controlField = 0x03; //000 0 00 11
+        //this->controlField = 0x03; //000 0 00 11
+        this->FrameBytes[14] = 0x03;
     }
-    this->FrameBytes[14] = controlField;
+    //this->FrameBytes[14] = controlField;
 };
 
 void AX25Frame::setControl(uint8_t controlByte){
-    this->controlField = controlByte; //000 1 00 11
-    this->FrameBytes[14] = controlField;
+    //this->controlField = controlByte; //000 1 00 11
+    this->FrameBytes[14] = controlByte;//controlField;
 };
 
 void AX25Frame::setPID(uint8_t PIDByte){
-    this->PIDField = PIDByte; //000 1 00 11
+    //this->PIDField = PIDByte; //000 1 00 11
     this->FrameBytes[15] = PIDByte;
 };
 
 
 void AX25Frame::setPacket(uint8_t packet[], uint8_t size){
     for(int i = 0; i < size; i++){
-        this->packetField[i] = packet[i];
+        //this->packetField[i] = packet[i];
         this->FrameBytes[16+i] = packet[i];
     }
 
-    this->packetSize = size;
+    //this->packetSize = size;
     this->FrameSize = size + 18;
 };
 
@@ -124,13 +126,12 @@ void AX25Frame::calculateFCS(){
     FCSBuff = FCSBuff ^ 0xFFFF;
     uint8_t FCSByte1 = ((uint8_t) (FCSBuff & 0x00FF));
     uint8_t FCSByte2 = ((uint8_t) ((FCSBuff & 0xFF00) >> 8));
-    FCSField = 0;
-    FCSField |= FCSByte2;
-    FCSField |= FCSByte1 << 8;
+    //FCSField = 0;
+    //FCSField |= FCSByte2;
+    //FCSField |= FCSByte1 << 8;
     //Since FCS is send bit 15 first, and all other is send in octets with lsb first, the byte order is changed and the bytes are reversed
-    this->FrameBytes[16+this->packetSize+1] = (this->FCSField & 0xFF);
-    this->FrameBytes[16+this->packetSize] = (this->FCSField >> 8);
-
+    this->FrameBytes[FrameSize-2] = FCSByte1;
+    this->FrameBytes[FrameSize-1] = FCSByte2;
 };
 
 void AX25Frame::calculateFCS(uint8_t data[], uint8_t size){
@@ -157,14 +158,12 @@ void AX25Frame::calculateFCS(uint8_t data[], uint8_t size){
     FCSBuff = FCSBuff ^ 0xFFFF;
     uint8_t FCSByte1 = ((uint8_t) (FCSBuff & 0x00FF));
     uint8_t FCSByte2 = ((uint8_t) ((FCSBuff & 0xFF00) >> 8));
-    FCSField = 0;
-    FCSField |= FCSByte2;
-    FCSField |= FCSByte1 << 8;
+    //FCSField = 0;
+    //FCSField |= FCSByte2;
+    //FCSField |= FCSByte1 << 8;
     //Since FCS is send bit 15 first, and all other is send in octets with lsb first, the byte order is changed and the bytes are reversed
-    this->FrameBytes[16+this->packetSize+1] = (this->FCSField & 0xFF);
-    this->FrameBytes[16+this->packetSize] = (this->FCSField >> 8);
-    //serial.print(FrameBytes[16+this->packetSize], HEX);
-    //serial.print(FrameBytes[16+this->packetSize+1], HEX);
+    this->FrameBytes[FrameSize-2] = FCSByte1;
+    this->FrameBytes[FrameSize-1] = FCSByte2;
 };
 
 bool AX25Frame::checkFCS(){
