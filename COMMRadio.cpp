@@ -2,6 +2,12 @@
 
 extern DSerial serial;
 
+#ifndef MODFUNC
+#define MODFUNC
+int mod(int a, int b)
+{ return (a%b+b)%b; }
+#endif
+
 COMMRadio* radioStub;
 uint8_t onTransmitWrapper(){
     //serial.println("transmitter stub!");
@@ -27,10 +33,15 @@ COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeS
 };
 
 void COMMRadio::runTask(){
-//    if(AX25Sync.rxBit(inBit)){
-//        this->AX25RXFrameBuffer[AX25RXframesInBuffer] = AX25Sync.receivedFrame;
-//        this->AX25RXframesInBuffer++;
-//    }
+    for(int k = 0; k < 10; k++){
+        for(int i = 0; i < 8; i++){
+            //serial.print("Y");
+            AX25Sync.rxBit();
+        }
+        if(AX25Sync.bytesInQue <= 0){
+            break;
+        }
+    }
 }
 
 uint8_t COMMRadio::onTransmit(){
@@ -78,7 +89,7 @@ uint8_t COMMRadio::onTransmit(){
                 }
 
                 //check if we're done sending flags
-                if(txIndex > 10){
+                if(txIndex > 2){
                     txInsertFlag = false;
                     txIndex = 0;
                     //serial.println("INSERTED!");
@@ -86,7 +97,7 @@ uint8_t COMMRadio::onTransmit(){
             } else if(!txPacketSend){
                 if(encoder.bitsInBuffer == 0){
                     //tx is ready for next bit
-                        uint8_t inBit = (AX25TXFrameBuffer[(AX25TXbufferIndex - AX25TXframesInBuffer) % AX25_TX_FRAME_BUFFER].getBytes()[txIndex] >> txBitIndex) & 0x01;
+                        uint8_t inBit = (AX25TXFrameBuffer[mod((AX25TXbufferIndex - AX25TXframesInBuffer), AX25_TX_FRAME_BUFFER)].getBytes()[txIndex] >> txBitIndex) & 0x01;
                         outputByte = outputByte | (encoder.txBit( inBit , true) << (7-i));
                         txBitIndex++;
                 }else{
@@ -98,7 +109,7 @@ uint8_t COMMRadio::onTransmit(){
                     txIndex++;
                     txBitIndex = 0;
                 }
-                if(txIndex >= AX25TXFrameBuffer[(AX25TXbufferIndex - AX25TXframesInBuffer) % AX25_TX_FRAME_BUFFER].getSize()){
+                if(txIndex >= AX25TXFrameBuffer[mod((AX25TXbufferIndex - AX25TXframesInBuffer), AX25_TX_FRAME_BUFFER)].getSize()){
                     txIndex = 0;
                     AX25TXframesInBuffer = AX25TXframesInBuffer - 1;
                     txInsertFlag = true;
@@ -167,9 +178,7 @@ void COMMRadio::onReceive(uint8_t data)
         for(int i = 0; i < 8; i++){
             uint8_t inBit = encoder.NRZIdecodeBit((data >> (7-i))& 0x01);
             inBit = encoder.descrambleBit(inBit);
-            if(AX25Sync.rxBit(inBit)){
-                //
-            }
+            AX25Sync.queByte(inBit);
         }
     }
 };
@@ -195,8 +204,8 @@ void COMMRadio::initTX(){
         txConfig.filtertype = BT_0_5;
         txConfig.bandwidth = 15000;
         txConfig.power = 14;
-        txConfig.fdev = 1200;
-        txConfig.datarate = 2400;
+        txConfig.fdev = 4800;
+        txConfig.datarate = 9600;
 
         txRadio->setFrequency(435000000);
 
@@ -221,8 +230,8 @@ void COMMRadio::initRX(){
         rxConfig.filtertype = BT_0_5;
         rxConfig.bandwidth = 15000;
         rxConfig.bandwidthAfc = 83333;
-        rxConfig.fdev = 1200;
-        rxConfig.datarate = 2400;
+        rxConfig.fdev = 4800;
+        rxConfig.datarate = 9600;
 
         rxRadio->setFrequency(435000000);
 
@@ -341,8 +350,12 @@ void COMMRadio::toggleReceivePrint(){
     serial.println();
     serial.println(" ============ ");
     for(int k = 0; k < AX25RXframesInBuffer; k++){
-        uint8_t* frameData = this->AX25RXFrameBuffer[(AX25RXbufferIndex - AX25RXframesInBuffer + k)%AX25_RX_FRAME_BUFFER].getBytes();
-        for(int j = 0; j < this->AX25RXFrameBuffer[(AX25RXbufferIndex - AX25RXframesInBuffer + k)%AX25_RX_FRAME_BUFFER].getSize(); j++){
+        serial.print("*******");
+        int tmp = mod((AX25RXbufferIndex - AX25RXframesInBuffer + k), AX25_RX_FRAME_BUFFER);
+        serial.print(tmp, DEC);
+        serial.println("*******");
+        uint8_t* frameData = this->AX25RXFrameBuffer[tmp].getBytes();
+        for(int j = 0; j < this->AX25RXFrameBuffer[tmp].getSize(); j++){
             serial.print(frameData[j], HEX);
             serial.print("|");
         }

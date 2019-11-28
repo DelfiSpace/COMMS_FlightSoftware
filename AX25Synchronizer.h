@@ -1,11 +1,13 @@
 #include "DSerial.h"
 #include "AX25Frame.h"
+#include "AX25Encoder.h"
 
 #ifndef AX25SYNC_H_
 #define AX25SYNC_H_
-#define AX25_RX_FRAME_BUFFER 20
+#define AX25_RX_FRAME_BUFFER 100
 
 #define BYTE_BUFFER_SIZE   2048
+#define BYTE_QUE_SIZE       256
 
 class AX25Synchronizer
 {
@@ -13,7 +15,9 @@ protected:
     uint8_t FlagByte[8] = {0,1,1,1,1,1,1,0};
     uint8_t crc16[17] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1};
     uint8_t bitBuffer[BYTE_BUFFER_SIZE];
-    uint8_t destuffBuffer[BYTE_BUFFER_SIZE];
+    uint8_t byteQue[BYTE_BUFFER_SIZE];
+    int byteQueIndex = 0;
+
     int byteBufferIndex = 0;
     int bitCounter = 0;
 
@@ -22,12 +26,18 @@ protected:
     int* AX25RXframesInBuffer;
     int* AX25RXbufferIndex;
 
+    int mod(int a, int b);
+
+    AX25Encoder encoder;
+
 public:
     AX25Synchronizer(AX25Frame AX25FrameBuffer[], int &AX25RXframesInBuffer, int &AX25RXbufferIndex);
 
     //AX25Frame receivedFrame;
-    bool rxBit(uint8_t inBit);
+    bool queByte(uint8_t byte);
+    bool rxBit();
     volatile bool hasReceivedFrame = false;
+    int bytesInQue = 0;
 };
 
 #endif
