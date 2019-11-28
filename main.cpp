@@ -1,3 +1,5 @@
+#define xstr(s) str(s)
+#define str(s) #s
 
 #include "COMMS.h"
 
@@ -144,6 +146,8 @@ void main(void)
     serial.println("COMMS booting...");
     commRadio.init();
     serial.println("COMMS Booted.");
+    serial.print("SOFTWARE VERSION:  ");
+    serial.println(xstr(SW_VERSION));
 
     TaskManager::start(tasks, 3);
 }

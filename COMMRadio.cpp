@@ -133,6 +133,7 @@ void COMMRadio::init(){
     MAP_Timer32_initModule(TIMER32_1_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT,
                     TIMER32_PERIODIC_MODE);
     this->rxReady = true;
+    //serial.print(GIT_HASH);
 };
 
 void COMMRadio::initTX(){
@@ -309,3 +310,21 @@ void COMMRadio::toggleReceivePrint(){
     //TODO: OPMODE
     //serial.print(rxReady);
 };
+
+uint8_t COMMRadio::getNumberOfRXFrames(){
+    return this->AX25RXframesInBuffer;
+};
+
+uint8_t COMMRadio::getSizeOfRXFrame(){
+    int tmp = mod((AX25RXbufferIndex - AX25RXframesInBuffer), AX25_RX_FRAME_BUFFER);
+    return this->AX25RXFrameBuffer[tmp].getSize();
+}
+
+uint8_t* COMMRadio::getRXFrame(){
+    int tmp = mod((AX25RXbufferIndex - AX25RXframesInBuffer), AX25_RX_FRAME_BUFFER);
+        return this->AX25RXFrameBuffer[tmp].getBytes();
+}
+
+void COMMRadio::popFrame(){
+    AX25RXframesInBuffer--;
+}

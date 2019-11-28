@@ -82,6 +82,11 @@ public:
     uint8_t TXDestination[7] = {0x82,0x98,0x98,0x40,0x40,0x40,0xFF};
     uint8_t TXSource[7]      = {0x40,0x40,0x40,0x40,0x40,0x40,0xFF};
     volatile bool txTimeout = false;
+
+    uint8_t getNumberOfRXFrames();
+    uint8_t getSizeOfRXFrame();
+    uint8_t* getRXFrame();
+    void popFrame();
 };
 
 #endif

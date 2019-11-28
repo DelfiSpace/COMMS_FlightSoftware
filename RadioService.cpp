@@ -1,4 +1,5 @@
 #include "RadioService.h"
+#include "AX25Frame.h"
 
 extern DSerial serial;
 
@@ -14,61 +15,73 @@ bool RadioService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Frame &worki
         // prepare response frame
         workingBuffer.setDestination(command.getSource());
         workingBuffer.setSource(interface.getAddress());
-        workingBuffer.setPayloadSize(2);
-        workingBuffer.getPayload()[0] = RADIO_SERVICE;
 
         if (command.getPayload()[1] == RADIO_CMD_INIT_TX)
         {
             serial.println("RadioService: Initialise TX Request");
             // respond to ping
             radio->initTX();
+            workingBuffer.setPayloadSize(2);
+            workingBuffer.getPayload()[0] = RADIO_SERVICE;
             workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
         }
-        else if(command.getPayload()[1] == RADIO_CMD_INIT_RX)
+        else if (command.getPayload()[1] == RADIO_CMD_INIT_TX)
         {
-            serial.println("RadioService: Initialise RX Request");
+            serial.println("RadioService: Initialise TX Request");
             // respond to ping
-            radio->initRX();
+            radio->initTX();
+            workingBuffer.setPayloadSize(2);
+            workingBuffer.getPayload()[0] = RADIO_SERVICE;
             workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
         }
-        else if(command.getPayload()[1] == RADIO_CMD_TRANSMIT)
+        else if(command.getPayload()[1] == RADIO_CMD_SENDFRAME)
         {
-            //serial.println("RadioService: Transmit Request");
-            // get packet size
+            workingBuffer.setPayloadSize(2);
+            workingBuffer.getPayload()[0] = RADIO_SERVICE;
+
             uint8_t packetSize = command.getPayload()[2];
             if(radio->transmitData(&command.getPayload()[3], packetSize)){
                 workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
             }else{
-                workingBuffer.getPayload()[1] = RADIO_CMD_ERROR;
+                workingBuffer.getPayload()[1] = RADIO_CMD_REJECT;
             }
-
         }
-        else if(command.getPayload()[1] == RADIO_CMD_TOGGLE_RX)
+        else if(command.getPayload()[1] == RADIO_CMD_GETFRAME)
+        {
+            if (radio->getNumberOfRXFrames() > 0){
+                //frames in buffer
+                int frameSize = radio->getSizeOfRXFrame() - 2;
+                workingBuffer.setPayloadSize(2 + frameSize);
+                workingBuffer.getPayload()[0] = RADIO_SERVICE;
+                workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
+                uint8_t * frameData = radio->getRXFrame();
+                for(int j = 0; j < frameSize; j++){
+                    workingBuffer.getPayload()[2+j] = frameData[j];
+                }
+                radio->popFrame();
+            }else{
+                //no frames in buffer
+                workingBuffer.setPayloadSize(2);
+                workingBuffer.getPayload()[0] = RADIO_SERVICE;
+                workingBuffer.getPayload()[0] = RADIO_CMD_REJECT;
+            }
+            //radio->toggleReceivePrint();
+            //workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
+        }
+        else if(command.getPayload()[1] == RADIO_CMD_PRINT_RX)
         {
             //serial.println("TOGGLE RX PRINTING");
             radio->toggleReceivePrint();
-            workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
-        }
-        else if(command.getPayload()[1] == RADIO_CMD_SET_REG1)
-        {
-            serial.println("RadioService: SET REG DEBUG 1");
-            // respond to ping
-            //radio->initRX();
-            //radio->writeTXReg(0x40, 0x10);
-            //radio->writeTXReg(0x31, 0x40);
-            workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
-        }
-        else if(command.getPayload()[1] == RADIO_CMD_SET_REG2)
-        {
-            serial.println("RadioService: SET REG DEBUG 2");
-            // respond to ping
-            //radio->initRX();
+            workingBuffer.setPayloadSize(2);
+            workingBuffer.getPayload()[0] = RADIO_SERVICE;
             workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
         }
         else
         {
             // unknown request
+            workingBuffer.setPayloadSize(2);
             workingBuffer.getPayload()[1] = RADIO_CMD_ERROR;
+            workingBuffer.getPayload()[0] = RADIO_SERVICE;
         }
 
         // send response
