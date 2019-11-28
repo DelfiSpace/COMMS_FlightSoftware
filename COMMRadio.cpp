@@ -117,11 +117,11 @@ void COMMRadio::onReceive(uint8_t data)
     this->notify();
     //Note: SPI Bus is configured MSB First, meaning that from the received Byte, the MSB was the first received Bit
     if(rxReady){
-        for(int i = 0; i < 8; i++){
-            uint8_t inBit = encoder.NRZIdecodeBit((data >> (7-i))& 0x01);
-            inBit = encoder.descrambleBit(inBit);
-            AX25Sync.queByte(inBit);
-        }
+        //for(int i = 0; i < 8; i++){
+           // uint8_t inBit = encoder.NRZIdecodeBit((data >> (7-i))& 0x01);
+          //  inBit = encoder.descrambleBit(inBit);
+            AX25Sync.queByte(data);
+        //}
     }
 };
 
@@ -236,43 +236,51 @@ void COMMRadio::sendPacket(){
 }
 
 bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
-    //Zero stuff the information Packet
+    //return false is unsuccesful
     txReady = false;
+    if(size < MAX_PACKET_SIZE && this->AX25TXframesInBuffer < AX25_TX_FRAME_BUFFER){
+        TXDestination[6] = 0xE0;//(('A' & 0x0F) << 1) | 0xE0;
+        TXSource[6] = 0x61;//(('B' & 0x0F) << 1) | 0x61;
+        AX25TXFrameBuffer[AX25TXbufferIndex].setAdress(TXDestination, TXSource);
+        AX25TXFrameBuffer[AX25TXbufferIndex].setControl(false);
+        AX25TXFrameBuffer[AX25TXbufferIndex].setPID(0xF0);
+        AX25TXFrameBuffer[AX25TXbufferIndex].setPacket(data, size);
+        AX25TXFrameBuffer[AX25TXbufferIndex].calculateFCS();
 
-    TXDestination[6] = 0xE0;//(('A' & 0x0F) << 1) | 0xE0;
-    TXSource[6] = 0x61;//(('B' & 0x0F) << 1) | 0x61;
-    AX25TXFrameBuffer[AX25TXbufferIndex].setAdress(TXDestination, TXSource);
-    AX25TXFrameBuffer[AX25TXbufferIndex].setControl(false);
-    AX25TXFrameBuffer[AX25TXbufferIndex].setPID(0xF0);
-    AX25TXFrameBuffer[AX25TXbufferIndex].setPacket(data, size);
-    AX25TXFrameBuffer[AX25TXbufferIndex].calculateFCS();
+        //txSize = AX25TXFrameBuffer[0].getSize();
+        //txRFMessageBuffer = AX25TXFrameBuffer[AX25TXbufferIndex].getBytes();
+        // Print RF Packet for Debug
+        serial.println("============================");
+        serial.print("PACKETIndex : ");
+        serial.print(AX25TXbufferIndex, DEC);
+        serial.print("  == AVAILABLE : ");
+        serial.print(AX25TXframesInBuffer+1, DEC);
+        serial.println();
+        for(int i = 0; i < AX25TXFrameBuffer[AX25TXbufferIndex].getSize(); i++){
+            serial.print(this->AX25TXFrameBuffer[AX25TXbufferIndex].getBytes()[i], HEX);
+            serial.print("|");
+        }
+        serial.println("");
+        serial.println("============================");
+        AX25TXbufferIndex++;
+        AX25TXframesInBuffer++;
 
-    //txSize = AX25TXFrameBuffer[0].getSize();
-    //txRFMessageBuffer = AX25TXFrameBuffer[AX25TXbufferIndex].getBytes();
-    // Print RF Packet for Debug
-    serial.println("============================");
-    serial.print("PACKETIndex : ");
-    serial.print(AX25TXbufferIndex, DEC);
-    serial.print("  == AVAILABLE : ");
-    serial.print(AX25TXframesInBuffer+1, DEC);
-    serial.println();
-    for(int i = 0; i < AX25TXFrameBuffer[AX25TXbufferIndex].getSize(); i++){
-        serial.print(this->AX25TXFrameBuffer[AX25TXbufferIndex].getBytes()[i], HEX);
-        serial.print("|");
+        txReady = true;
+        return true;
+    }else{
+        txReady = true;
+        return false;
     }
-    serial.println("");
-    serial.println("============================");
-    AX25TXbufferIndex++;
-    AX25TXframesInBuffer++;
-
-    txReady = true;
-    return true;
 }
 
 void COMMRadio::sendPacketAX25(){
-    txFlagInsert += UPRAMP_BYTES;
-    txPacketReady = true;
-    txRadio->setIdleMode(true);
+    if(!txPacketReady){
+        txFlagInsert += UPRAMP_BYTES;
+        txPacketReady = true;
+        txRadio->setIdleMode(true);
+    }
+    // else the radio is already on.
+
     //rxPrint = true;
     //rxReady = false;
 }

@@ -6,8 +6,8 @@
 #define AX25SYNC_H_
 #define AX25_RX_FRAME_BUFFER 100
 
-#define BYTE_BUFFER_SIZE   2048
-#define BYTE_QUE_SIZE       256
+#define BYTE_BUFFER_SIZE    500
+#define BYTE_QUE_SIZE       500
 
 class AX25Synchronizer
 {
@@ -17,6 +17,7 @@ protected:
     int byteQueIndex = 0;
 
     int byteBufferIndex = 0;
+    int bitBufferIndex = 0;
     int bitCounter = 0;
 
     bool compareBitArrays(uint8_t array1[], uint8_t array[2], uint8_t size);
