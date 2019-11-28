@@ -51,20 +51,20 @@ bool AX25Synchronizer::rxBit(){
     for(int i = 0; i < 8; i++){
         uint8_t inBit = encoder.NRZIdecodeBit((inByte >> (7-i))& 0x01);
         inBit = encoder.descrambleBit(inBit);
-        bitBuffer[bitBufferIndex/8] |= inBit << (7-(bitBufferIndex%8));
+        bitBuffer[byteBufferIndex] = inBit;
         bitCounter++;
         //for(int i = 7; i >= 0; i--){
         //    serial.print(byteBuffer[(byteBufferIndex - i)%BYTE_BUFFER_SIZE], DEC);
         //}
         //serial.println();
-        if(     ((bitBuffer[mod((bitBufferIndex-7)/8,BYTE_BUFFER_SIZE)] >> (7-mod(bitBufferIndex-7,8))) & 0x01) == 0 &&
-                ((bitBuffer[mod((bitBufferIndex-6)/8,BYTE_BUFFER_SIZE)] >> (7-mod(bitBufferIndex-6,8))) & 0x01) == 1 &&
-                ((bitBuffer[mod((bitBufferIndex-5)/8,BYTE_BUFFER_SIZE)] >> (7-mod(bitBufferIndex-5,8))) & 0x01) == 1 &&
-                ((bitBuffer[mod((bitBufferIndex-4)/8,BYTE_BUFFER_SIZE)] >> (7-mod(bitBufferIndex-4,8))) & 0x01) == 1 &&
-                ((bitBuffer[mod((bitBufferIndex-3)/8,BYTE_BUFFER_SIZE)] >> (7-mod(bitBufferIndex-3,8))) & 0x01) == 1 &&
-                ((bitBuffer[mod((bitBufferIndex-2)/8,BYTE_BUFFER_SIZE)] >> (7-mod(bitBufferIndex-2,8))) & 0x01) == 1 &&
-                ((bitBuffer[mod((bitBufferIndex-1)/8,BYTE_BUFFER_SIZE)] >> (7-mod(bitBufferIndex-1,8))) & 0x01) == 1 &&
-                ((bitBuffer[mod((bitBufferIndex-0)/8,BYTE_BUFFER_SIZE)] >> (7-mod(bitBufferIndex-0,8))) & 0x01) == 0
+        if(     bitBuffer[(byteBufferIndex - 7)%BYTE_BUFFER_SIZE] == 0 &&
+                bitBuffer[(byteBufferIndex - 6)%BYTE_BUFFER_SIZE] == 1 &&
+                bitBuffer[(byteBufferIndex - 5)%BYTE_BUFFER_SIZE] == 1 &&
+                bitBuffer[(byteBufferIndex - 4)%BYTE_BUFFER_SIZE] == 1 &&
+                bitBuffer[(byteBufferIndex - 3)%BYTE_BUFFER_SIZE] == 1 &&
+                bitBuffer[(byteBufferIndex - 2)%BYTE_BUFFER_SIZE] == 1 &&
+                bitBuffer[(byteBufferIndex - 1)%BYTE_BUFFER_SIZE] == 1 &&
+                bitBuffer[(byteBufferIndex - 0)%BYTE_BUFFER_SIZE] == 0
             ){
             //last received bit completed a flag, the tail of a transfer exists of flags, hence check byteBuffer for packet;
             //minimum frame length is 4 bytes, maximum bits is decided by Buffer.
@@ -80,15 +80,15 @@ bool AX25Synchronizer::rxBit(){
                 //destuff Bits and Fix Ordering (every octet is received LSB first).
                 this->receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] = 0;
                 for(int k = 0; k < bitCounter - 8; k++){
-                    this->receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[destuffIndex] |= (((bitBuffer[mod((bitBufferIndex- bitCounter + 1 + k)/8,BYTE_BUFFER_SIZE)] >> (7-mod(bitBufferIndex- bitCounter + 1 + k,8))) & 0x01) << destuffBitIndex);
+                    this->receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[destuffIndex] |= ((bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, BYTE_BUFFER_SIZE)] & 0x01) << destuffBitIndex);
                     //serial.print(destuffBuffer[destuffIndex], HEX);
                     //serial.print(destuffIndex + destuffBitIndex, DEC);
                     //serial.println();
-                    if(((bitBuffer[mod((bitBufferIndex- bitCounter + 1 + k)/8,BYTE_BUFFER_SIZE)] >> (7-mod(bitBufferIndex- bitCounter + 1 + k,8))) & 0x01) == 0x01){
+                    if(bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, BYTE_BUFFER_SIZE)] == 0x01){
                         destuffCount++;
                         //serial.print("1");
                     }
-                    if(((bitBuffer[mod((bitBufferIndex- bitCounter + 1 + k)/8,BYTE_BUFFER_SIZE)] >> (7-mod(bitBufferIndex- bitCounter + 1 + k,8))) & 0x01) == 0x00){
+                    if(bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, BYTE_BUFFER_SIZE)] == 0x00){
                         destuffCount = 0;
                         //serial.print("0");
                     }
@@ -128,7 +128,7 @@ bool AX25Synchronizer::rxBit(){
             }
         }
 
-        bitBufferIndex = mod((bitBufferIndex + 1),(8*BYTE_BUFFER_SIZE));
+        byteBufferIndex = (byteBufferIndex + 1)%BYTE_BUFFER_SIZE;
     }
 
     return packetReceived;
