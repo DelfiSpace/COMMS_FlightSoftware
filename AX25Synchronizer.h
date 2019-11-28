@@ -6,7 +6,7 @@
 #define AX25SYNC_H_
 #define AX25_RX_FRAME_BUFFER 100
 
-#define BYTE_BUFFER_SIZE   2048
+#define BYTE_BUFFER_SIZE    500
 #define BYTE_QUE_SIZE       500
 
 class AX25Synchronizer

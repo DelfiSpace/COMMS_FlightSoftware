@@ -34,7 +34,7 @@ bool AX25Synchronizer::queByte(uint8_t inByte){
     bytesInQue = bytesInQue + 1;
 
     if(bytesInQue > BYTE_QUE_SIZE){
-        serial.println("[!!]");
+        //serial.println("[!!]");
     }
 
     return true;
@@ -49,6 +49,7 @@ bool AX25Synchronizer::rxBit(){
     bytesInQue = bytesInQue - 1;
 
     for(int i = 0; i < 8; i++){
+        //serial.print(byteBufferIndex);
         uint8_t inBit = encoder.NRZIdecodeBit((inByte >> (7-i))& 0x01);
         inBit = encoder.descrambleBit(inBit);
         bitBuffer[byteBufferIndex] = inBit;
@@ -57,14 +58,14 @@ bool AX25Synchronizer::rxBit(){
         //    serial.print(byteBuffer[(byteBufferIndex - i)%BYTE_BUFFER_SIZE], DEC);
         //}
         //serial.println();
-        if(     bitBuffer[(byteBufferIndex - 7)%BYTE_BUFFER_SIZE] == 0 &&
-                bitBuffer[(byteBufferIndex - 6)%BYTE_BUFFER_SIZE] == 1 &&
-                bitBuffer[(byteBufferIndex - 5)%BYTE_BUFFER_SIZE] == 1 &&
-                bitBuffer[(byteBufferIndex - 4)%BYTE_BUFFER_SIZE] == 1 &&
-                bitBuffer[(byteBufferIndex - 3)%BYTE_BUFFER_SIZE] == 1 &&
-                bitBuffer[(byteBufferIndex - 2)%BYTE_BUFFER_SIZE] == 1 &&
-                bitBuffer[(byteBufferIndex - 1)%BYTE_BUFFER_SIZE] == 1 &&
-                bitBuffer[(byteBufferIndex - 0)%BYTE_BUFFER_SIZE] == 0
+        if(     bitBuffer[mod(byteBufferIndex - 7, BYTE_BUFFER_SIZE)] == 0 &&
+                bitBuffer[mod(byteBufferIndex - 6, BYTE_BUFFER_SIZE)] == 1 &&
+                bitBuffer[mod(byteBufferIndex - 5, BYTE_BUFFER_SIZE)] == 1 &&
+                bitBuffer[mod(byteBufferIndex - 4, BYTE_BUFFER_SIZE)] == 1 &&
+                bitBuffer[mod(byteBufferIndex - 3, BYTE_BUFFER_SIZE)] == 1 &&
+                bitBuffer[mod(byteBufferIndex - 2, BYTE_BUFFER_SIZE)] == 1 &&
+                bitBuffer[mod(byteBufferIndex - 1, BYTE_BUFFER_SIZE)] == 1 &&
+                bitBuffer[mod(byteBufferIndex - 0, BYTE_BUFFER_SIZE)] == 0
             ){
             //last received bit completed a flag, the tail of a transfer exists of flags, hence check byteBuffer for packet;
             //minimum frame length is 4 bytes, maximum bits is decided by Buffer.
@@ -106,13 +107,13 @@ bool AX25Synchronizer::rxBit(){
                 }
                 int packetBits = bitCounter - destuffs - 8;
 
-                if(packetBits % 8 == 0 && receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] == 0x82){ // 'correct' packets are always whole bytes
+                if(mod(packetBits, 8) == 0 && receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] == 0x82){ // 'correct' packets are always whole bytes
                     receivedFrameBuffer[*AX25RXbufferIndex].FrameSize = packetBits/8;
                     if(this->receivedFrameBuffer[*AX25RXbufferIndex].checkFCS()){
                         this->hasReceivedFrame = true;
                         packetReceived = true;
                         //serial.println("!");
-                        *AX25RXbufferIndex = ( *AX25RXbufferIndex + 1 ) % AX25_RX_FRAME_BUFFER;
+                        *AX25RXbufferIndex = mod( *AX25RXbufferIndex + 1 , AX25_RX_FRAME_BUFFER);
                         if(*AX25RXframesInBuffer < AX25_RX_FRAME_BUFFER){
                             *AX25RXframesInBuffer = *AX25RXframesInBuffer + 1;
                         }
@@ -128,7 +129,7 @@ bool AX25Synchronizer::rxBit(){
             }
         }
 
-        byteBufferIndex = (byteBufferIndex + 1)%BYTE_BUFFER_SIZE;
+        byteBufferIndex = mod(byteBufferIndex + 1, BYTE_BUFFER_SIZE);
     }
 
     return packetReceived;

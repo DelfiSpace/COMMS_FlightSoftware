@@ -121,7 +121,7 @@
 		<cconfiguration id="com.ti.ccstudio.buildDefinitions.MSP432.Release.2110840172">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.ti.ccstudio.buildDefinitions.MSP432.Release.2110840172" moduleId="org.eclipse.cdt.core.settings" name="Release">
 				<macros>
-					<stringMacro name="GITHASH" type="VALUE_TEXT" value="$(shell git rev-parse HEAD)"/>
+					<stringMacro name="GITHASH" type="VALUE_TEXT" value="$(shell git rev-parse --short HEAD)"/>
 				</macros>
 				<externalSettings/>
 				<extensions>
