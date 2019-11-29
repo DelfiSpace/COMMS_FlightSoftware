@@ -120,9 +120,6 @@
 		</cconfiguration>
 		<cconfiguration id="com.ti.ccstudio.buildDefinitions.MSP432.Release.2110840172">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.ti.ccstudio.buildDefinitions.MSP432.Release.2110840172" moduleId="org.eclipse.cdt.core.settings" name="Release">
-				<macros>
-					<stringMacro name="GITHASH" type="VALUE_TEXT" value="$(shell git rev-parse --short HEAD)"/>
-				</macros>
 				<externalSettings/>
 				<extensions>
 					<extension id="com.ti.ccstudio.binaryparser.CoffParser" point="org.eclipse.cdt.core.BinaryParser"/>
@@ -147,7 +144,7 @@
 							</option>
 							<option id="com.ti.ccstudio.buildDefinitions.core.OPT_CODEGEN_VERSION.744248953" name="Compiler version" superClass="com.ti.ccstudio.buildDefinitions.core.OPT_CODEGEN_VERSION" value="18.12.3.LTS" valueType="string"/>
 							<targetPlatform id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.exe.targetPlatformRelease.822282194" name="Platform" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.exe.targetPlatformRelease"/>
-							<builder buildPath="${BuildDirectory}" id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.exe.builderRelease.637682634" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="GNU Make" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.exe.builderRelease"/>
+							<builder buildPath="${BuildDirectory}" id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.exe.builderRelease.637682634" keepEnvironmentInBuildfile="false" name="GNU Make" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.exe.builderRelease"/>
 							<tool id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.exe.compilerRelease.329166337" name="ARM Compiler" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.exe.compilerRelease">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.INCLUDE_PATH.2129419123" name="Add dir to #include search path (--include_path, -I)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.INCLUDE_PATH" valueType="includePath">
 									<listOptionValue builtIn="false" value="${CCS_BASE_ROOT}/arm/include"/>
@@ -167,7 +164,6 @@
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.DEFINE.1476165716" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.DEFINE" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__MSP432P401R__"/>
-									<listOptionValue builtIn="false" value="SW_VERSION=&quot;&quot;${GITHASH}&quot;&quot;"/>
 									<listOptionValue builtIn="false" value="ccs"/>
 									<listOptionValue builtIn="false" value="${INHERITED_SYMBOLS}"/>
 								</option>
@@ -177,7 +173,7 @@
 								<option id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.ABI.101479863" name="Application binary interface. (--abi)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.ABI" value="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.ABI.eabi" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.FLOAT_SUPPORT.1830047295" name="Specify floating point support (--float_support)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.FLOAT_SUPPORT" value="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.FLOAT_SUPPORT.FPv4SPD16" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.LITTLE_ENDIAN.1284997892" name="Little endian code [See 'General' page to edit] (--little_endian, -me)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.LITTLE_ENDIAN" value="true" valueType="boolean"/>
-								<option id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.ADVICE__POWER.1408306669" name="Enable checking of ULP power rules (--advice:power)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.ADVICE__POWER" value="&quot;all&quot;" valueType="string"/>
+								<option id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.ADVICE__POWER.1408306669" name="Enable checking of ULP power rules (--advice:power)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.ADVICE__POWER" value="all" valueType="string"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.DIAG_WARNING.1436490121" name="Treat diagnostic &lt;id&gt; as warning (--diag_warning, -pdsw)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.DIAG_WARNING" valueType="stringList">
 									<listOptionValue builtIn="false" value="225"/>
 								</option>
@@ -186,9 +182,6 @@
 								<option id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.ASM_LISTING.1530162370" name="Generate listing file (--asm_listing, -al)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.ASM_LISTING" value="true" valueType="boolean"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.SOURCE_INTERLIST.915083063" name="Source interlist" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.SOURCE_INTERLIST" value="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.SOURCE_INTERLIST.C_SRC_INTERLIST" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.ASM_CROSS_REFERENCE_LISTING.1890543217" name="Generate cross reference assembly listing file (--asm_cross_reference_listing)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.ASM_CROSS_REFERENCE_LISTING" value="true" valueType="boolean"/>
-								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.UNDEFINE.1112114130" name="Undefine NAME (--undefine, -U)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compilerID.UNDEFINE" valueType="stringList">
-									<listOptionValue builtIn="false" value="_INLINE_"/>
-								</option>
 								<inputType id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compiler.inputType__C_SRCS.1443855497" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compiler.inputType__C_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compiler.inputType__CPP_SRCS.2140078024" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compiler.inputType__CPP_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compiler.inputType__ASM_SRCS.396914399" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.compiler.inputType__ASM_SRCS"/>
