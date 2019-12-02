@@ -66,9 +66,8 @@ bool SoftwareVersionService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Fr
                 uint8_t versionString[] = {xstr(SW_VERSION)};
                 workingBuffer.getPayload()[2] = NibblesToByte(0,HexStringToNibble(versionString[0]));
                 workingBuffer.getPayload()[3] = NibblesToByte(HexStringToNibble(versionString[1]),HexStringToNibble(versionString[2]));
-                workingBuffer.getPayload()[4] = NibblesToByte(HexStringToNibble(versionString[3]),HexStringToNibble(versionString[3]));
+                workingBuffer.getPayload()[4] = NibblesToByte(HexStringToNibble(versionString[3]),HexStringToNibble(versionString[4]));
                 workingBuffer.getPayload()[5] = NibblesToByte(HexStringToNibble(versionString[5]),HexStringToNibble(versionString[6]));
-
             }else{
                 serial.println("has no SW Version!");
                 workingBuffer.setPayloadSize(2);
