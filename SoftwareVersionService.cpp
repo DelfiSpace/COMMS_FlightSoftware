@@ -8,9 +8,6 @@
 
 #define xstr(s) str(s)
 #define str(s) #s
-#define HEXTONIBBLE(s) (*(s) >= 'a' ?  *(s) - 87 : *(s) - 48)
-#define NIBBLESTOBYTE(msb,lsb) ((msb << 4) | lsb)
-
 
 #ifndef SW_VERSION
 #define HAS_SW_VERSION 0
