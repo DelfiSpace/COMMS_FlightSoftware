@@ -1,5 +1,8 @@
 
 #include "COMMS.h"
+#define xstr(s) str(s)
+#define str(s) #s
+#define HEXTONIBBLE(s) (*(s) >= 'a' ?  *(s) - 87 : *(s) - 48)
 
 // I2C busses
 DWire I2Cinternal(0);
@@ -134,6 +137,16 @@ void main(void)
     rx.init();
 
     serial.println("COMMS booting...");
+    serial.print("SOFTWARE VERSION:  ");
+    uint8_t versionString[] = {xstr(SW_VERSION)};
+    serial.print(HEXTONIBBLE(versionString + 0), HEX);
+    serial.print(HEXTONIBBLE(versionString + 1), HEX);
+    serial.print(HEXTONIBBLE(versionString + 2), HEX);
+    serial.print(HEXTONIBBLE(versionString + 3), HEX);
+    serial.print(HEXTONIBBLE(versionString + 4), HEX);
+    serial.print(HEXTONIBBLE(versionString + 5), HEX);
+    serial.print(HEXTONIBBLE(versionString + 6), HEX);
+    serial.println();
 
     TaskManager::start(tasks, 2);
 }

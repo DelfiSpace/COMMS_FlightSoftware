@@ -1,0 +1,12 @@
+################################################################################################################################################################
+# C. H. Broekhuizen
+#
+# This File is automatically included in Generation of the Makefile of Code Composer
+# File adds a predefined variable (macro) SW_VERSION to the build the build which contains the Git hash. 
+# This file should be in the project root at the same place as both the project root and the .git file
+# Also one should ensure that git is installed and accessible from the shell
+################################################################################################################################################################
+
+GIT_HASH := $(shell git rev-parse --short HEAD)
+
+GEN_OPTS__FLAG += --define=SW_VERSION=""${GIT_HASH}""
