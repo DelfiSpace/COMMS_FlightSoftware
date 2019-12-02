@@ -28,6 +28,7 @@
 #include "ResetService.h"
 #include "SoftwareUpdateService.h"
 #include "SX1276.h"
+#include "SoftwareVersionService.h"
 
 #define FCLOCK 48000000
 

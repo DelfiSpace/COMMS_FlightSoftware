@@ -1,8 +1,5 @@
 
 #include "COMMS.h"
-#define xstr(s) str(s)
-#define str(s) #s
-#define HEXTONIBBLE(s) (*(s) >= 'a' ?  *(s) - 87 : *(s) - 48)
 
 // I2C busses
 DWire I2Cinternal(0);
@@ -20,11 +17,12 @@ HousekeepingService<COMMSTelemetryContainer> hk;
 TestService tst;
 PingService ping;
 ResetService reset( GPIO_PORT_P5, GPIO_PIN0 );
+SoftwareVersionService SWversion;
 SoftwareUpdateService SWUpdate;
-Service* services[] = { &hk, &ping, &reset, &SWUpdate, &tst };
+Service* services[] = { &hk, &ping, &reset, &SWUpdate, &tst, &SWversion };
 
 // COMMS board tasks
-PQ9CommandHandler cmdHandler(pq9bus, services, 5);
+PQ9CommandHandler cmdHandler(pq9bus, services, 6);
 PeriodicTask timerTask(FCLOCK, periodicTask);
 Task* tasks[] = { &cmdHandler, &timerTask };
 
@@ -137,16 +135,6 @@ void main(void)
     rx.init();
 
     serial.println("COMMS booting...");
-    serial.print("SOFTWARE VERSION:  ");
-    uint8_t versionString[] = {xstr(SW_VERSION)};
-    serial.print(HEXTONIBBLE(versionString + 0), HEX);
-    serial.print(HEXTONIBBLE(versionString + 1), HEX);
-    serial.print(HEXTONIBBLE(versionString + 2), HEX);
-    serial.print(HEXTONIBBLE(versionString + 3), HEX);
-    serial.print(HEXTONIBBLE(versionString + 4), HEX);
-    serial.print(HEXTONIBBLE(versionString + 5), HEX);
-    serial.print(HEXTONIBBLE(versionString + 6), HEX);
-    serial.println();
 
     TaskManager::start(tasks, 2);
 }
