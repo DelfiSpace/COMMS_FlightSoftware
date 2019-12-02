@@ -261,7 +261,7 @@ bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
         }
         serial.println("");
         serial.println("============================");
-        AX25TXbufferIndex++;
+        AX25TXbufferIndex = mod(AX25TXbufferIndex + 1, AX25_TX_FRAME_BUFFER);
         AX25TXframesInBuffer++;
 
         txReady = true;
