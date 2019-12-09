@@ -40,6 +40,9 @@ PQ9CommandHandler cmdHandler(pq9bus, services, 5);
 PeriodicTask timerTask(FCLOCK, periodicTask);
 Task* tasks[] = { &cmdHandler, &timerTask, &commRadio };
 
+LDPCDecoder testdecoder;
+
+
 // system uptime
 unsigned long uptime = 0;
 
@@ -148,6 +151,14 @@ void main(void)
     serial.println("COMMS Booted.");
     serial.print("SOFTWARE VERSION:  ");
     serial.println(xstr(SW_VERSION));
+
+    serial.println("DECODER TEST:");
+    for(int k = 0; k < 50; k++){
+        if(testdecoder.iterateBitflip()){
+            serial.println("SUCCES!");
+            break;
+        }
+    }
 
     TaskManager::start(tasks, 3);
 }

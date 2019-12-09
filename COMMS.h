@@ -30,6 +30,7 @@
 #include "SX1276.h"
 #include "RadioService.h"
 #include "COMMRadio.h"
+#include "LDPC_decoder.h"
 
 
 #define FCLOCK 48000000
