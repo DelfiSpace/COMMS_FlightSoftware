@@ -4,8 +4,9 @@ extern DSerial serial;
 
 void LDPCDecoder::setInput(uint8_t inputBuffer[]){
     this->inputReady = false;
+    this->currentIterations = 0;
     for(int i = 0; i < 512; i++){
-        this->v[i] = inputBuffer[i];
+        this->v[i] = (inputBuffer[i/8] >> (7-(i%8)) ) & 0x01;
     }
 }
 
@@ -46,12 +47,11 @@ uint8_t MaxValue(uint8_t inputArray[], int size){
             maxValue = inputArray[i];
         }
     }
+    return maxValue;
 }
 
 bool LDPCDecoder::iterateBitflip(){
-    serial.println("# parity bits:");
     if(this->getParity()){
-        this->inputReady = true
         return true;
     }else{
         this->getScore();
@@ -62,7 +62,18 @@ bool LDPCDecoder::iterateBitflip(){
                 this->v[i] ^= (0x01);
             }
         }
-
+        this->currentIterations++;
         return false;
     }
+}
+
+uint8_t* LDPCDecoder::getOutput(){
+    for(int i = 0; i < 64; i++){
+        this->outputBuff[i] = 0;
+    }
+    for(int i = 0; i < 512; i++){
+        this->outputBuff[i/8] ^= this->v[i] << (7-(i%8));
+    }
+    this->inputReady = true;
+    return outputBuff;
 }

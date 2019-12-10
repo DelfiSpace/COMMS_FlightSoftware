@@ -217,3 +217,7 @@ uint8_t * AX25Frame::getBytes(){
 uint8_t AX25Frame::getSize(){
     return this->FrameSize;
 }
+
+uint8_t AX25Frame::getPacketSize(){
+    return this->FrameSize - 18;
+}

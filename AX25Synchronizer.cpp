@@ -70,7 +70,7 @@ bool AX25Synchronizer::rxBit(){
             //last received bit completed a flag, the tail of a transfer exists of flags, hence check byteBuffer for packet;
             //minimum frame length is 4 bytes, maximum bits is decided by Buffer.
 
-            if(bitCounter > 8*(14+2+2) && bitCounter < 8*(50)){
+            if(bitCounter > 8*(14+2+2) && bitCounter < 8*(256)){
 
                 //start destuffing bits:
                 int destuffIndex = 0;

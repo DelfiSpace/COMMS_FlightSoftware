@@ -6,6 +6,7 @@
 #include "AX25Frame.h"
 #include "AX25Synchronizer.h"
 #include "Task.h"
+#include "LDPC_decoder.h"
 
 #ifndef COMMRADIO_H_
 #define COMMRADIO_H_
@@ -62,6 +63,8 @@ protected:
     AX25Frame TXFrame;
     AX25Synchronizer AX25Sync = AX25Synchronizer(AX25RXFrameBuffer, AX25RXframesInBuffer, AX25RXbufferIndex);
 
+    LDPCDecoder LDPCdecoder;
+    bool LDPCdecodeEnabled = true;
 
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);

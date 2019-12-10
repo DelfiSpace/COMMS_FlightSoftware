@@ -3,7 +3,7 @@
 #ifndef AX25FRAME_H_
 #define AX25FRAME_H_
 
-#define MAX_PACKET_SIZE 100
+#define MAX_PACKET_SIZE 256-18
 #define AX25_CRC        0x8408
 
 
@@ -39,7 +39,7 @@ public:
 
      uint8_t* getBytes();
      uint8_t getSize();
-
+     uint8_t getPacketSize();
 };
 
 #endif
