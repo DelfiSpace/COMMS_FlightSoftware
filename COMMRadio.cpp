@@ -47,6 +47,7 @@ void COMMRadio::runTask(){
         for(int k = 0; k < AX25RXframesInBuffer; k++){
             int tmp = mod((AX25RXbufferIndex - AX25RXframesInBuffer + k), AX25_RX_FRAME_BUFFER);
             if(this->AX25RXFrameBuffer[tmp].getPacketSize() == 64){
+                this->LDPCdecoder.setInput(&this->AX25RXFrameBuffer[tmp].FrameBytes[16]);
                 for(int k = 0; k < 10; k++){
                     if(this->LDPCdecoder.iterateBitflip()){
                         serial.println("SUCCES!");
