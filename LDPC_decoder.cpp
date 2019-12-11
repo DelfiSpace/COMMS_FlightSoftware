@@ -8,24 +8,16 @@ uint8_t getBit(uint8_t byteArray[], int bitIndex){
 }
 
 void xorBit(uint8_t byteArray[], int bitIndex){
-    byteArray[bitIndex/8] ^= 0x01 << (7-(bitIndex%8)) ;
+    byteArray[bitIndex/8] ^= 0x01 << (7-(bitIndex%8));
 }
 
 void setBit(uint8_t byteArray[], int bitIndex, bool state){
-    if( (getBit(byteArray, bitIndex) == 0x01 && state == false)  ||  (getBit(byteArray, bitIndex) == 0x00 && state == true) ){
-        xorBit(byteArray, bitIndex);
-    }
-}
-void LDPCDecoder::setInput(uint8_t inputBuffer[]){
-    this->inputReady = false;
-    this->currentIterations = 0;
-    for(int q = 0; q < 64; q++){
-        this->v[q] = inputBuffer[q];
+    if( (getBit(byteArray, bitIndex) == 0x01 && state == false) || (getBit(byteArray, bitIndex) == 0x00 && state == true)  ){
+        xorBit(byteArray,bitIndex);
     }
 }
 
-
-bool LDPCDecoder::getParity(){
+bool LDPCDecoder::getParity(uint8_t input[]){
     int sumSn = 0;
     for(int i = 0; i < 2048; i++){
 
@@ -33,14 +25,14 @@ bool LDPCDecoder::getParity(){
             setBit(this->sn, i/8, false);
         }
 
-        if(getBit(this->v,this->H1[i]) == 0x01){
+        if( getBit(input,this->H1[i]) == 0x01 ){
             xorBit(this->sn, i/8);
         }
 
-        if(i % 8 == 7){
-            sumSn = sumSn + sn[i/8];
-        }
 
+        if(i % 8 == 7){
+            sumSn = sumSn + getBit(sn, i/8);
+        }
     }
 
     if (sumSn == 0){
@@ -56,7 +48,7 @@ void LDPCDecoder::getScore(){
         this->en[i] = 0;
     }
     for(int i = 0; i < 2048; i++){
-        this->en[this->H1[i]] += (this->sn[i/8] & 0x01);
+        this->en[this->H1[i]] += getBit(this->sn, i/8);
     }
 }
 
@@ -70,9 +62,9 @@ uint8_t MaxValue(uint8_t inputArray[], int size){
     return maxValue;
 }
 
-bool LDPCDecoder::iterateBitflip(){
+bool LDPCDecoder::iterateBitflip(uint8_t input[]){
     serial.println("Iteration!");
-    if(this->getParity()){
+    if(this->getParity(input)){
         return true;
     }else{
         this->getScore();
@@ -80,18 +72,10 @@ bool LDPCDecoder::iterateBitflip(){
 
         for(int i = 0; i < 512; i++){
             if(this->en[i] == maxVal){
-                xorBit(this->v, i);
+                xorBit(input,i);
             }
         }
-        this->currentIterations++;
         return false;
     }
 }
 
-uint8_t* LDPCDecoder::getOutput(){
-    for(int i = 0; i < 64; i++){
-        this->outputBuff[i] = this->v[i];
-    }
-    this->inputReady = true;
-    return outputBuff;
-}

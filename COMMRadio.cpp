@@ -43,16 +43,18 @@ void COMMRadio::runTask(){
             break;
         }
     }
-    if(this->LDPCdecoder.inputReady && this->LDPCdecodeEnabled){
+    if(this->LDPCdecodeEnabled){
         for(int k = 0; k < AX25RXframesInBuffer; k++){
             int tmp = mod((AX25RXbufferIndex - AX25RXframesInBuffer + k), AX25_RX_FRAME_BUFFER);
             if(this->AX25RXFrameBuffer[tmp].getPacketSize() == 64){
-                this->LDPCdecoder.setInput(&this->AX25RXFrameBuffer[tmp].FrameBytes[16]);
                 for(int k = 0; k < 10; k++){
-                    if(this->LDPCdecoder.iterateBitflip()){
+                    if(this->LDPCdecoder.iterateBitflip(&this->AX25RXFrameBuffer[tmp].FrameBytes[16])){
                         serial.println("SUCCES!");
-                        uint8_t* outbuff = LDPCdecoder.getOutput();
-                        this->AX25RXFrameBuffer[tmp].setPacket(outbuff, 32);
+                        for(int p = 0; p < 32; p++){
+                            serial.print(this->AX25RXFrameBuffer[tmp].FrameBytes[16+p], HEX);
+                            serial.print("|");
+                        }
+                        this->AX25RXFrameBuffer[tmp].FrameSize = this->AX25RXFrameBuffer[tmp].FrameSize-1;
                         break;
                     }
                 }
