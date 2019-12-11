@@ -43,24 +43,24 @@ void COMMRadio::runTask(){
             break;
         }
     }
-    if(this->LDPCdecodeEnabled){
-        for(int k = 0; k < AX25RXframesInBuffer; k++){
-            int tmp = mod((AX25RXbufferIndex - AX25RXframesInBuffer + k), AX25_RX_FRAME_BUFFER);
-            if(this->AX25RXFrameBuffer[tmp].getPacketSize() == 64){
-                for(int k = 0; k < 10; k++){
-                    if(this->LDPCdecoder.iterateBitflip(&this->AX25RXFrameBuffer[tmp].FrameBytes[16])){
-                        serial.println("SUCCES!");
-                        for(int p = 0; p < 32; p++){
-                            serial.print(this->AX25RXFrameBuffer[tmp].FrameBytes[16+p], HEX);
-                            serial.print("|");
-                        }
-                        this->AX25RXFrameBuffer[tmp].FrameSize = this->AX25RXFrameBuffer[tmp].FrameSize-1;
-                        break;
-                    }
-                }
-            }
-        }
-    }
+//    if(this->LDPCdecodeEnabled){
+//        for(int k = 0; k < AX25RXframesInBuffer; k++){
+//            int tmp = mod((AX25RXbufferIndex - AX25RXframesInBuffer + k), AX25_RX_FRAME_BUFFER);
+//            if(this->AX25RXFrameBuffer[tmp].getPacketSize() == 64){
+//                for(int k = 0; k < 10; k++){
+//                    if(this->LDPCdecoder.iterateBitflip(&this->AX25RXFrameBuffer[tmp].FrameBytes[16])){
+//                        serial.println("SUCCES!");
+//                        for(int p = 0; p < 32; p++){
+//                            serial.print(this->AX25RXFrameBuffer[tmp].FrameBytes[16+p], HEX);
+//                            serial.print("|");
+//                        }
+//                        this->AX25RXFrameBuffer[tmp].FrameSize = this->AX25RXFrameBuffer[tmp].FrameSize-1;
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+//    }
 }
 
 uint8_t COMMRadio::onTransmit(){
