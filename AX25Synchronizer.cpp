@@ -107,7 +107,7 @@ bool AX25Synchronizer::rxBit(){
                 }
                 int packetBits = bitCounter - destuffs - 8;
 
-                if(mod(packetBits, 8) == 0 && receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] == 0x82){ // 'correct' packets are always whole bytes
+                if(mod(packetBits, 8) == 0 ){//&& receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] == 0x82){ // 'correct' packets are always whole bytes
                     receivedFrameBuffer[*AX25RXbufferIndex].FrameSize = packetBits/8;
                     if(this->receivedFrameBuffer[*AX25RXbufferIndex].checkFCS()){
                         this->hasReceivedFrame = true;
