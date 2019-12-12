@@ -34,15 +34,27 @@ COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeS
 };
 
 void COMMRadio::runTask(){
+//    for(int k = 0; k < 10; k++){
+//        for(int i = 0; i < 8; i++){
+//            //serial.print("Y");
+//            AX25Sync.rxBit();
+//        }
+//        if(AX25Sync.bytesInQue <= 0){
+//            break;
+//        }
+//    }
+
     for(int k = 0; k < 10; k++){
         for(int i = 0; i < 8; i++){
             //serial.print("Y");
-            AX25Sync.rxBit();
+            APSync.rxBit();
         }
-        if(AX25Sync.bytesInQue <= 0){
+        if(APSync.bytesInQue <= 0){
             break;
         }
     }
+
+
 //    if(this->LDPCdecodeEnabled){
 //        for(int k = 0; k < AX25RXframesInBuffer; k++){
 //            int tmp = mod((AX25RXbufferIndex - AX25RXframesInBuffer + k), AX25_RX_FRAME_BUFFER);
@@ -140,6 +152,7 @@ void COMMRadio::onReceive(uint8_t data)
            // uint8_t inBit = encoder.NRZIdecodeBit((data >> (7-i))& 0x01);
           //  inBit = encoder.descrambleBit(inBit);
             AX25Sync.queByte(data);
+            APSync.queByte(data);
         //}
     }
 };

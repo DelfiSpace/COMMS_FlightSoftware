@@ -7,6 +7,7 @@
 #include "AX25Synchronizer.h"
 #include "Task.h"
 #include "LDPC_decoder.h"
+#include "APSynchronizer.h"
 
 #ifndef COMMRADIO_H_
 #define COMMRADIO_H_
@@ -62,6 +63,8 @@ protected:
     AX25Encoder encoder;
     AX25Frame TXFrame;
     AX25Synchronizer AX25Sync = AX25Synchronizer(AX25RXFrameBuffer, AX25RXframesInBuffer, AX25RXbufferIndex);
+
+    APSynchronizer APSync = APSynchronizer(AX25RXFrameBuffer, AX25RXframesInBuffer, AX25RXbufferIndex);
 
     LDPCDecoder LDPCdecoder;
     bool LDPCdecodeEnabled = true;
