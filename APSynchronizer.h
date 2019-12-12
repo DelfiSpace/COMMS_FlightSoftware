@@ -2,6 +2,7 @@
 #include "BitArray.h"
 #include "AX25Frame.h"
 #include "AX25Encoder.h"
+#include "LDPC_decoder.h"
 
 #ifndef APSYNC_H_
 #define APSYNC_H_
@@ -26,12 +27,12 @@ protected:
     uint8_t APBitBuffer[AP_BYTE_BUFFER_SIZE];
     int APBitBufferIndex;
     int synchronizerState = 1;
+    int allowedSeqError = 2;
     //0 = Inactive, 1 = Searching, 2 = Reading Pilot CLTU, 3 = obtaining CLTUs
     uint8_t pilotCLTU[64];
     int CLTUIndex = 0;
+    LDPCDecoder decoder = LDPCDecoder();
 
-
-    bool compareBitArrays(uint8_t array1[], uint8_t array[2], uint8_t size);
     AX25Frame* receivedFrameBuffer;
     int* AX25RXframesInBuffer;
     int* AX25RXbufferIndex;

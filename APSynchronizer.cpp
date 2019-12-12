@@ -13,15 +13,6 @@ APSynchronizer::APSynchronizer(AX25Frame AX25FrameBuffer[], int &AX25RXframesInB
     this->AX25RXbufferIndex = &AX25RXbufferIndex;
 }
 
-bool APSynchronizer::compareBitArrays(uint8_t array1[], uint8_t array2[], uint8_t size){
-    bool out = true;
-    for(int i = 0; i < size; i++){
-        if(array1[i] != array2[i]){
-            out = false;
-        }
-    }
-    return out;
-}
 
 //void APSynchronizer::queBit(uint8_t inBit){
 //    bitBuffer[byteBufferIndex] = inBit;
@@ -33,7 +24,7 @@ bool APSynchronizer::queByte(uint8_t inByte){
     bytesInQue = bytesInQue + 1;
 
     if(bytesInQue > AP_BYTE_QUE_SIZE){
-        serial.println("[!! ByteQue Overflow !!]");
+        //serial.println("[!! ByteQue Overflow !!]");
     }
 
     return true;
@@ -136,7 +127,7 @@ bool APSynchronizer::rxBit(){
                                     matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 2, 8*AP_BYTE_BUFFER_SIZE)) == 0) ? 1 : 0;
                                     matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 1, 8*AP_BYTE_BUFFER_SIZE)) == 0) ? 1 : 0;
                                     matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 0, 8*AP_BYTE_BUFFER_SIZE)) == 0) ? 1 : 0;
-                                    if(matchCoeff >= 16){
+                                    if(matchCoeff >= 16 - allowedSeqError){
                                         serial.println("START SEQ DETECTED!");
                                         this->synchronizerState = 2;
                                     }
@@ -153,6 +144,25 @@ bool APSynchronizer::rxBit(){
                                     if(CLTUIndex >= 8*64){
                                         CLTUIndex = 0;
                                         serial.println("PILOT SEQUENCE RECEIVED!");
+                                        bool decoded = false;
+                                        for(int decoder_iter = 0; decoder_iter<10; decoder_iter++){
+                                            if(this->decoder.iterateBitflip(pilotCLTU)){
+                                                serial.print("LDPC Iterations:  ");
+                                                serial.print(decoder_iter, DEC);
+                                                serial.println();
+                                                decoded = true;
+                                                break;
+                                            }
+                                        }
+                                        if(decoded){
+                                            for(int w = 0; w < 32; w++){
+                                                serial.print(pilotCLTU[w], HEX);
+                                                serial.print("|");
+                                            }
+                                        }else{
+                                            serial.print("!! DECODING FAILED !!");
+                                        }
+                                        serial.println();
                                         this->synchronizerState = 1;
                                     }
                                     break;
