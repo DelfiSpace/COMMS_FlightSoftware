@@ -8,7 +8,7 @@ class LDPCDecoder
 {
 protected:
     static const int H1[2048];
-    static uint8_t sn[256];
+    static uint8_t sn[64];
     static uint8_t en[512];
 
     static bool getParity(uint8_t input[]);
