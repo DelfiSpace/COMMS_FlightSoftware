@@ -146,7 +146,7 @@ bool APSynchronizer::rxBit(){
                                         serial.println("PILOT SEQUENCE RECEIVED!");
                                         bool decoded = false;
                                         for(int decoder_iter = 0; decoder_iter<10; decoder_iter++){
-                                            if(this->decoder.iterateBitflip(pilotCLTU)){
+                                            if(LDPCDecoder::iterateBitflip(pilotCLTU)){
                                                 serial.print("LDPC Iterations:  ");
                                                 serial.print(decoder_iter, DEC);
                                                 serial.println();

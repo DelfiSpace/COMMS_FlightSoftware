@@ -31,7 +31,6 @@ protected:
     //0 = Inactive, 1 = Searching, 2 = Reading Pilot CLTU, 3 = obtaining CLTUs
     uint8_t pilotCLTU[64];
     int CLTUIndex = 0;
-    LDPCDecoder decoder = LDPCDecoder();
 
     AX25Frame* receivedFrameBuffer;
     int* AX25RXframesInBuffer;
