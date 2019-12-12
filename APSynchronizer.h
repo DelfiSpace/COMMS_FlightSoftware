@@ -1,3 +1,10 @@
+/*
+ * APSynchronizer.h
+ *
+ *  Created on: 12 Dec 2019
+ *      Author: Casper Broekhuizen
+ */
+#include <CLTUPacket.h>
 #include "DSerial.h"
 #include "BitArray.h"
 #include "AX25Frame.h"
@@ -25,23 +32,26 @@ protected:
     int bitCounter = 0;
 
     uint8_t APBitBuffer[AP_BYTE_BUFFER_SIZE];
-    int APBitBufferIndex;
+    int APBitBufferIndex = 0;
     int synchronizerState = 1;
-    int allowedSeqError = 2;
+    int allowedSeqError = 3;
     //0 = Inactive, 1 = Searching, 2 = Reading Pilot CLTU, 3 = obtaining CLTUs
     uint8_t pilotCLTU[64];
-    int CLTUIndex = 0;
+    int CLTUbitCounter = 0;
+    int incomingCLTUs = 0;
+    bool pilotReceived = false;
 
-    AX25Frame* receivedFrameBuffer;
-    int* AX25RXframesInBuffer;
-    int* AX25RXbufferIndex;
+    CLTUPacket* rxCLTU;
+    int* rxCLTUInBuffer;
+    int* rxCLTUBufferIndex;
 
     int mod(int a, int b);
 
     AX25Encoder encoder;
 
+
 public:
-    APSynchronizer(AX25Frame AX25FrameBuffer[], int &AX25RXframesInBuffer, int &AX25RXbufferIndex);
+    APSynchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXframesInBuffer, int &AX25RXbufferIndex);
 
     //AX25Frame receivedFrame;
     bool queByte(uint8_t byte);

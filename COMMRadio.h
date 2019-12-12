@@ -1,3 +1,4 @@
+#include <CLTUPacket.h>
 #include "AX25Encoder.h"
 #include "SX1276.h"
 #include "DSPI.h"
@@ -64,7 +65,11 @@ protected:
     AX25Frame TXFrame;
     AX25Synchronizer AX25Sync = AX25Synchronizer(AX25RXFrameBuffer, AX25RXframesInBuffer, AX25RXbufferIndex);
 
-    APSynchronizer APSync = APSynchronizer(AX25RXFrameBuffer, AX25RXframesInBuffer, AX25RXbufferIndex);
+
+    CLTUPacket rxCLTUBuffer[AX25_TX_FRAME_BUFFER];
+    int rxCLTUInBuffer = 0;
+    int rxCLTUBufferIndex = 0;
+    APSynchronizer APSync = APSynchronizer(rxCLTUBuffer, rxCLTUInBuffer, rxCLTUBufferIndex);
 
     LDPCDecoder LDPCdecoder;
     bool LDPCdecodeEnabled = true;

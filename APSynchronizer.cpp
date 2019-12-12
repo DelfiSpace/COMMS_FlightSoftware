@@ -1,3 +1,9 @@
+/*
+ * APSynchronizer.cpp
+ *
+ *  Created on: 12 Dec 2019
+ *      Author: Casper Broekhuizen
+ */
 #include "APSynchronizer.h"
 
 extern DSerial serial;
@@ -7,10 +13,10 @@ int APSynchronizer::mod(int a, int b)
 
 
 
-APSynchronizer::APSynchronizer(AX25Frame AX25FrameBuffer[], int &AX25RXframesInBuffer,  int &AX25RXbufferIndex){
-    this->receivedFrameBuffer = AX25FrameBuffer;
-    this->AX25RXframesInBuffer = &AX25RXframesInBuffer;
-    this->AX25RXbufferIndex = &AX25RXbufferIndex;
+APSynchronizer::APSynchronizer(CLTUPacket rxCLTU[], int &rxCLTUInBuffer,  int &rxCLTUBufferIndex){
+    this->rxCLTU = rxCLTU;
+    this->rxCLTUInBuffer = &rxCLTUInBuffer;
+    this->rxCLTUBufferIndex = &rxCLTUBufferIndex;
 }
 
 
@@ -109,6 +115,9 @@ bool APSynchronizer::rxBit(){
                                 case 0 : //Inactive
                                     break;
                                 case 1 : //Searching/Waiting for Start-Seq
+                                    if(pilotReceived){
+                                        pilotReceived = false;
+                                    }
                                     //check for start seq: 1110 1011 1001 0000
                                     int matchCoeff = 0;
                                     matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 15, 8*AP_BYTE_BUFFER_SIZE)) == 1) ? 1 : 0;
@@ -138,31 +147,48 @@ bool APSynchronizer::rxBit(){
 //                                    serial.print(" - ");
 //                                    serial.print(CLTUIndex, DEC);
 //                                    serial.println();
-
-                                    BitArray::setBit(pilotCLTU, CLTUIndex, BitArray::getBit(APBitBuffer, APBitBufferIndex) == 0x01);
-                                    CLTUIndex += 1;
-                                    if(CLTUIndex >= 8*64){
-                                        CLTUIndex = 0;
-                                        serial.println("PILOT SEQUENCE RECEIVED!");
-                                        bool decoded = false;
-                                        for(int decoder_iter = 0; decoder_iter<10; decoder_iter++){
-                                            if(LDPCDecoder::iterateBitflip(pilotCLTU)){
-                                                serial.print("LDPC Iterations:  ");
-                                                serial.print(decoder_iter, DEC);
-                                                serial.println();
-                                                decoded = true;
-                                                break;
+                                    if(!pilotReceived){
+                                        BitArray::setBit(pilotCLTU, CLTUbitCounter, BitArray::getBit(APBitBuffer, APBitBufferIndex) == 0x01);
+                                        CLTUbitCounter += 1;
+                                        if(CLTUbitCounter >= 8*64){
+                                            CLTUbitCounter = 0;
+                                            serial.println("PILOT SEQUENCE RECEIVED!");
+                                            pilotReceived = true;
+                                            bool decoded = false;
+                                            for(int decoder_iter = 0; decoder_iter<10; decoder_iter++){
+                                                if(LDPCDecoder::iterateBitflip(pilotCLTU)){
+                                                    serial.print("LDPC Iterations:  ");
+                                                    serial.print(decoder_iter, DEC);
+                                                    serial.println();
+                                                    decoded = true;
+                                                    break;
+                                                }
                                             }
-                                        }
-                                        if(decoded){
-                                            for(int w = 0; w < 32; w++){
-                                                serial.print(pilotCLTU[w], HEX);
-                                                serial.print("|");
+                                            if(decoded){
+                                                incomingCLTUs = pilotCLTU[0];
+                                                for(int w = 0; w < 32; w++){
+                                                    serial.print(pilotCLTU[w], HEX);
+                                                    serial.print("|");
+                                                }
+                                            }else{
+                                                serial.print("!! PILOT DECODING FAILED !!");
+                                                this->synchronizerState = 1;
                                             }
-                                        }else{
-                                            serial.print("!! DECODING FAILED !!");
+                                            serial.println();
                                         }
-                                        serial.println();
+                                    }else if(incomingCLTUs > 0){
+                                        BitArray::setBit(this->rxCLTU[*rxCLTUBufferIndex].data, CLTUbitCounter, BitArray::getBit(APBitBuffer, APBitBufferIndex) == 0x01);
+                                        CLTUbitCounter++;
+                                        if(CLTUbitCounter >= 8*64){
+                                            serial.print("receivedCLTU: ");
+                                            serial.print(incomingCLTUs, DEC);
+                                            serial.println();
+                                            CLTUbitCounter = 0;
+                                            *rxCLTUBufferIndex = mod(*rxCLTUBufferIndex + 1, 20);
+                                            *rxCLTUInBuffer = *rxCLTUInBuffer+1;
+                                            incomingCLTUs--;
+                                        }
+                                    }else{
                                         this->synchronizerState = 1;
                                     }
                                     break;
@@ -175,9 +201,6 @@ bool APSynchronizer::rxBit(){
 //                            serial.print(APBitBufferIndex);
 //                            serial.print("  :  ");
 //                            serial.print(BitArray::getBit(APBitBuffer, APBitBufferIndex), HEX);
-
-
-
                             APBitBufferIndex = mod(APBitBufferIndex + 1, 8 * AP_BYTE_BUFFER_SIZE);
 
                         }
