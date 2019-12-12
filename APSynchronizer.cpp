@@ -81,15 +81,16 @@ bool APSynchronizer::rxBit(){
                 //destuff Bits and Fix Ordering (every octet is received LSB first).
                 this->destuffedBitBuffer[0] = 0;
                 for(int k = 0; k < bitCounter - 8; k++){
-                    this->destuffedBitBuffer[destuffIndex] |= ((bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, AP_BYTE_BUFFER_SIZE)] & 0x01) << destuffBitIndex);
+                    uint8_t curBit = bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, AP_BYTE_BUFFER_SIZE)] & 0x01;
+                    this->destuffedBitBuffer[destuffIndex] |= curBit << destuffBitIndex;
                     //serial.print(destuffBuffer[destuffIndex], HEX);
                     //serial.print(destuffIndex + destuffBitIndex, DEC);
                     //serial.println();
-                    if(bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, AP_BYTE_BUFFER_SIZE)] == 0x01){
+                    if(curBit == 0x01){
                         destuffCount++;
                         //serial.print("1");
                     }
-                    if(bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, AP_BYTE_BUFFER_SIZE)] == 0x00){
+                    if(curBit == 0x00){
                         destuffCount = 0;
                         //serial.print("0");
                     }
@@ -143,10 +144,9 @@ bool APSynchronizer::rxBit(){
                 bitCounter = 0;
             }
         }
-        if(this->byteBitBufferIndex > 7){
-            this->byteBitBufferIndex = 0;
-            byteBufferIndex = mod(byteBufferIndex + 1, AP_BYTE_BUFFER_SIZE);
-        }
+
+        byteBufferIndex = mod(byteBufferIndex + 1, AP_BYTE_BUFFER_SIZE);
+
     }
 
     return packetReceived;
