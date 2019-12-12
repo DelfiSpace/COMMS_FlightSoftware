@@ -1,4 +1,5 @@
 #include "DSerial.h"
+#include "BitArray.h"
 #include "AX25Frame.h"
 #include "AX25Encoder.h"
 
@@ -6,7 +7,7 @@
 #define APSYNC_H_
 #define AX25_RX_FRAME_BUFFER 10
 
-#define AP_BYTE_BUFFER_SIZE    512
+#define AP_BYTE_BUFFER_SIZE    256
 #define AP_BYTE_QUE_SIZE       1024
 
 class APSynchronizer
@@ -16,16 +17,18 @@ protected:
     int byteQueIndex = 0;
 
     uint8_t bitBuffer[AP_BYTE_BUFFER_SIZE];
+
     uint8_t destuffedBitBuffer[AP_BYTE_BUFFER_SIZE];
 
-    int byteBufferIndex = 0;
     int bitBufferIndex = 0;
     int bitCounter = 0;
 
     uint8_t APBitBuffer[AP_BYTE_BUFFER_SIZE];
-    int APBufferIndex;
-    int APBufferBitIndex;
-
+    int APBitBufferIndex;
+    int synchronizerState = 1;
+    //0 = Inactive, 1 = Searching, 2 = Reading Pilot CLTU, 3 = obtaining CLTUs
+    uint8_t pilotCLTU[64];
+    int CLTUIndex = 0;
 
 
     bool compareBitArrays(uint8_t array1[], uint8_t array[2], uint8_t size);
