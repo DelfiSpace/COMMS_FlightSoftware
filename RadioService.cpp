@@ -63,7 +63,7 @@ bool RadioService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Frame &worki
                 //no frames in buffer
                 workingBuffer.setPayloadSize(2);
                 workingBuffer.getPayload()[0] = RADIO_SERVICE;
-                workingBuffer.getPayload()[0] = RADIO_CMD_REJECT;
+                workingBuffer.getPayload()[1] = RADIO_CMD_REJECT;
             }
             //radio->toggleReceivePrint();
             //workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
