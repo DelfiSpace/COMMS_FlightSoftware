@@ -41,15 +41,6 @@ protected:
     int txBitIndex = 0;
     int txFlagInsert = 0;
 
-
-    CLTUPacket AX25RXFrameBuffer[RX_FRAME_BUFFER];
-    int AX25RXframesInBuffer = 0;
-    int AX25RXbufferIndex = 0;
-
-    CLTUPacket AX25TXFrameBuffer[TX_FRAME_BUFFER];
-    int AX25TXframesInBuffer = 0;
-    int AX25TXbufferIndex = 0;
-
     AX25Encoder encoder;
 
     CLTUPacket txCLTUBuffer[TX_FRAME_BUFFER];
