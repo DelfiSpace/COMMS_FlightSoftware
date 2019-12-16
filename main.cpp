@@ -107,7 +107,7 @@ void main(void)
     I2Cinternal.begin();
 
     // Initialize SPI master
-    controlSPI.begin();
+    controlSPI.initMaster(DSPI::MODE0, DSPI::MSBFirst, 1000000);
 
     serial.begin( );                        // baud rate: 9600 bps
     pq9bus.begin(115200, COMMS_ADDRESS);    // baud rate: 115200 bps
