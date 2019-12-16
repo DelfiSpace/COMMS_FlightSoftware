@@ -30,7 +30,7 @@ bool APSynchronizer::queByte(uint8_t inByte){
     bytesInQue = bytesInQue + 1;
 
     if(bytesInQue > AP_BYTE_QUE_SIZE){
-        //serial.println("[!! ByteQue Overflow !!]");
+        serial.println("[!! ByteQue Overflow !!]");
     }
 
     return true;
@@ -63,7 +63,7 @@ bool APSynchronizer::rxBit(){
             //last received bit completed a flag, the tail of a transfer exists of flags, hence check byteBuffer for packet;
             //minimum frame length is 4 bytes, maximum bits is decided by Buffer.
 
-            if(bitCounter > 8*(18) && bitCounter < 8*(256)){
+            if(bitCounter > 8*(18) && bitCounter < 8*(AP_BYTE_BUFFER_SIZE)){
 
                 //start destuffing bits:
                 int destuffIndex = 0;
@@ -108,6 +108,17 @@ bool APSynchronizer::rxBit(){
                     //
                     //
                     if(this->destuffedBitBuffer[0] == 0xAA && this->destuffedBitBuffer[1] == 0xAA){
+
+                        //
+                        //
+                        //
+                        //
+                        //
+                        //
+                        //
+                        //
+
+
                         for(int iter = 0; iter < packetBits-16; iter++){
                             uint8_t inBit = BitArray::getBit(destuffedBitBuffer, iter);
                             BitArray::setBit(APBitBuffer, APBitBufferIndex, inBit == 0x01);
@@ -153,7 +164,6 @@ bool APSynchronizer::rxBit(){
                                         if(CLTUbitCounter >= 8*64){
                                             CLTUbitCounter = 0;
                                             serial.println("PILOT SEQUENCE RECEIVED!");
-                                            pilotReceived = true;
                                             bool decoded = false;
                                             for(int decoder_iter = 0; decoder_iter<10; decoder_iter++){
                                                 if(LDPCDecoder::iterateBitflip(pilotCLTU)){
@@ -165,6 +175,7 @@ bool APSynchronizer::rxBit(){
                                                 }
                                             }
                                             if(decoded){
+                                                pilotReceived = true;
                                                 incomingCLTUs = pilotCLTU[0];
                                                 for(int w = 0; w < 32; w++){
                                                     serial.print(pilotCLTU[w], HEX);
@@ -184,6 +195,7 @@ bool APSynchronizer::rxBit(){
                                             serial.print(incomingCLTUs, DEC);
                                             serial.println();
                                             CLTUbitCounter = 0;
+                                            rxCLTU[*rxCLTUBufferIndex].packetSize = 64;
                                             *rxCLTUBufferIndex = mod(*rxCLTUBufferIndex + 1, 20);
                                             *rxCLTUInBuffer = *rxCLTUInBuffer+1;
                                             incomingCLTUs--;

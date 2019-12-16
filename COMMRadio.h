@@ -85,6 +85,7 @@ public:
 
     bool transmitData(uint8_t data[], uint8_t size);
     void toggleReceivePrint();
+    void toggleCLTUPacketReceivePrint();
 
     void sendPacket();
     bool quePacketAX25(uint8_t dataIn[], uint8_t size);

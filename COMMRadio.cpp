@@ -34,6 +34,9 @@ COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeS
 };
 
 void COMMRadio::runTask(){
+
+// Receive bits out of buffer:
+
 //    for(int k = 0; k < 10; k++){
 //        for(int i = 0; i < 8; i++){
 //            //serial.print("Y");
@@ -55,24 +58,7 @@ void COMMRadio::runTask(){
     }
 
 
-//    if(this->LDPCdecodeEnabled){
-//        for(int k = 0; k < AX25RXframesInBuffer; k++){
-//            int tmp = mod((AX25RXbufferIndex - AX25RXframesInBuffer + k), AX25_RX_FRAME_BUFFER);
-//            if(this->AX25RXFrameBuffer[tmp].getPacketSize() == 64){
-//                for(int k = 0; k < 10; k++){
-//                    if(this->LDPCdecoder.iterateBitflip(&this->AX25RXFrameBuffer[tmp].FrameBytes[16])){
-//                        serial.println("SUCCES!");
-//                        for(int p = 0; p < 32; p++){
-//                            serial.print(this->AX25RXFrameBuffer[tmp].FrameBytes[16+p], HEX);
-//                            serial.print("|");
-//                        }
-//                        this->AX25RXFrameBuffer[tmp].FrameSize = this->AX25RXFrameBuffer[tmp].FrameSize-1;
-//                        break;
-//                    }
-//                }
-//            }
-//        }
-//    }
+ // If codeblock ready, decode
 }
 
 uint8_t COMMRadio::onTransmit(){
@@ -341,6 +327,34 @@ void COMMRadio::toggleReceivePrint(){
     //TODO: OPMODE
     //serial.print(rxReady);
 };
+
+void COMMRadio::toggleCLTUPacketReceivePrint(){
+    //serial.print("Toggle RX Print: ");
+    //serial.println(rxReady);
+
+    serial.println();
+    serial.println(" ============ ");
+    serial.print("Amount of CLTU in Buffer: ");
+    serial.print(this->rxCLTUInBuffer, DEC);
+    serial.println();
+    serial.println(" ============ ");
+    for(int k = 0; k < rxCLTUInBuffer; k++){
+        serial.print("*******");
+        int tmp = mod((rxCLTUBufferIndex - rxCLTUInBuffer + k), AX25_RX_FRAME_BUFFER);
+        serial.print(tmp, DEC);
+        serial.println("*******");
+        uint8_t* frameData = this->rxCLTUBuffer[tmp].data;
+        for(int j = 0; j < this->rxCLTUBuffer[tmp].packetSize; j++){
+            serial.print(frameData[j], HEX);
+            serial.print("|");
+        }
+        serial.println();
+        serial.println(" ============ ");
+    }
+    //TODO: OPMODE
+    //serial.print(rxReady);
+};
+
 
 uint8_t COMMRadio::getNumberOfRXFrames(){
     return this->AX25RXframesInBuffer;

@@ -71,7 +71,8 @@ bool RadioService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Frame &worki
         else if(command.getPayload()[1] == RADIO_CMD_PRINT_RX)
         {
             //serial.println("TOGGLE RX PRINTING");
-            radio->toggleReceivePrint();
+            //radio->toggleReceivePrint();
+            radio->toggleCLTUPacketReceivePrint();
             workingBuffer.setPayloadSize(2);
             workingBuffer.getPayload()[0] = RADIO_SERVICE;
             workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
