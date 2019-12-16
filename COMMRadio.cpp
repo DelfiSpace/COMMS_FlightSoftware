@@ -215,7 +215,7 @@ bool COMMRadio::transmitData(uint8_t data[], uint8_t size){
         serial.println("Setting Timer");
 
         MAP_Timer32_registerInterrupt(TIMER32_1_INTERRUPT, &sendPacketWrapper);
-        MAP_Timer32_setCount(TIMER32_1_BASE, 2*48000000);
+        MAP_Timer32_setCount(TIMER32_1_BASE, 48000000);
         MAP_Timer32_startTimer(TIMER32_1_BASE, true);
         txTimeout = true;
     }
