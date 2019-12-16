@@ -30,7 +30,7 @@ bool APSynchronizer::queByte(uint8_t inByte){
     bytesInQue = bytesInQue + 1;
 
     if(bytesInQue > AP_BYTE_QUE_SIZE){
-        serial.println("[!! ByteQue Overflow !!]");
+        //serial.println("[!! ByteQue Overflow !!]");
     }
 
     return true;

@@ -17,6 +17,7 @@
 #define DOWNRAMP_BYTES 20
 
 #define AX25_TX_FRAME_BUFFER 20
+#define AX25_RX_FRAME_BUFFER 20
 
 //July 14, 2009 Hallvard Furuseth
 static const unsigned char BitsSetTable256[256] =
@@ -40,39 +41,29 @@ protected:
     TxConfig_t txConfig;
     RxConfig_t rxConfig;
 
-    uint8_t txPacketBuffer[PACKET_SIZE] = {0};
-    //uint8_t* txRFMessageBuffer;
-
     volatile bool txReady = false;
     volatile bool txPacketReady = false;
-
     volatile bool rxReady = false;
 
     int txIndex = 0;
     int txBitIndex = 0;
     int txFlagInsert = 0;
 
-
-    AX25Frame AX25RXFrameBuffer[AX25_RX_FRAME_BUFFER];
-    int AX25RXframesInBuffer = 0;
-    int AX25RXbufferIndex = 0;
-
-    AX25Frame AX25TXFrameBuffer[AX25_TX_FRAME_BUFFER];
-    int AX25TXframesInBuffer = 0;
-    int AX25TXbufferIndex = 0;
-
     AX25Encoder encoder;
-    AX25Frame TXFrame;
-    AX25Synchronizer AX25Sync = AX25Synchronizer(AX25RXFrameBuffer, AX25RXframesInBuffer, AX25RXbufferIndex);
 
+    CLTUPacket txCLTUBuffer[AX25_TX_FRAME_BUFFER];
+    int txCLTUInBuffer = 0;
+    int txCLTUBufferIndex = 0;
 
-    CLTUPacket rxCLTUBuffer[AX25_TX_FRAME_BUFFER];
+    CLTUPacket rxCLTUBuffer[AX25_RX_FRAME_BUFFER];
     int rxCLTUInBuffer = 0;
     int rxCLTUBufferIndex = 0;
+    AX25Synchronizer AX25Sync = AX25Synchronizer(rxCLTUBuffer, rxCLTUInBuffer, rxCLTUBufferIndex);
     APSynchronizer APSync = APSynchronizer(rxCLTUBuffer, rxCLTUInBuffer, rxCLTUBufferIndex);
 
     LDPCDecoder LDPCdecoder;
     bool LDPCdecodeEnabled = true;
+    bool AX25Mode = false;
 
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);
