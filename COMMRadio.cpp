@@ -35,25 +35,22 @@ COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeS
 
 void COMMRadio::runTask(){
 
-// Receive bits out of buffer:
-    if(AX25Mode == true){
+    // Receive bits out of buffer:
+    if(advancedMode){
         for(int k = 0; k < 10; k++){
-            //serial.print("Y");
-            AX25Sync.rxBit();
-            if(AX25Sync.bytesInQue <= 0){
-                break;
-            }
-        }
-    }else{
-        for(int k = 0; k < 10; k++){
-            //serial.print("Y");
             APSync.rxBit();
             if(APSync.bytesInQue <= 0){
                 break;
             }
         }
+    }else{
+        for(int k = 0; k < 10; k++){
+            AX25Sync.rxBit();
+            if(AX25Sync.bytesInQue <= 0){
+                break;
+            }
+        }
     }
-
  // If codeblock ready, decode
 }
 
@@ -79,10 +76,10 @@ uint8_t COMMRadio::onTransmit(){
                     txBitIndex = 0;
                     txFlagInsert--;
                 }
-            }else if(txCLTUInBuffer > 0){
+            }else if(AX25TXframesInBuffer > 0){
                 if(encoder.bitsInBuffer == 0){
                     //tx is ready for next bit
-                        uint8_t inBit = (this->txCLTUBuffer[mod((txCLTUBufferIndex - txCLTUInBuffer), AX25_TX_FRAME_BUFFER)].data[txIndex] >> txBitIndex) & 0x01;
+                        uint8_t inBit = (AX25TXFrameBuffer[mod((AX25TXbufferIndex - AX25TXframesInBuffer), TX_FRAME_BUFFER)].getBytes()[txIndex] >> txBitIndex) & 0x01;
                         outputByte = outputByte | (encoder.txBit( inBit , true) << (7-i));
                         txBitIndex++;
                 }else{
@@ -94,10 +91,10 @@ uint8_t COMMRadio::onTransmit(){
                     txIndex++;
                     txBitIndex = 0;
                 }
-                if(txIndex >= txCLTUBuffer[mod((txCLTUBufferIndex - txCLTUInBuffer), AX25_TX_FRAME_BUFFER)].packetSize){
+                if(txIndex >= AX25TXFrameBuffer[mod((AX25TXbufferIndex - AX25TXframesInBuffer), TX_FRAME_BUFFER)].getSize()){
                     txIndex = 0;
-                    txCLTUInBuffer = txCLTUInBuffer - 1;
-                    if(txCLTUInBuffer != 0){
+                    AX25TXframesInBuffer = AX25TXframesInBuffer - 1;
+                    if(AX25TXframesInBuffer != 0){
                         txFlagInsert += 2;
                     }else{
                         txFlagInsert += DOWNRAMP_BYTES;
@@ -111,7 +108,7 @@ uint8_t COMMRadio::onTransmit(){
             //serial.print(txBitIndex, HEX);
         }
 
-        if(txFlagInsert <= 0 && txCLTUInBuffer <= 0){
+        if(txFlagInsert <= 0 && AX25TXframesInBuffer <= 0){
             //end of transmission
             txRadio->setIdleMode(false);
             txPacketReady = false;
@@ -130,12 +127,11 @@ void COMMRadio::onReceive(uint8_t data)
     this->notify();
     //Note: SPI Bus is configured MSB First, meaning that from the received Byte, the MSB was the first received Bit
     if(rxReady){
-        //for(int i = 0; i < 8; i++){
-           // uint8_t inBit = encoder.NRZIdecodeBit((data >> (7-i))& 0x01);
-          //  inBit = encoder.descrambleBit(inBit);
-            AX25Sync.queByte(data);
+        if(advancedMode){
             APSync.queByte(data);
-        //}
+        }else{
+            AX25Sync.queByte(data);
+        }
     }
 };
 
@@ -250,32 +246,32 @@ void COMMRadio::sendPacket(){
 bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
     //return false is unsuccesful
     txReady = false;
-    if(size < MAX_PACKET_SIZE && this->txCLTUInBuffer < AX25_TX_FRAME_BUFFER){
+    if(size < MAX_PACKET_SIZE && this->AX25TXframesInBuffer < TX_FRAME_BUFFER){
         TXDestination[6] = 0xE0;//(('A' & 0x0F) << 1) | 0xE0;
         TXSource[6] = 0x61;//(('B' & 0x0F) << 1) | 0x61;
-        AX25Frame::setAdress(txCLTUBuffer[txCLTUBufferIndex], TXDestination, TXSource);
-        AX25Frame::setControl(txCLTUBuffer[txCLTUBufferIndex], false);
-        AX25Frame::setPID(txCLTUBuffer[txCLTUBufferIndex], 0xF0);
-        AX25Frame::setInfoPacket(txCLTUBuffer[txCLTUBufferIndex], data, size);
-        AX25Frame::calculateFCS(txCLTUBuffer[txCLTUBufferIndex]);
+        AX25TXFrameBuffer[AX25TXbufferIndex].setAdress(TXDestination, TXSource);
+        AX25TXFrameBuffer[AX25TXbufferIndex].setControl(false);
+        AX25TXFrameBuffer[AX25TXbufferIndex].setPID(0xF0);
+        AX25TXFrameBuffer[AX25TXbufferIndex].setPacket(data, size);
+        AX25TXFrameBuffer[AX25TXbufferIndex].calculateFCS();
 
-        //txSize = txCLTUBuffer[0].getSize();
-        //txRFMessageBuffer = txCLTUBuffer[txCLTUBufferIndex].getBytes();
+        //txSize = AX25TXFrameBuffer[0].getSize();
+        //txRFMessageBuffer = AX25TXFrameBuffer[AX25TXbufferIndex].getBytes();
         // Print RF Packet for Debug
         serial.println("============================");
         serial.print("PACKETIndex : ");
-        serial.print(txCLTUBufferIndex, DEC);
+        serial.print(AX25TXbufferIndex, DEC);
         serial.print("  == AVAILABLE : ");
-        serial.print(txCLTUInBuffer+1, DEC);
+        serial.print(AX25TXframesInBuffer+1, DEC);
         serial.println();
-        for(int i = 0; i < txCLTUBuffer[txCLTUBufferIndex].packetSize; i++){
-            serial.print(this->txCLTUBuffer[txCLTUBufferIndex].data[i], HEX);
+        for(int i = 0; i < AX25TXFrameBuffer[AX25TXbufferIndex].getSize(); i++){
+            serial.print(this->AX25TXFrameBuffer[AX25TXbufferIndex].getBytes()[i], HEX);
             serial.print("|");
         }
         serial.println("");
         serial.println("============================");
-        txCLTUBufferIndex = mod(txCLTUBufferIndex + 1, AX25_TX_FRAME_BUFFER);
-        txCLTUInBuffer++;
+        AX25TXbufferIndex = mod(AX25TXbufferIndex + 1, TX_FRAME_BUFFER);
+        AX25TXframesInBuffer++;
 
         txReady = true;
         return true;
@@ -304,16 +300,16 @@ void COMMRadio::toggleReceivePrint(){
     serial.println();
     serial.println(" ============ ");
     serial.print("Amount of Frames in Buffer: ");
-    serial.print(this->rxCLTUInBuffer, DEC);
+    serial.print(this->AX25RXframesInBuffer, DEC);
     serial.println();
     serial.println(" ============ ");
-    for(int k = 0; k < rxCLTUInBuffer; k++){
+    for(int k = 0; k < AX25RXframesInBuffer; k++){
         serial.print("*******");
-        int tmp = mod((rxCLTUBufferIndex - rxCLTUInBuffer + k), AX25_RX_FRAME_BUFFER);
+        int tmp = mod((AX25RXbufferIndex - AX25RXframesInBuffer + k), AX25_RX_FRAME_BUFFER);
         serial.print(tmp, DEC);
         serial.println("*******");
-        uint8_t* frameData = this->rxCLTUBuffer[tmp].data;
-        for(int j = 0; j < this->rxCLTUBuffer[tmp].packetSize; j++){
+        uint8_t* frameData = this->AX25RXFrameBuffer[tmp].getBytes();
+        for(int j = 0; j < this->AX25RXFrameBuffer[tmp].getSize(); j++){
             serial.print(frameData[j], HEX);
             serial.print("|");
         }
@@ -324,48 +320,26 @@ void COMMRadio::toggleReceivePrint(){
     //serial.print(rxReady);
 };
 
-void COMMRadio::toggleCLTUPacketReceivePrint(){
-    //serial.print("Toggle RX Print: ");
-    //serial.println(rxReady);
-
-    serial.println();
-    serial.println(" ============ ");
-    serial.print("Amount of CLTU in Buffer: ");
-    serial.print(this->rxCLTUInBuffer, DEC);
-    serial.println();
-    serial.println(" ============ ");
-    for(int k = 0; k < rxCLTUInBuffer; k++){
-        serial.print("*******");
-        int tmp = mod((rxCLTUBufferIndex - rxCLTUInBuffer + k), AX25_RX_FRAME_BUFFER);
-        serial.print(tmp, DEC);
-        serial.println("*******");
-        uint8_t* frameData = this->rxCLTUBuffer[tmp].data;
-        for(int j = 0; j < this->rxCLTUBuffer[tmp].packetSize; j++){
-            serial.print(frameData[j], HEX);
-            serial.print("|");
-        }
-        serial.println();
-        serial.println(" ============ ");
-    }
-    //TODO: OPMODE
-    //serial.print(rxReady);
+void COMMRadio::toggleMode(){
+    serial.println("Toggle ProtocolMode ");
+    advancedMode = !advancedMode;
 };
 
 
 uint8_t COMMRadio::getNumberOfRXFrames(){
-    return this->rxCLTUInBuffer;
+    return this->AX25RXframesInBuffer;
 };
 
 uint8_t COMMRadio::getSizeOfRXFrame(){
-    int tmp = mod((rxCLTUBufferIndex - rxCLTUInBuffer), AX25_RX_FRAME_BUFFER);
-    return this->rxCLTUBuffer[tmp].packetSize;
+    int tmp = mod((AX25RXbufferIndex - AX25RXframesInBuffer), AX25_RX_FRAME_BUFFER);
+    return this->AX25RXFrameBuffer[tmp].getSize();
 }
 
 uint8_t* COMMRadio::getRXFrame(){
-    int tmp = mod((rxCLTUBufferIndex - rxCLTUInBuffer), AX25_RX_FRAME_BUFFER);
-        return this->rxCLTUBuffer[tmp].data;
+    int tmp = mod((AX25RXbufferIndex - AX25RXframesInBuffer), AX25_RX_FRAME_BUFFER);
+        return this->AX25RXFrameBuffer[tmp].getBytes();
 }
 
 void COMMRadio::popFrame(){
-    rxCLTUInBuffer--;
+    AX25RXframesInBuffer--;
 }

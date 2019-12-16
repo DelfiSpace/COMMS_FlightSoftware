@@ -1,5 +1,4 @@
 #include "DSerial.h"
-#include "CLTUPacket.h"
 
 #ifndef AX25FRAME_H_
 #define AX25FRAME_H_
@@ -20,19 +19,27 @@ protected:
     //uint8_t packetField[MAX_PACKET_SIZE]; //'info' field
 
 public:
-     static unsigned char reverseByteOrder(unsigned char x);
-     static void setAdress(CLTUPacket packet, uint8_t Destination[], uint8_t Source[]);
-     static void setControl(CLTUPacket packet, bool PF);
-     static void setControl(CLTUPacket packet, uint8_t byte);
-     static void setPID(CLTUPacket packet, uint8_t byte);
-     static void setFCS(CLTUPacket packet, uint8_t FCS[]);
+     //uint16_t FCSField;
+     uint8_t FrameBytes[MAX_PACKET_SIZE+18];
+     uint8_t FrameSize;
+     //uint8_t packetSize;
 
-     static void setInfoPacket(CLTUPacket packet, uint8_t data[], uint8_t size);
-     static void setPacket(CLTUPacket packet, uint8_t data[], uint8_t size);
-     static void calculateFCS(CLTUPacket packet);
-     static bool checkFCS(CLTUPacket packet);
+     unsigned char reverseByteOrder(unsigned char x);
+     void setAdress(uint8_t Destination[], uint8_t Source[]);
+     void setControl(bool PF);
+     void setControl(uint8_t byte);
+     void setPID(uint8_t byte);
+     void setFCS(uint8_t FCS[]);
 
-     static uint8_t getPacketSize(CLTUPacket packet);
+     void setPacket(uint8_t packet[], uint8_t size);
+     void setData(uint8_t data[], uint8_t size);
+     void calculateFCS();
+     void calculateFCS(uint8_t data[], uint8_t size);
+     bool checkFCS();
+
+     uint8_t* getBytes();
+     uint8_t getSize();
+     uint8_t getPacketSize();
 };
 
 #endif

@@ -11,6 +11,8 @@
 #include "Dserial.h"
 
 #define CLTU_MAX_SIZE   64
+#define TX_FRAME_BUFFER 20
+#define RX_FRAME_BUFFER 20
 
 class CLTUPacket
 {
