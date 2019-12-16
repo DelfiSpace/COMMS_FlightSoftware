@@ -304,12 +304,21 @@ void COMMRadio::toggleReceivePrint(){
     serial.println();
     serial.println(" ============ ");
     for(int k = 0; k < rxCLTUInBuffer; k++){
-        serial.print("*******");
-        int tmp = mod((rxCLTUBufferIndex - rxCLTUInBuffer + k), AX25_RX_FRAME_BUFFER);
-        serial.print(tmp, DEC);
         serial.println("*******");
-        uint8_t* frameData = this->rxCLTUBuffer[tmp].getBytes();
-        for(int j = 0; j < this->rxCLTUBuffer[tmp].getSize(); j++){
+        int buf_index = mod((rxCLTUBufferIndex - rxCLTUInBuffer + k), RX_FRAME_BUFFER);
+        int packet_size = rxCLTUBuffer[buf_index].packetSize;
+        if (packet_size > 64){
+            serial.print("||WARNING||");
+            packet_size = 1;
+        }
+        serial.print("Index of Packet:  ");
+        serial.print(buf_index, DEC);
+        serial.print("  |   Packet Size:  ");
+        serial.print(packet_size, DEC);
+        serial.println();
+        serial.println("*******");
+        uint8_t* frameData = this->rxCLTUBuffer[buf_index].data;
+        for(int j = 0; j < packet_size; j++){
             serial.print(frameData[j], HEX);
             serial.print("|");
         }

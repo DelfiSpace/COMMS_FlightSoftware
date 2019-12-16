@@ -26,6 +26,7 @@ public:
      static void setData(CLTUPacket &inPacket, uint8_t data[], uint8_t size);
      static void calculateFCS(CLTUPacket &inPacket);
      static bool checkFCS(CLTUPacket &inPacket);
+     static bool checkFCS(CLTUPacket &inPacket, int size);
 
      static uint8_t getPacketSize(CLTUPacket &inPacket);
 };

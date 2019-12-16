@@ -197,7 +197,9 @@ bool APSynchronizer::rxBit(){
                                             CLTUbitCounter = 0;
                                             rxCLTU[*rxCLTUBufferIndex].packetSize = 64;
                                             *rxCLTUBufferIndex = mod(*rxCLTUBufferIndex + 1, 20);
-                                            *rxCLTUInBuffer = *rxCLTUInBuffer+1;
+                                            if(*rxCLTUInBuffer < RX_FRAME_BUFFER-1){
+                                                *rxCLTUInBuffer = *rxCLTUInBuffer+1;
+                                            }
                                             incomingCLTUs--;
                                         }
                                     }else{

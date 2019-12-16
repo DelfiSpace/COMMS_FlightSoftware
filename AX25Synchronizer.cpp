@@ -108,19 +108,26 @@ bool AX25Synchronizer::rxBit(){
                 int packetBits = bitCounter - destuffs - 8;
 
                 if(mod(packetBits, 8) == 0 ){//&& receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] == 0x82){ // 'correct' packets are always whole bytes
+                    int oldSize = receivedFrameBuffer[*AX25RXbufferIndex].packetSize;
                     receivedFrameBuffer[*AX25RXbufferIndex].packetSize = packetBits/8;
+
                     if(AX25Frame::checkFCS(this->receivedFrameBuffer[*AX25RXbufferIndex])){
                         this->hasReceivedFrame = true;
                         packetReceived = true;
                         //serial.println("!");
-                        *AX25RXbufferIndex = mod( *AX25RXbufferIndex + 1 , RX_FRAME_BUFFER);
-                        if(*AX25RXframesInBuffer < RX_FRAME_BUFFER){
+                        if(*AX25RXframesInBuffer < RX_FRAME_BUFFER-1){
                             *AX25RXframesInBuffer = *AX25RXframesInBuffer + 1;
                         }
                         serial.print(*AX25RXframesInBuffer, DEC);
-                        //serial.print("  -  ");
-                        //serial.print(*AX25RXbufferIndex, DEC);
+                        serial.print("  -  ");
+                        serial.print(*AX25RXbufferIndex, DEC);
+                        serial.print("  -  ");
+                        serial.print(this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize, DEC);
                         serial.println();
+
+                        *AX25RXbufferIndex = mod( *AX25RXbufferIndex + 1 , RX_FRAME_BUFFER);
+                    }else{
+                        receivedFrameBuffer[*AX25RXbufferIndex].packetSize = oldSize;
                     }
                 }
                 bitCounter = 0;

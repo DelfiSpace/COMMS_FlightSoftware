@@ -179,6 +179,51 @@ bool AX25Frame::checkFCS(CLTUPacket &inPacket){
     }
 }
 
+bool AX25Frame::checkFCS(CLTUPacket &inPacket, int size){
+    //serial.println("calculating?");
+    //fcs poly: 1 0001 0000 0010 0001  (17bits);
+
+    //PKT -> FrameBytes
+    bool guard;
+    bool bit;
+
+    uint16_t FCSBuff = 0xFFFF;
+
+    for(int k = 0; k < (size-2); k++)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            guard = (FCSBuff & 0x01) != 0;
+            FCSBuff = FCSBuff >> 1;     //Shift right
+            FCSBuff = FCSBuff & 0x7FFF; //Set most left bit to zero;
+            bit = (inPacket.data[k] & (1 << i)) != 0;
+            if (bit != guard)
+            {
+                FCSBuff = FCSBuff ^ 0x8408;
+            }
+        }
+    }
+    FCSBuff = FCSBuff ^ 0xFFFF;
+    uint8_t FCSByte1 = ((uint8_t) (FCSBuff & 0x00FF));
+    uint8_t FCSByte2 = ((uint8_t) ((FCSBuff & 0xFF00) >> 8));
+    //FCSField = 0;
+    //FCSField |= FCSByte2;
+    //FCSField |= FCSByte1 << 8;
+//    serial.print("Calculated CRC: ");
+//    serial.print(FCSByte1, HEX);
+//    serial.print(FCSByte2, HEX);
+//    serial.println();
+//    serial.print("Received CRC: ");
+//    serial.print(FrameBytes[FrameSize-2], HEX);
+//    serial.print(FrameBytes[FrameSize-1], HEX);
+//    serial.println();
+    if( FCSByte1 == inPacket.data[size-2] && FCSByte2 == inPacket.data[size-1]){
+        return true;
+    }else{
+        return false;
+    }
+}
+
 uint8_t AX25Frame::getPacketSize(CLTUPacket &inPacket){
     return inPacket.packetSize - 18;
 }

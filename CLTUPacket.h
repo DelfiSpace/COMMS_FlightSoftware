@@ -21,7 +21,7 @@ protected:
 
 public:
     uint8_t data[CLTU_MAX_SIZE] = {0};
-    int packetSize = 0;
+    int packetSize = CLTU_MAX_SIZE;
 
     int getSize();
     uint8_t* getBytes();
