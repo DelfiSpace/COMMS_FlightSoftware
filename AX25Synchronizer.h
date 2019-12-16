@@ -21,7 +21,7 @@ protected:
     int bitCounter = 0;
 
     bool compareBitArrays(uint8_t array1[], uint8_t array[2], uint8_t size);
-    AX25Frame* receivedFrameBuffer;
+    CLTUPacket* receivedFrameBuffer;
     int* AX25RXframesInBuffer;
     int* AX25RXbufferIndex;
 
@@ -30,7 +30,7 @@ protected:
     AX25Encoder encoder;
 
 public:
-    AX25Synchronizer(AX25Frame AX25FrameBuffer[], int &AX25RXframesInBuffer, int &AX25RXbufferIndex);
+    AX25Synchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXframesInBuffer, int &AX25RXbufferIndex);
 
     //AX25Frame receivedFrame;
     bool queByte(uint8_t byte);

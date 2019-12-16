@@ -249,11 +249,11 @@ bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
     if(size < MAX_PACKET_SIZE && this->AX25TXframesInBuffer < TX_FRAME_BUFFER){
         TXDestination[6] = 0xE0;//(('A' & 0x0F) << 1) | 0xE0;
         TXSource[6] = 0x61;//(('B' & 0x0F) << 1) | 0x61;
-        AX25TXFrameBuffer[AX25TXbufferIndex].setAdress(TXDestination, TXSource);
-        AX25TXFrameBuffer[AX25TXbufferIndex].setControl(false);
-        AX25TXFrameBuffer[AX25TXbufferIndex].setPID(0xF0);
-        AX25TXFrameBuffer[AX25TXbufferIndex].setPacket(data, size);
-        AX25TXFrameBuffer[AX25TXbufferIndex].calculateFCS();
+        AX25Frame::setAdress(AX25TXFrameBuffer[AX25TXbufferIndex], TXDestination, TXSource);
+        AX25Frame::setControl(AX25TXFrameBuffer[AX25TXbufferIndex], false);
+        AX25Frame::setPID(AX25TXFrameBuffer[AX25TXbufferIndex], 0xF0);
+        AX25Frame::setPacket(AX25TXFrameBuffer[AX25TXbufferIndex], data, size);
+        AX25Frame::calculateFCS(AX25TXFrameBuffer[AX25TXbufferIndex]);
 
         //txSize = AX25TXFrameBuffer[0].getSize();
         //txRFMessageBuffer = AX25TXFrameBuffer[AX25TXbufferIndex].getBytes();

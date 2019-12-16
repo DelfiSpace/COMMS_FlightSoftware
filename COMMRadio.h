@@ -42,26 +42,28 @@ protected:
     int txFlagInsert = 0;
 
 
-    AX25Frame AX25RXFrameBuffer[RX_FRAME_BUFFER];
+    CLTUPacket AX25RXFrameBuffer[RX_FRAME_BUFFER];
     int AX25RXframesInBuffer = 0;
     int AX25RXbufferIndex = 0;
 
-    AX25Frame AX25TXFrameBuffer[TX_FRAME_BUFFER];
+    CLTUPacket AX25TXFrameBuffer[TX_FRAME_BUFFER];
     int AX25TXframesInBuffer = 0;
     int AX25TXbufferIndex = 0;
 
     AX25Encoder encoder;
-    AX25Frame TXFrame;
-    AX25Synchronizer AX25Sync = AX25Synchronizer(AX25RXFrameBuffer, AX25RXframesInBuffer, AX25RXbufferIndex);
 
+    CLTUPacket txCLTUBuffer[TX_FRAME_BUFFER];
+    int txCLTUInBuffer = 0;
+    int txCLTUBufferIndex = 0;
 
-    CLTUPacket rxCLTUBuffer[TX_FRAME_BUFFER];
+    CLTUPacket rxCLTUBuffer[RX_FRAME_BUFFER];
     int rxCLTUInBuffer = 0;
     int rxCLTUBufferIndex = 0;
+
     APSynchronizer APSync = APSynchronizer(rxCLTUBuffer, rxCLTUInBuffer, rxCLTUBufferIndex);
+    AX25Synchronizer AX25Sync = AX25Synchronizer(rxCLTUBuffer, rxCLTUInBuffer, rxCLTUBufferIndex);
 
     LDPCDecoder LDPCdecoder;
-    bool LDPCdecodeEnabled = true;
 
     bool advancedMode = false;
     //true = AP, false = AX25;

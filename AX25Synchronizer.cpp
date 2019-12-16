@@ -8,7 +8,7 @@ int AX25Synchronizer::mod(int a, int b)
 
 
 
-AX25Synchronizer::AX25Synchronizer(AX25Frame AX25FrameBuffer[], int &AX25RXframesInBuffer,  int &AX25RXbufferIndex){
+AX25Synchronizer::AX25Synchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXframesInBuffer,  int &AX25RXbufferIndex){
     this->receivedFrameBuffer = AX25FrameBuffer;
     this->AX25RXframesInBuffer = &AX25RXframesInBuffer;
     this->AX25RXbufferIndex = &AX25RXbufferIndex;
@@ -79,9 +79,9 @@ bool AX25Synchronizer::rxBit(){
                 int destuffs = 0;
 
                 //destuff Bits and Fix Ordering (every octet is received LSB first).
-                this->receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] = 0;
+                this->receivedFrameBuffer[*AX25RXbufferIndex].data[0] = 0;
                 for(int k = 0; k < bitCounter - 8; k++){
-                    this->receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[destuffIndex] |= ((bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, BYTE_BUFFER_SIZE)] & 0x01) << destuffBitIndex);
+                    this->receivedFrameBuffer[*AX25RXbufferIndex].data[destuffIndex] |= ((bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, BYTE_BUFFER_SIZE)] & 0x01) << destuffBitIndex);
                     //serial.print(destuffBuffer[destuffIndex], HEX);
                     //serial.print(destuffIndex + destuffBitIndex, DEC);
                     //serial.println();
@@ -102,14 +102,14 @@ bool AX25Synchronizer::rxBit(){
                     if(destuffBitIndex >= 8){
                         destuffBitIndex = 0;
                         destuffIndex++;
-                        this->receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[destuffIndex] = 0;
+                        this->receivedFrameBuffer[*AX25RXbufferIndex].data[destuffIndex] = 0;
                     }
                 }
                 int packetBits = bitCounter - destuffs - 8;
 
                 if(mod(packetBits, 8) == 0 ){//&& receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] == 0x82){ // 'correct' packets are always whole bytes
-                    receivedFrameBuffer[*AX25RXbufferIndex].FrameSize = packetBits/8;
-                    if(this->receivedFrameBuffer[*AX25RXbufferIndex].checkFCS()){
+                    receivedFrameBuffer[*AX25RXbufferIndex].packetSize = packetBits/8;
+                    if(AX25Frame::checkFCS(this->receivedFrameBuffer[*AX25RXbufferIndex])){
                         this->hasReceivedFrame = true;
                         packetReceived = true;
                         //serial.println("!");
