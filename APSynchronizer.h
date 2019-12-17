@@ -5,11 +5,11 @@
  *      Author: Casper Broekhuizen
  */
 #include <CLTUPacket.h>
+#include <LDPCDecoder.h>
 #include "DSerial.h"
 #include "BitArray.h"
 #include "AX25Frame.h"
 #include "AX25Encoder.h"
-#include "LDPC_decoder.h"
 
 #ifndef APSYNC_H_
 #define APSYNC_H_
@@ -42,7 +42,6 @@ protected:
     bool pilotReceived = false;
 
     CLTUPacket* rxCLTU;
-    int* rxCLTUInBuffer;
     int* rxCLTUBufferIndex;
 
     int mod(int a, int b);
@@ -52,7 +51,7 @@ protected:
 
 
 public:
-    APSynchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXframesInBuffer, int &AX25RXbufferIndex);
+    APSynchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXbufferIndex);
 
     //AX25Frame receivedFrame;
     bool queByte(uint8_t byte);

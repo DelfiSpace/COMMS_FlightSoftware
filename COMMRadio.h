@@ -1,4 +1,5 @@
 #include <CLTUPacket.h>
+#include <LDPCDecoder.h>
 #include "AX25Encoder.h"
 #include "SX1276.h"
 #include "DSPI.h"
@@ -7,7 +8,6 @@
 #include "AX25Frame.h"
 #include "AX25Synchronizer.h"
 #include "Task.h"
-#include "LDPC_decoder.h"
 #include "APSynchronizer.h"
 
 #ifndef COMMRADIO_H_
@@ -48,12 +48,10 @@ protected:
     int txCLTUBufferIndex = 0;
 
     CLTUPacket rxCLTUBuffer[RX_FRAME_BUFFER];
-    int rxCLTUInBuffer = 0;
     int rxCLTUBufferIndex = 0;
-    int test = 0;
 
-    APSynchronizer APSync = APSynchronizer(rxCLTUBuffer, rxCLTUInBuffer, test);
-    AX25Synchronizer AX25Sync = AX25Synchronizer(rxCLTUBuffer, rxCLTUInBuffer, rxCLTUBufferIndex);
+    APSynchronizer APSync = APSynchronizer(rxCLTUBuffer, rxCLTUBufferIndex);
+    AX25Synchronizer AX25Sync = AX25Synchronizer(rxCLTUBuffer, rxCLTUBufferIndex);
 
     LDPCDecoder LDPCdecoder;
 

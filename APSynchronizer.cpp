@@ -17,9 +17,8 @@ int APSynchronizer::clip(int a, int b)
 
 
 
-APSynchronizer::APSynchronizer(CLTUPacket rxCLTU[], int &rxCLTUInBuffer,  int &rxCLTUBufferIndex){
+APSynchronizer::APSynchronizer(CLTUPacket rxCLTU[], int &rxCLTUBufferIndex){
     this->rxCLTU = rxCLTU;
-    this->rxCLTUInBuffer = &rxCLTUInBuffer;
     this->rxCLTUBufferIndex = &rxCLTUBufferIndex;
 }
 

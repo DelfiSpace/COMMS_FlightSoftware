@@ -10,9 +10,8 @@ int AX25Synchronizer::clip(int a, int b)
 { return a>b ? a-mod(a,b) : a; }
 
 
-AX25Synchronizer::AX25Synchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXframesInBuffer,  int &AX25RXbufferIndex){
+AX25Synchronizer::AX25Synchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXbufferIndex){
     this->receivedFrameBuffer = AX25FrameBuffer;
-    this->AX25RXframesInBuffer = &AX25RXframesInBuffer;
     this->AX25RXbufferIndex = &AX25RXbufferIndex;
 }
 
