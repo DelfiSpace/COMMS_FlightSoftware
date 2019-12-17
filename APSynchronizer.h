@@ -15,7 +15,7 @@
 #define APSYNC_H_
 #define AX25_RX_FRAME_BUFFER 10
 
-#define AP_BYTE_BUFFER_SIZE    20*64
+#define AP_BYTE_BUFFER_SIZE    100*64
 #define AP_BYTE_QUE_SIZE       1024
 
 class APSynchronizer
@@ -34,7 +34,7 @@ protected:
     uint8_t APBitBuffer[AP_BYTE_BUFFER_SIZE];
     int APBitBufferIndex = 0;
     int synchronizerState = 1;
-    int allowedSeqError = 1;
+    int allowedSeqError = 2;
     //0 = Inactive, 1 = Searching, 2 = Reading Pilot CLTU, 3 = obtaining CLTUs
     uint8_t pilotCLTU[64];
     int CLTUbitCounter = 0;

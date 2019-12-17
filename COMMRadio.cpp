@@ -51,7 +51,33 @@ void COMMRadio::runTask(){
             }
         }
     }
- // If codeblock ready, decode
+
+    // If codeblock ready, decode
+    for(int k = 0; k < RX_FRAME_BUFFER; k++){
+        int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_FRAME_BUFFER);
+        if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true && rxCLTUBuffer[buf_index].isCoded == true){
+            bool decoded = false;
+            for(int j = 0; j < 20; j++){
+                if(LDPCDecoder::iterateBitflip(rxCLTUBuffer[buf_index].data)){
+                    rxCLTUBuffer[buf_index].packetSize = 32;
+                    rxCLTUBuffer[buf_index].isCoded = false;
+                    serial.print("DECODED PACKET!  :");
+                    serial.print(j,DEC);
+                    serial.println();
+                    decoded = true;
+                    break;
+                }
+            }
+            if(!decoded){
+                serial.println("BROKEN PACKET!");
+                rxCLTUBuffer[buf_index].isCoded = false;
+                rxCLTUBuffer[buf_index].isNotRecoverable = true;
+                break;
+            }
+        }
+    }
+
+
 }
 
 uint8_t COMMRadio::onTransmit(){

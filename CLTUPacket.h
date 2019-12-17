@@ -26,6 +26,7 @@ public:
     bool isReady = false;
     bool isLocked = false;
     bool isCoded = false;
+    bool isNotRecoverable = false;
 
     int getSize();
     uint8_t* getBytes();
