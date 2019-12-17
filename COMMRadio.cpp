@@ -299,31 +299,31 @@ void COMMRadio::toggleReceivePrint(){
 
     serial.println();
     serial.println(" ============ ");
-    serial.print("Amount of Frames in Buffer: ");
-    serial.print(this->rxCLTUInBuffer, DEC);
-    serial.println();
+    serial.println("Printing Buffer:");
     serial.println(" ============ ");
-    for(int k = 0; k < rxCLTUInBuffer; k++){
-        serial.println("*******");
-        int buf_index = mod((rxCLTUBufferIndex - rxCLTUInBuffer + k), RX_FRAME_BUFFER);
-        int packet_size = rxCLTUBuffer[buf_index].packetSize;
-        if (packet_size > 64){
-            serial.print("||WARNING||");
-            packet_size = 1;
+    for(int k = 0; k < RX_FRAME_BUFFER; k++){
+        int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_FRAME_BUFFER);
+        if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true){
+            serial.println("*******");
+            int packet_size = rxCLTUBuffer[buf_index].packetSize;
+            if (packet_size > 64){
+                serial.print("||WARNING||");
+                packet_size = 1;
+            }
+            serial.print("Index of Packet:  ");
+            serial.print(buf_index, DEC);
+            serial.print("  |   Packet Size:  ");
+            serial.print(packet_size, DEC);
+            serial.println();
+            serial.println("*******");
+            uint8_t* frameData = this->rxCLTUBuffer[buf_index].data;
+            for(int j = 0; j < packet_size; j++){
+                serial.print(frameData[j], HEX);
+                serial.print("|");
+            }
+            serial.println();
+            serial.println(" ============ ");
         }
-        serial.print("Index of Packet:  ");
-        serial.print(buf_index, DEC);
-        serial.print("  |   Packet Size:  ");
-        serial.print(packet_size, DEC);
-        serial.println();
-        serial.println("*******");
-        uint8_t* frameData = this->rxCLTUBuffer[buf_index].data;
-        for(int j = 0; j < packet_size; j++){
-            serial.print(frameData[j], HEX);
-            serial.print("|");
-        }
-        serial.println();
-        serial.println(" ============ ");
     }
     //TODO: OPMODE
     //serial.print(rxReady);
@@ -336,19 +336,42 @@ void COMMRadio::toggleMode(){
 
 
 uint8_t COMMRadio::getNumberOfRXFrames(){
-    return this->rxCLTUInBuffer;
+    int count = 0;
+    for(int k = 0; k < RX_FRAME_BUFFER; k++){
+        int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_FRAME_BUFFER);
+        if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true){
+            count++;
+        }
+    }
+    return count;
 };
 
 uint8_t COMMRadio::getSizeOfRXFrame(){
-    int tmp = mod((rxCLTUBufferIndex - rxCLTUInBuffer), AX25_RX_FRAME_BUFFER);
-    return this->rxCLTUBuffer[tmp].getSize();
+    for(int k = 0; k < RX_FRAME_BUFFER; k++){
+        int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_FRAME_BUFFER);
+        if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true){
+            return rxCLTUBuffer[buf_index].packetSize;
+        }
+    }
+    return 0;
 }
 
 uint8_t* COMMRadio::getRXFrame(){
-    int tmp = mod((rxCLTUBufferIndex - rxCLTUInBuffer), AX25_RX_FRAME_BUFFER);
-        return this->rxCLTUBuffer[tmp].getBytes();
+    for(int k = 0; k < RX_FRAME_BUFFER; k++){
+        int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_FRAME_BUFFER);
+        if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true){
+            return rxCLTUBuffer[buf_index].data;
+        }
+    }
+    return 0;
 }
 
 void COMMRadio::popFrame(){
-    rxCLTUInBuffer--;
+    for(int k = 0; k < RX_FRAME_BUFFER; k++){
+        int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_FRAME_BUFFER);
+        if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true){
+            rxCLTUBuffer[buf_index].isReady = false;
+            break;
+        }
+    }
 }

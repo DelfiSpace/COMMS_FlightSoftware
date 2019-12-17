@@ -4,8 +4,10 @@ extern DSerial serial;
 
 
 int AX25Synchronizer::mod(int a, int b)
-{ return (a%b+b)%b; }
+{ return a<0 ? (a%b+b)%b : a%b; }
 
+int AX25Synchronizer::clip(int a, int b)
+{ return a>b ? a-mod(a,b) : a; }
 
 
 AX25Synchronizer::AX25Synchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXframesInBuffer,  int &AX25RXbufferIndex){
@@ -71,7 +73,6 @@ bool AX25Synchronizer::rxBit(){
             //minimum frame length is 4 bytes, maximum bits is decided by Buffer.
 
             if(bitCounter > 8*(14+2+2) && bitCounter < 8*(256)){
-
                 //start destuffing bits:
                 int destuffIndex = 0;
                 int destuffBitIndex = 0;
@@ -114,18 +115,21 @@ bool AX25Synchronizer::rxBit(){
                     if(AX25Frame::checkFCS(this->receivedFrameBuffer[*AX25RXbufferIndex])){
                         this->hasReceivedFrame = true;
                         packetReceived = true;
-                        //serial.println("!");
-                        if(*AX25RXframesInBuffer < RX_FRAME_BUFFER-1){
-                            *AX25RXframesInBuffer = *AX25RXframesInBuffer + 1;
-                        }
-                        serial.print(*AX25RXframesInBuffer, DEC);
-                        serial.print("  -  ");
+                        receivedFrameBuffer[*AX25RXbufferIndex].isLocked = false;
+                        receivedFrameBuffer[*AX25RXbufferIndex].isReady = true;
+
                         serial.print(*AX25RXbufferIndex, DEC);
                         serial.print("  -  ");
                         serial.print(this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize, DEC);
                         serial.println();
 
-                        *AX25RXbufferIndex = mod( *AX25RXbufferIndex + 1 , RX_FRAME_BUFFER);
+                        *AX25RXbufferIndex = *AX25RXbufferIndex + 1;
+//*AX25RXbufferIndex = (*AX25RXbufferIndex)%RX_FRAME_BUFFER;
+
+                        receivedFrameBuffer[*AX25RXbufferIndex].isLocked = true;
+                        receivedFrameBuffer[*AX25RXbufferIndex].isReady = false;
+
+
                     }else{
                         receivedFrameBuffer[*AX25RXbufferIndex].packetSize = oldSize;
                     }

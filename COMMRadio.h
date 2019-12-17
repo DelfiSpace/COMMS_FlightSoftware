@@ -50,8 +50,9 @@ protected:
     CLTUPacket rxCLTUBuffer[RX_FRAME_BUFFER];
     int rxCLTUInBuffer = 0;
     int rxCLTUBufferIndex = 0;
+    int test = 0;
 
-    APSynchronizer APSync = APSynchronizer(rxCLTUBuffer, rxCLTUInBuffer, rxCLTUBufferIndex);
+    APSynchronizer APSync = APSynchronizer(rxCLTUBuffer, rxCLTUInBuffer, test);
     AX25Synchronizer AX25Sync = AX25Synchronizer(rxCLTUBuffer, rxCLTUInBuffer, rxCLTUBufferIndex);
 
     LDPCDecoder LDPCdecoder;

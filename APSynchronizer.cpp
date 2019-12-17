@@ -11,6 +11,10 @@ extern DSerial serial;
 int APSynchronizer::mod(int a, int b)
 { return (a%b+b)%b; }
 
+int APSynchronizer::clip(int a, int b)
+{ return a>b ? a-mod(a,b) : a; }
+
+
 
 
 APSynchronizer::APSynchronizer(CLTUPacket rxCLTU[], int &rxCLTUInBuffer,  int &rxCLTUBufferIndex){
@@ -191,16 +195,25 @@ bool APSynchronizer::rxBit(){
                                         BitArray::setBit(this->rxCLTU[*rxCLTUBufferIndex].data, CLTUbitCounter, BitArray::getBit(APBitBuffer, APBitBufferIndex) == 0x01);
                                         CLTUbitCounter++;
                                         if(CLTUbitCounter >= 8*64){
-                                            serial.print("receivedCLTU: ");
-                                            serial.print(incomingCLTUs, DEC);
-                                            serial.println();
                                             CLTUbitCounter = 0;
                                             rxCLTU[*rxCLTUBufferIndex].packetSize = 64;
-                                            *rxCLTUBufferIndex = mod(*rxCLTUBufferIndex + 1, 20);
-                                            if(*rxCLTUInBuffer < RX_FRAME_BUFFER-1){
-                                                *rxCLTUInBuffer = *rxCLTUInBuffer+1;
-                                            }
+
+                                            rxCLTU[*rxCLTUBufferIndex].isLocked = false;
+                                            rxCLTU[*rxCLTUBufferIndex].isCoded = true;
+                                            rxCLTU[*rxCLTUBufferIndex].isReady = true;
+
+
+                                            serial.print(*rxCLTUBufferIndex, DEC);
+                                            serial.print("  -  ");
+                                            serial.print(this->rxCLTU[*rxCLTUBufferIndex].packetSize, DEC);
+                                            serial.println();
+                                            *rxCLTUBufferIndex = mod(*rxCLTUBufferIndex + 1, RX_FRAME_BUFFER);
                                             incomingCLTUs--;
+
+                                            rxCLTU[*rxCLTUBufferIndex].isLocked = true;
+                                            rxCLTU[*rxCLTUBufferIndex].isCoded = false;
+                                            rxCLTU[*rxCLTUBufferIndex].isReady = false;
+
                                         }
                                     }else{
                                         this->synchronizerState = 1;

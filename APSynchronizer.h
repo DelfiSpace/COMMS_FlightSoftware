@@ -46,6 +46,7 @@ protected:
     int* rxCLTUBufferIndex;
 
     int mod(int a, int b);
+    int clip(int a, int b);
 
     AX25Encoder encoder;
 

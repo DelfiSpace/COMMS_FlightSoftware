@@ -26,6 +26,7 @@ protected:
     int* AX25RXbufferIndex;
 
     int mod(int a, int b);
+    int clip(int a, int b);
 
     AX25Encoder encoder;
 
