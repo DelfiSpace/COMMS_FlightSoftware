@@ -332,10 +332,7 @@ void COMMRadio::toggleReceivePrint(){
         if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true){
             serial.println("*******");
             int packet_size = rxCLTUBuffer[buf_index].packetSize;
-            if (packet_size > 64){
-                serial.print("||WARNING||");
-                packet_size = 1;
-            }
+
             serial.print("Index of Packet:  ");
             serial.print(buf_index, DEC);
             serial.print("  |   Packet Size:  ");
