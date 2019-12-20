@@ -1,3 +1,5 @@
+#include <CLTUPacket.h>
+#include <LDPCDecoder.h>
 #include "AX25Encoder.h"
 #include "SX1276.h"
 #include "DSPI.h"
@@ -6,24 +8,13 @@
 #include "AX25Frame.h"
 #include "AX25Synchronizer.h"
 #include "Task.h"
-#include "LDPC_decoder.h"
+#include "APSynchronizer.h"
 
 #ifndef COMMRADIO_H_
 #define COMMRADIO_H_
 #define PACKET_SIZE    100
 #define UPRAMP_BYTES   70
 #define DOWNRAMP_BYTES 20
-
-#define AX25_TX_FRAME_BUFFER 20
-
-//July 14, 2009 Hallvard Furuseth
-static const unsigned char BitsSetTable256[256] =
-{
-#   define B2(n) n,     n+1,     n+1,     n+2
-#   define B4(n) B2(n), B2(n+1), B2(n+1), B2(n+2)
-#   define B6(n) B4(n), B4(n+1), B4(n+1), B4(n+2)
-    B6(0), B6(1), B6(1), B6(2)
-};
 
 class COMMRadio : public Task
 {
@@ -50,21 +41,22 @@ protected:
     int txBitIndex = 0;
     int txFlagInsert = 0;
 
-
-    AX25Frame AX25RXFrameBuffer[AX25_RX_FRAME_BUFFER];
-    int AX25RXframesInBuffer = 0;
-    int AX25RXbufferIndex = 0;
-
-    AX25Frame AX25TXFrameBuffer[AX25_TX_FRAME_BUFFER];
-    int AX25TXframesInBuffer = 0;
-    int AX25TXbufferIndex = 0;
-
     AX25Encoder encoder;
-    AX25Frame TXFrame;
-    AX25Synchronizer AX25Sync = AX25Synchronizer(AX25RXFrameBuffer, AX25RXframesInBuffer, AX25RXbufferIndex);
+
+    CLTUPacket txCLTUBuffer[TX_FRAME_BUFFER];
+    int txCLTUInBuffer = 0;
+    int txCLTUBufferIndex = 0;
+
+    CLTUPacket rxCLTUBuffer[RX_FRAME_BUFFER];
+    int rxCLTUBufferIndex = 0;
+
+    APSynchronizer APSync = APSynchronizer(rxCLTUBuffer, rxCLTUBufferIndex);
+    AX25Synchronizer AX25Sync = AX25Synchronizer(rxCLTUBuffer, rxCLTUBufferIndex);
 
     LDPCDecoder LDPCdecoder;
-    bool LDPCdecodeEnabled = true;
+
+    bool advancedMode = false;
+    //true = AP, false = AX25;
 
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);
@@ -77,6 +69,7 @@ public:
 
     bool transmitData(uint8_t data[], uint8_t size);
     void toggleReceivePrint();
+    void toggleMode();
 
     void sendPacket();
     bool quePacketAX25(uint8_t dataIn[], uint8_t size);

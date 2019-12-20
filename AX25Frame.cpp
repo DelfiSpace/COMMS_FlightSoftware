@@ -41,65 +41,65 @@ unsigned char AX25Frame::reverseByteOrder(unsigned char x)
     return table[x];
 }
 
-void AX25Frame::setData(uint8_t data[], uint8_t size){
-    this->setAdress(&data[0], &data[7]);
-    this->setControl(data[14]);
-    this->setPID(data[15]);
-    this->setPacket(&data[16], size - 18);
-    this->setFCS(&data[size-2]);
+void AX25Frame::setData(CLTUPacket &inPacket, uint8_t data[], uint8_t size){
+    AX25Frame::setAdress(inPacket, &data[0], &data[7]);
+    AX25Frame::setControl(inPacket, data[14]);
+    AX25Frame::setPID(inPacket, data[15]);
+    AX25Frame::setPacket(inPacket, &data[16], size - 18);
+    AX25Frame::setFCS(inPacket, &data[size-2]);
 };
 
-void AX25Frame::setFCS(uint8_t FCS[]){
-    this->FrameBytes[FrameSize-2] = FCS[0];
-    this->FrameBytes[FrameSize-1] = FCS[1];
-    //this->FCSField = ( (uint16_t)  (FCS[1] << 8)) | FCS[0];
+void AX25Frame::setFCS(CLTUPacket &inPacket, uint8_t FCS[]){
+    inPacket.data[inPacket.packetSize-2] = FCS[0];
+    inPacket.data[inPacket.packetSize-1] = FCS[1];
+    //AX25Frame::FCSField = ( (uint16_t)  (FCS[1] << 8)) | FCS[0];
 };
 
-void AX25Frame::setAdress(uint8_t Destination[], uint8_t Source[]){
+void AX25Frame::setAdress(CLTUPacket &inPacket, uint8_t Destination[], uint8_t Source[]){
     for(int i = 0; i < 7; i++){
-        //this->addressField[i] = Destination[i];
-        this->FrameBytes[i] = Destination[i];
+        //AX25Frame::addressField[i] = Destination[i];
+        inPacket.data[i] = Destination[i];
     }
     for(int i = 0; i < 7; i++){
-        //this->addressField[7+i] = Source[i];
-        this->FrameBytes[7+i] = Source[i];
+        //AX25Frame::addressField[7+i] = Source[i];
+        inPacket.data[i+7] = Source[i];
     }
 
 };
 
-void AX25Frame::setControl(bool PF){
+void AX25Frame::setControl(CLTUPacket &inPacket, bool PF){
     if(PF){
-        //this->controlField = 0x13; //000 1 00 11
-        this->FrameBytes[14] = 0x13;
+        //AX25Frame::controlField = 0x13; //000 1 00 11
+        inPacket.data[14] = 0x13;
     }else{
-        //this->controlField = 0x03; //000 0 00 11
-        this->FrameBytes[14] = 0x03;
+        //AX25Frame::controlField = 0x03; //000 0 00 11
+        inPacket.data[14] = 0x03;
     }
-    //this->FrameBytes[14] = controlField;
+    //inPacket.data[14] = controlField;
 };
 
-void AX25Frame::setControl(uint8_t controlByte){
-    //this->controlField = controlByte; //000 1 00 11
-    this->FrameBytes[14] = controlByte;//controlField;
+void AX25Frame::setControl(CLTUPacket &inPacket, uint8_t controlByte){
+    //AX25Frame::controlField = controlByte; //000 1 00 11
+    inPacket.data[14] = controlByte;//controlField;
 };
 
-void AX25Frame::setPID(uint8_t PIDByte){
-    //this->PIDField = PIDByte; //000 1 00 11
-    this->FrameBytes[15] = PIDByte;
+void AX25Frame::setPID(CLTUPacket &inPacket, uint8_t PIDByte){
+    //AX25Frame::PIDField = PIDByte; //000 1 00 11
+    inPacket.data[15] = PIDByte;
 };
 
 
-void AX25Frame::setPacket(uint8_t packet[], uint8_t size){
+void AX25Frame::setPacket(CLTUPacket &inPacket, uint8_t packet[], uint8_t size){
     for(int i = 0; i < size; i++){
-        //this->packetField[i] = packet[i];
-        this->FrameBytes[16+i] = packet[i];
+        //AX25Frame::packetField[i] = packet[i];
+        inPacket.data[16+i] = packet[i];
     }
 
-    //this->packetSize = size;
-    this->FrameSize = size + 18;
+    //AX25Frame::packetSize = size;
+    inPacket.packetSize = size + 18;
 };
 
-void AX25Frame::calculateFCS(){
+void AX25Frame::calculateFCS(CLTUPacket &inPacket){
     //serial.println("calculating?");
     //fcs poly: 1 0001 0000 0010 0001  (17bits);
 
@@ -109,14 +109,14 @@ void AX25Frame::calculateFCS(){
 
     uint16_t FCSBuff = 0xFFFF;
 
-    for(int k = 0; k < (this->FrameSize-2); k++)
+    for(int k = 0; k < (inPacket.packetSize-2); k++)
     {
         for (int i = 0; i < 8; i++)
         {
             guard = (FCSBuff & 0x01) != 0;
             FCSBuff = FCSBuff >> 1;     //Shift right
             FCSBuff = FCSBuff & 0x7FFF; //Set most left bit to zero;
-            bit = (this->FrameBytes[k] & (1 << i)) != 0;
+            bit = (inPacket.data[k] & (1 << i)) != 0;
             if (bit != guard)
             {
                 FCSBuff = FCSBuff ^ 0x8408;
@@ -130,43 +130,11 @@ void AX25Frame::calculateFCS(){
     //FCSField |= FCSByte2;
     //FCSField |= FCSByte1 << 8;
     //Since FCS is send bit 15 first, and all other is send in octets with lsb first, the byte order is changed and the bytes are reversed
-    this->FrameBytes[FrameSize-2] = FCSByte1;
-    this->FrameBytes[FrameSize-1] = FCSByte2;
+    inPacket.data[inPacket.packetSize - 2] = FCSByte1;
+    inPacket.data[inPacket.packetSize - 1] = FCSByte2;
 };
 
-void AX25Frame::calculateFCS(uint8_t data[], uint8_t size){
-    //fcs poly: 1 0001 0000 0010 0001  (17bits);
-    bool guard;
-    bool bit;
-
-    uint16_t FCSBuff = 0xFFFF;
-
-    for(int k = 0; k < (size); k++)
-    {
-        for (int i = 0; i < 8; i++)
-        {
-            guard = (FCSBuff & 0x01) != 0;
-            FCSBuff = FCSBuff >> 1;     //Shift right
-            FCSBuff = FCSBuff & 0x7FFF; //Set most left bit to zero;
-            bit = (data[k] & (1 << i)) != 0;
-            if (bit != guard)
-            {
-                FCSBuff = FCSBuff ^ 0x8408;
-            }
-        }
-    }
-    FCSBuff = FCSBuff ^ 0xFFFF;
-    uint8_t FCSByte1 = ((uint8_t) (FCSBuff & 0x00FF));
-    uint8_t FCSByte2 = ((uint8_t) ((FCSBuff & 0xFF00) >> 8));
-    //FCSField = 0;
-    //FCSField |= FCSByte2;
-    //FCSField |= FCSByte1 << 8;
-    //Since FCS is send bit 15 first, and all other is send in octets with lsb first, the byte order is changed and the bytes are reversed
-    this->FrameBytes[FrameSize-2] = FCSByte1;
-    this->FrameBytes[FrameSize-1] = FCSByte2;
-};
-
-bool AX25Frame::checkFCS(){
+bool AX25Frame::checkFCS(CLTUPacket &inPacket){
     //serial.println("calculating?");
     //fcs poly: 1 0001 0000 0010 0001  (17bits);
 
@@ -176,14 +144,14 @@ bool AX25Frame::checkFCS(){
 
     uint16_t FCSBuff = 0xFFFF;
 
-    for(int k = 0; k < (this->FrameSize-2); k++)
+    for(int k = 0; k < (inPacket.packetSize-2); k++)
     {
         for (int i = 0; i < 8; i++)
         {
             guard = (FCSBuff & 0x01) != 0;
             FCSBuff = FCSBuff >> 1;     //Shift right
             FCSBuff = FCSBuff & 0x7FFF; //Set most left bit to zero;
-            bit = (this->FrameBytes[k] & (1 << i)) != 0;
+            bit = (inPacket.data[k] & (1 << i)) != 0;
             if (bit != guard)
             {
                 FCSBuff = FCSBuff ^ 0x8408;
@@ -204,20 +172,58 @@ bool AX25Frame::checkFCS(){
 //    serial.print(FrameBytes[FrameSize-2], HEX);
 //    serial.print(FrameBytes[FrameSize-1], HEX);
 //    serial.println();
-    if( FCSByte1 == FrameBytes[FrameSize-2] && FCSByte2 == FrameBytes[FrameSize-1]){
+    if( FCSByte1 == inPacket.data[inPacket.packetSize-2] && FCSByte2 == inPacket.data[inPacket.packetSize-1]){
         return true;
     }else{
         return false;
     }
 }
-uint8_t * AX25Frame::getBytes(){
-    return this->FrameBytes;
-};
 
-uint8_t AX25Frame::getSize(){
-    return this->FrameSize;
+bool AX25Frame::checkFCS(CLTUPacket &inPacket, int size){
+    //serial.println("calculating?");
+    //fcs poly: 1 0001 0000 0010 0001  (17bits);
+
+    //PKT -> FrameBytes
+    bool guard;
+    bool bit;
+
+    uint16_t FCSBuff = 0xFFFF;
+
+    for(int k = 0; k < (size-2); k++)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            guard = (FCSBuff & 0x01) != 0;
+            FCSBuff = FCSBuff >> 1;     //Shift right
+            FCSBuff = FCSBuff & 0x7FFF; //Set most left bit to zero;
+            bit = (inPacket.data[k] & (1 << i)) != 0;
+            if (bit != guard)
+            {
+                FCSBuff = FCSBuff ^ 0x8408;
+            }
+        }
+    }
+    FCSBuff = FCSBuff ^ 0xFFFF;
+    uint8_t FCSByte1 = ((uint8_t) (FCSBuff & 0x00FF));
+    uint8_t FCSByte2 = ((uint8_t) ((FCSBuff & 0xFF00) >> 8));
+    //FCSField = 0;
+    //FCSField |= FCSByte2;
+    //FCSField |= FCSByte1 << 8;
+//    serial.print("Calculated CRC: ");
+//    serial.print(FCSByte1, HEX);
+//    serial.print(FCSByte2, HEX);
+//    serial.println();
+//    serial.print("Received CRC: ");
+//    serial.print(FrameBytes[FrameSize-2], HEX);
+//    serial.print(FrameBytes[FrameSize-1], HEX);
+//    serial.println();
+    if( FCSByte1 == inPacket.data[size-2] && FCSByte2 == inPacket.data[size-1]){
+        return true;
+    }else{
+        return false;
+    }
 }
 
-uint8_t AX25Frame::getPacketSize(){
-    return this->FrameSize - 18;
+uint8_t AX25Frame::getPacketSize(CLTUPacket &inPacket){
+    return inPacket.packetSize - 18;
 }

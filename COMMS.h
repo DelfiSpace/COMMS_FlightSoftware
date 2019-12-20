@@ -9,6 +9,7 @@
 #define EPS_H_
 
 #include <driverlib.h>
+#include <LDPCDecoder.h>
 #include "msp.h"
 #include "DelfiPQcore.h"
 #include "PQ9Bus.h"
@@ -30,7 +31,6 @@
 #include "SX1276.h"
 #include "RadioService.h"
 #include "COMMRadio.h"
-#include "LDPC_decoder.h"
 
 
 #define FCLOCK 48000000

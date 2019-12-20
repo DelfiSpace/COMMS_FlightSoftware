@@ -26,6 +26,7 @@
 #define RADIO_CMD_SETTXIDLE      17
 
 #define RADIO_CMD_PRINT_RX       20
+#define RADIO_CMD_TOGGLE_MODE    21
 
 #define RADIO_CMD_ACCEPT        2
 #define RADIO_CMD_REJECT        3

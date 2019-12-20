@@ -1,10 +1,10 @@
 #include "DSerial.h"
 #include "AX25Frame.h"
 #include "AX25Encoder.h"
+#include "CLTUPacket.h"
 
 #ifndef AX25SYNC_H_
 #define AX25SYNC_H_
-#define AX25_RX_FRAME_BUFFER 10
 
 #define BYTE_BUFFER_SIZE    1024
 #define BYTE_QUE_SIZE       512
@@ -21,16 +21,16 @@ protected:
     int bitCounter = 0;
 
     bool compareBitArrays(uint8_t array1[], uint8_t array[2], uint8_t size);
-    AX25Frame* receivedFrameBuffer;
-    int* AX25RXframesInBuffer;
+    CLTUPacket* receivedFrameBuffer;
     int* AX25RXbufferIndex;
 
     int mod(int a, int b);
+    int clip(int a, int b);
 
     AX25Encoder encoder;
 
 public:
-    AX25Synchronizer(AX25Frame AX25FrameBuffer[], int &AX25RXframesInBuffer, int &AX25RXbufferIndex);
+    AX25Synchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXbufferIndex);
 
     //AX25Frame receivedFrame;
     bool queByte(uint8_t byte);

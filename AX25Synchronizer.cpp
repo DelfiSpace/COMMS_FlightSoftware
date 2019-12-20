@@ -4,13 +4,14 @@ extern DSerial serial;
 
 
 int AX25Synchronizer::mod(int a, int b)
-{ return (a%b+b)%b; }
+{ return a<0 ? (a%b+b)%b : a%b; }
+
+int AX25Synchronizer::clip(int a, int b)
+{ return a>b ? a-mod(a,b) : a; }
 
 
-
-AX25Synchronizer::AX25Synchronizer(AX25Frame AX25FrameBuffer[], int &AX25RXframesInBuffer,  int &AX25RXbufferIndex){
+AX25Synchronizer::AX25Synchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXbufferIndex){
     this->receivedFrameBuffer = AX25FrameBuffer;
-    this->AX25RXframesInBuffer = &AX25RXframesInBuffer;
     this->AX25RXbufferIndex = &AX25RXbufferIndex;
 }
 
@@ -71,7 +72,6 @@ bool AX25Synchronizer::rxBit(){
             //minimum frame length is 4 bytes, maximum bits is decided by Buffer.
 
             if(bitCounter > 8*(14+2+2) && bitCounter < 8*(256)){
-
                 //start destuffing bits:
                 int destuffIndex = 0;
                 int destuffBitIndex = 0;
@@ -79,9 +79,9 @@ bool AX25Synchronizer::rxBit(){
                 int destuffs = 0;
 
                 //destuff Bits and Fix Ordering (every octet is received LSB first).
-                this->receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] = 0;
+                this->receivedFrameBuffer[*AX25RXbufferIndex].data[0] = 0;
                 for(int k = 0; k < bitCounter - 8; k++){
-                    this->receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[destuffIndex] |= ((bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, BYTE_BUFFER_SIZE)] & 0x01) << destuffBitIndex);
+                    this->receivedFrameBuffer[*AX25RXbufferIndex].data[destuffIndex] |= ((bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, BYTE_BUFFER_SIZE)] & 0x01) << destuffBitIndex);
                     //serial.print(destuffBuffer[destuffIndex], HEX);
                     //serial.print(destuffIndex + destuffBitIndex, DEC);
                     //serial.println();
@@ -102,25 +102,35 @@ bool AX25Synchronizer::rxBit(){
                     if(destuffBitIndex >= 8){
                         destuffBitIndex = 0;
                         destuffIndex++;
-                        this->receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[destuffIndex] = 0;
+                        this->receivedFrameBuffer[*AX25RXbufferIndex].data[destuffIndex] = 0;
                     }
                 }
                 int packetBits = bitCounter - destuffs - 8;
 
-                if(mod(packetBits, 8) == 0 && receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] == 0x82){ // 'correct' packets are always whole bytes
-                    receivedFrameBuffer[*AX25RXbufferIndex].FrameSize = packetBits/8;
-                    if(this->receivedFrameBuffer[*AX25RXbufferIndex].checkFCS()){
+                if(mod(packetBits, 8) == 0 ){//&& receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] == 0x82){ // 'correct' packets are always whole bytes
+                    int oldSize = receivedFrameBuffer[*AX25RXbufferIndex].packetSize;
+                    receivedFrameBuffer[*AX25RXbufferIndex].packetSize = packetBits/8;
+
+                    if(AX25Frame::checkFCS(this->receivedFrameBuffer[*AX25RXbufferIndex])){
                         this->hasReceivedFrame = true;
                         packetReceived = true;
-                        //serial.println("!");
-                        *AX25RXbufferIndex = mod( *AX25RXbufferIndex + 1 , AX25_RX_FRAME_BUFFER);
-                        if(*AX25RXframesInBuffer < AX25_RX_FRAME_BUFFER){
-                            *AX25RXframesInBuffer = *AX25RXframesInBuffer + 1;
-                        }
-                        serial.print(*AX25RXframesInBuffer, DEC);
-                        //serial.print("  -  ");
-                        //serial.print(*AX25RXbufferIndex, DEC);
+                        receivedFrameBuffer[*AX25RXbufferIndex].isLocked = false;
+                        receivedFrameBuffer[*AX25RXbufferIndex].isReady = true;
+
+                        serial.print(*AX25RXbufferIndex, DEC);
+                        serial.print("  -  ");
+                        serial.print(this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize, DEC);
                         serial.println();
+
+                        *AX25RXbufferIndex = *AX25RXbufferIndex + 1;
+//*AX25RXbufferIndex = (*AX25RXbufferIndex)%RX_FRAME_BUFFER;
+
+                        receivedFrameBuffer[*AX25RXbufferIndex].isLocked = true;
+                        receivedFrameBuffer[*AX25RXbufferIndex].isReady = false;
+
+
+                    }else{
+                        receivedFrameBuffer[*AX25RXbufferIndex].packetSize = oldSize;
                     }
                 }
                 bitCounter = 0;
