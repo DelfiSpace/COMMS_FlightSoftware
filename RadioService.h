@@ -1,6 +1,5 @@
 
 #include "Service.h"
-#include "PQ9Frame.h"
 #include "DSerial.h"
 #include "DSPI.h"
 #include "SX1276.h"
@@ -40,6 +39,6 @@ protected:
 public:
     RadioService(COMMRadio &radio_in);
 
-    virtual bool process( PQ9Frame &command, PQ9Bus &interface, PQ9Frame &workingBbuffer );
+    virtual bool process( PQ9Frame &command, PQ9Sender &interface, PQ9Frame &workingBbuffer );
 };
 

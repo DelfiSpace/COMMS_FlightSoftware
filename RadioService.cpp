@@ -7,7 +7,7 @@ RadioService::RadioService(COMMRadio &radio_in):
     radio(&radio_in){
 
 };
-bool RadioService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Frame &workingBuffer)
+bool RadioService::process(PQ9Frame &command, PQ9Sender &interface, PQ9Frame &workingBuffer)
 {
     if (command.getPayload()[0] == RADIO_SERVICE)
     {
