@@ -24,16 +24,21 @@
 #define HAS_WORKSPACE_VERSION 1
 #endif
 
+extern DSerial serial;
 
 uint8_t HexStringToNibble(char c){
-    return ((c) >= 'a' ? (c) - 87 : (c) - 48);
+    if ((c) >= 'a'){
+        return c - 87;
+    }else if ((c) >= 'A'){
+        return c - 55;
+    }else{
+        return c - 48;
+    }
 }
 
 uint8_t NibblesToByte(uint8_t msb, uint8_t lsb){
     return ((msb << 4) | lsb);
 }
-
-extern DSerial serial;
 
 /**
  *
