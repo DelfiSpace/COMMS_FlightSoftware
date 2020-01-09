@@ -18,6 +18,13 @@
 #define HAS_SW_VERSION 1
 #endif
 
+#ifndef WORKSPACE_VERSION
+#define HAS_WORKSPACE_VERSION 0
+#else
+#define HAS_WORKSPACE_VERSION 1
+#endif
+
+
 uint8_t HexStringToNibble(char c){
     return ((c) >= 'a' ? (c) - 87 : (c) - 48);
 }
@@ -51,10 +58,10 @@ bool SoftwareVersionService::process(PQ9Frame &command, PQ9Sender &interface, PQ
         workingBuffer.setSource(interface.getAddress());
         workingBuffer.getPayload()[0] = SOFTWAREVERSION_SERVICE;
 
-        if (command.getPayload()[1] == SOFTWAREVERSION_GETVERSION)
+        if (command.getPayload()[1] == SOFTWAREVERSION_GETSOFTWAREVERSION)
         {
             workingBuffer.setPayloadSize(2);
-            serial.println("SoftwareVersionService: Version Request");
+            serial.println("SoftwareVersionService: Software Version Request");
             // respond to ping
             workingBuffer.getPayload()[1] = SOFTWAREVERSION_ACCEPT;
             if(HAS_SW_VERSION == 1){
@@ -63,14 +70,36 @@ bool SoftwareVersionService::process(PQ9Frame &command, PQ9Sender &interface, PQ
                 serial.println("has SW Version!");
                 serial.print("SW VERSION:  ");
                 serial.println(xstr(SW_VERSION));
-                serial.println(xstr(WORKSPACE_VERSION));
                 uint8_t versionString[] = {xstr(SW_VERSION)};
-                workingBuffer.getPayload()[2] = NibblesToByte(0,HexStringToNibble(versionString[0]));
-                workingBuffer.getPayload()[3] = NibblesToByte(HexStringToNibble(versionString[1]),HexStringToNibble(versionString[2]));
-                workingBuffer.getPayload()[4] = NibblesToByte(HexStringToNibble(versionString[3]),HexStringToNibble(versionString[4]));
-                workingBuffer.getPayload()[5] = NibblesToByte(HexStringToNibble(versionString[5]),HexStringToNibble(versionString[6]));
+                workingBuffer.getPayload()[2] = NibblesToByte(HexStringToNibble(versionString[0]),HexStringToNibble(versionString[1]));
+                workingBuffer.getPayload()[3] = NibblesToByte(HexStringToNibble(versionString[2]),HexStringToNibble(versionString[3]));
+                workingBuffer.getPayload()[4] = NibblesToByte(HexStringToNibble(versionString[4]),HexStringToNibble(versionString[5]));
+                workingBuffer.getPayload()[5] = NibblesToByte(HexStringToNibble(versionString[6]),HexStringToNibble(versionString[7]));
             }else{
                 serial.println("has no SW Version!");
+                workingBuffer.setPayloadSize(2);
+                workingBuffer.getPayload()[1] = SOFTWAREVERSION_ERROR;
+            }
+        }
+        else if (command.getPayload()[1] == SOFTWAREVERSION_GETWORKSPACEVERSION)
+        {
+            workingBuffer.setPayloadSize(2);
+            serial.println("SoftwareVersionService: Workspace Version Request");
+            // respond to ping
+            workingBuffer.getPayload()[1] = SOFTWAREVERSION_ACCEPT;
+            if(HAS_WORKSPACE_VERSION == 1){
+                workingBuffer.setPayloadSize(6);
+                workingBuffer.getPayload()[1] = SOFTWAREVERSION_ACCEPT;
+                serial.println("has Workspace Version!");
+                serial.print("WORKSPACE VERSION:  ");
+                serial.println(xstr(WORKSPACE_VERSION));
+                uint8_t versionString[] = {xstr(WORKSPACE_VERSION)};
+                workingBuffer.getPayload()[2] = NibblesToByte(HexStringToNibble(versionString[0]),HexStringToNibble(versionString[1]));
+                workingBuffer.getPayload()[3] = NibblesToByte(HexStringToNibble(versionString[2]),HexStringToNibble(versionString[3]));
+                workingBuffer.getPayload()[4] = NibblesToByte(HexStringToNibble(versionString[4]),HexStringToNibble(versionString[5]));
+                workingBuffer.getPayload()[5] = NibblesToByte(HexStringToNibble(versionString[6]),HexStringToNibble(versionString[7]));
+            }else{
+                serial.println("has no Workspace Version!");
                 workingBuffer.setPayloadSize(2);
                 workingBuffer.getPayload()[1] = SOFTWAREVERSION_ERROR;
             }
