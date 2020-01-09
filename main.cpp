@@ -1,6 +1,12 @@
 
 #include "COMMS.h"
 
+#ifndef STRINGIFY_H_
+#define STRINGIFT_H
+#define xstr(s) str(s)
+#define str(s) #s
+#endif
+
 // I2C busses
 DWire I2Cinternal(0);
 
@@ -135,6 +141,10 @@ void main(void)
     rx.init();
 
     serial.println("COMMS booting...");
+    serial.print("SOFTWARE VERSION: ");
+    serial.println(xstr(SW_VERSION));
+    serial.print("WORKSPACE VERION: ");
+    serial.println(xstr(WORKSPACE_VERSION));
 
     TaskManager::start(tasks, 2);
 }

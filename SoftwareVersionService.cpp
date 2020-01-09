@@ -6,8 +6,11 @@
  */
 #include <SoftwareVersionService.h>
 
+#ifndef STRINGIFY_H_
+#define STRINGIFT_H
 #define xstr(s) str(s)
 #define str(s) #s
+#endif
 
 #ifndef SW_VERSION
 #define HAS_SW_VERSION 0
@@ -39,7 +42,7 @@ extern DSerial serial;
  *        false     :           Frame is not directed to this Service
  *
  */
-bool SoftwareVersionService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Frame &workingBuffer)
+bool SoftwareVersionService::process(PQ9Frame &command, PQ9Sender &interface, PQ9Frame &workingBuffer)
 {
     if (command.getPayload()[0] == SOFTWAREVERSION_SERVICE) //Check if this frame is directed to this service
     {
@@ -60,6 +63,7 @@ bool SoftwareVersionService::process(PQ9Frame &command, PQ9Bus &interface, PQ9Fr
                 serial.println("has SW Version!");
                 serial.print("SW VERSION:  ");
                 serial.println(xstr(SW_VERSION));
+                serial.println(xstr(WORKSPACE_VERSION));
                 uint8_t versionString[] = {xstr(SW_VERSION)};
                 workingBuffer.getPayload()[2] = NibblesToByte(0,HexStringToNibble(versionString[0]));
                 workingBuffer.getPayload()[3] = NibblesToByte(HexStringToNibble(versionString[1]),HexStringToNibble(versionString[2]));

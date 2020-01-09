@@ -22,7 +22,7 @@
 class SoftwareVersionService: public Service
 {
  public:
-     virtual bool process( PQ9Frame &command, PQ9Bus &interface, PQ9Frame &workingBbuffer );
+     virtual bool process( PQ9Frame &command, PQ9Sender &interface, PQ9Frame &workingBbuffer );
 };
 
 #endif /* SOFTWAREVERSIONSERVICE_H_ */

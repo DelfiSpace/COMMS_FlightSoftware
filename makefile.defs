@@ -7,6 +7,9 @@
 # Also one should ensure that git is installed and accessible from the shell
 ################################################################################################################################################################
 
-GIT_HASH := $(shell git rev-parse --short HEAD)
+SW_GIT_HASH := $(shell git rev-parse --short HEAD)
+WORKSPACE_FOLDER := $(shell git rev-parse --show-superproject-working-tree)
+WORKSPACE_GIT_HASH := $(shell cd $(WORKSPACE_FOLDER) && git rev-parse --short HEAD)
 
-GEN_OPTS__FLAG += --define=SW_VERSION=""${GIT_HASH}""
+GEN_OPTS__FLAG += --define=SW_VERSION=""${SW_GIT_HASH}""
+GEN_OPTS__FLAG += --define=WORKSPACE_VERSION=""${WORKSPACE_GIT_HASH}""
