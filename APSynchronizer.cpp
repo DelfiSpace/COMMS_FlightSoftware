@@ -9,7 +9,7 @@
 extern DSerial serial;
 
 int APSynchronizer::mod(int a, int b)
-{ return (a%b+b)%b; }
+{ return a>0 ? (a%b) : (a%b+b)%b; }
 
 int APSynchronizer::clip(int a, int b)
 { return a>b ? a-mod(a,b) : a; }
@@ -51,212 +51,88 @@ bool APSynchronizer::rxBit(){
         //serial.print(byteBufferIndex);
         uint8_t inBit = encoder.NRZIdecodeBit((inByte >> (7-i))& 0x01);
         inBit = encoder.descrambleBit(inBit);
-        BitArray::setBit(bitBuffer, bitBufferIndex, inBit == 0x01);
-        bitCounter++;
+        switch(synchronizerState){
+            case 0 : //Inactive
+                break;
+            case 1 : //Searching/Waiting for Start-Seq
+                flagDetectBuffer[flagDetectBitIndex] = inBit;
+                flagDetectBitIndex = (flagDetectBitIndex+1)%64;
 
-        if(     BitArray::getBit(bitBuffer, mod(bitBufferIndex - 7, 8*AP_BYTE_BUFFER_SIZE)) == 0 &&
-                BitArray::getBit(bitBuffer, mod(bitBufferIndex - 6, 8*AP_BYTE_BUFFER_SIZE)) == 1 &&
-                BitArray::getBit(bitBuffer, mod(bitBufferIndex - 5, 8*AP_BYTE_BUFFER_SIZE)) == 1 &&
-                BitArray::getBit(bitBuffer, mod(bitBufferIndex - 4, 8*AP_BYTE_BUFFER_SIZE)) == 1 &&
-                BitArray::getBit(bitBuffer, mod(bitBufferIndex - 3, 8*AP_BYTE_BUFFER_SIZE)) == 1 &&
-                BitArray::getBit(bitBuffer, mod(bitBufferIndex - 2, 8*AP_BYTE_BUFFER_SIZE)) == 1 &&
-                BitArray::getBit(bitBuffer, mod(bitBufferIndex - 1, 8*AP_BYTE_BUFFER_SIZE)) == 1 &&
-                BitArray::getBit(bitBuffer, mod(bitBufferIndex - 0, 8*AP_BYTE_BUFFER_SIZE)) == 0
-            ){
-            //last received bit completed a flag, the tail of a transfer exists of flags, hence check byteBuffer for packet;
-            //minimum frame length is 4 bytes, maximum bits is decided by Buffer.
-
-            if(bitCounter > 8*(18) && bitCounter < 8*(AP_BYTE_BUFFER_SIZE)){
-
-                //start destuffing bits:
-                int destuffIndex = 0;
-                int destuffBitIndex = 0;
-                int destuffCount = 0;
-                int destuffs = 0;
-
-                //destuff Bits and Fix Ordering (every octet is received LSB first).
-                this->destuffedBitBuffer[0] = 0;
-                for(int k = 0; k < bitCounter - 8; k++){
-                    uint8_t curBit = BitArray::getBit(bitBuffer, mod(bitBufferIndex - bitCounter + 1 + k, 8*AP_BYTE_BUFFER_SIZE));
-                    this->destuffedBitBuffer[destuffIndex] |= curBit << destuffBitIndex;
-                    //serial.print(destuffBuffer[destuffIndex], HEX);
-                    //serial.print(destuffIndex + destuffBitIndex, DEC);
-                    //serial.println();
-                    if(curBit == 0x01){
-                        destuffCount++;
-                        //serial.print("1");
-                    }
-                    if(curBit == 0x00){
-                        destuffCount = 0;
-                        //serial.print("0");
-                    }
-                    if(destuffCount == 5){
-                        destuffCount = 0;
-                        destuffs++;;
-                        k = k + 1; //skip next bit.
-                    }
-                    destuffBitIndex++;
-                    if(destuffBitIndex >= 8){
-                        destuffBitIndex = 0;
-                        destuffIndex++;
-                        this->destuffedBitBuffer[destuffIndex] = 0;
-                    }
+                int matchErrors = 0;
+                for(int p = 0; p < 64; p++){
+                    //serial.print(BitArray::getBit(flagDetectBuffer, this->mod(flagDetectBitIndex-64+p,64)), DEC);
+                    //serial.print(BitArray::getBit(this->startSeq, p), DEC);
+                    matchErrors += (flagDetectBuffer[this->mod(flagDetectBitIndex-64+p,64)] == BitArray::getBit(this->startSeq, p)) ? 0 : 1;
                 }
-                int packetBits = bitCounter - destuffs - 8;
+                //serial.println();
+                if(matchErrors <= this->allowedSeqError){
+                    serial.print(matchErrors, DEC);
+                    serial.println("  START SEQ DETECTED!");
+                    flagDetectBitIndex = 0;
+                    this->synchronizerState = 2;
+                }
+                break;
+            case 2 : //Reading CLTUs
+                BitArray::setBit(this->rxCLTU[*rxCLTUBufferIndex].data, CLTUbitCounter, inBit);
+                CLTUbitCounter++;
 
-                if(mod(packetBits, 8) == 0 ){//&& destuffedBitBuffer[0] == 0x82){ // 'correct' packets are always whole bytes
-                    //
-                    //
-                    //
-                    //
-                    //
-                    if(this->destuffedBitBuffer[0] == 0xAA && this->destuffedBitBuffer[1] == 0xAA){
+                if(CLTUbitCounter <= 8*8){
+                    BitArray::setBit(flagDetectBuffer, flagDetectBitIndex, inBit);
+                    flagDetectBitIndex = (flagDetectBitIndex+1)%64;
+                }
 
-                        //
-                        //
-                        //
-                        //
-                        //
-                        //
-                        //
-                        //
+                if(CLTUbitCounter == 8*8){
+                    //Check for Tail Marker
+                    int matchErrors = 0;
+                    for(int p = 0; p < 16; p++){
+                        //serial.print(BitArray::getBit(flagDetectBuffer, this->mod(flagDetectBitIndex-64+p,64)), DEC);
+                        //serial.print(BitArray::getBit(this->startSeq, p), DEC);
+                        matchErrors += (BitArray::getBit(flagDetectBuffer, this->mod(flagDetectBitIndex-16+p,64)) == BitArray::getBit(this->tailSeq, p)) ? 0 : 1;
+                    }
+                    if(matchErrors <= this->allowedSeqError){
+                        serial.print(matchErrors, DEC);
+                        serial.println("  TAIL SEQ DETECTED!");
+                        CLTUbitCounter = 0;
+                        this->synchronizerState = 1;
+                    }
+                    flagDetectBitIndex = 0;
+                }
+                else if(CLTUbitCounter == 8*64){
+                    //Save CLTU
+                    CLTUbitCounter = 0;
+                    rxCLTU[*rxCLTUBufferIndex].packetSize = 64;
 
-
-                        for(int iter = 0; iter < packetBits-16; iter++){
-                            uint8_t inBit = BitArray::getBit(destuffedBitBuffer, iter);
-                            BitArray::setBit(APBitBuffer, APBitBufferIndex, inBit == 0x01);
-                            switch(synchronizerState){
-                                case 0 : //Inactive
-                                    break;
-                                case 1 : //Searching/Waiting for Start-Seq
-                                    if(pilotReceived){
-                                        pilotReceived = false;
-                                    }
-                                    //check for start seq: 1110 1011 1001 0000
-                                    int matchCoeff = 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 15, 8*AP_BYTE_BUFFER_SIZE)) == 1) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 14, 8*AP_BYTE_BUFFER_SIZE)) == 1) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 13, 8*AP_BYTE_BUFFER_SIZE)) == 1) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 12, 8*AP_BYTE_BUFFER_SIZE)) == 0) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 11, 8*AP_BYTE_BUFFER_SIZE)) == 1) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 10, 8*AP_BYTE_BUFFER_SIZE)) == 0) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 9, 8*AP_BYTE_BUFFER_SIZE)) == 1) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 8, 8*AP_BYTE_BUFFER_SIZE)) == 1) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 7, 8*AP_BYTE_BUFFER_SIZE)) == 1) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 6, 8*AP_BYTE_BUFFER_SIZE)) == 0) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 5, 8*AP_BYTE_BUFFER_SIZE)) == 0) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 4, 8*AP_BYTE_BUFFER_SIZE)) == 1) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 3, 8*AP_BYTE_BUFFER_SIZE)) == 0) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 2, 8*AP_BYTE_BUFFER_SIZE)) == 0) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 1, 8*AP_BYTE_BUFFER_SIZE)) == 0) ? 1 : 0;
-                                    matchCoeff +=  (BitArray::getBit(APBitBuffer, mod(APBitBufferIndex - 0, 8*AP_BYTE_BUFFER_SIZE)) == 0) ? 1 : 0;
-                                    if(matchCoeff >= 16 - allowedSeqError){
-                                        serial.println("START SEQ DETECTED!");
-                                        this->synchronizerState = 2;
-                                    }
-                                    break;
-                                case 2 : //Reading CLTUs
-                                    //test case: read 1 pilot CLTU
-//                                    serial.print(APBitBufferIndex, DEC);
-//                                    serial.print(" - ");
-//                                    serial.print(CLTUIndex, DEC);
-//                                    serial.println();
-                                    if(!pilotReceived){
-                                        BitArray::setBit(pilotCLTU, CLTUbitCounter, BitArray::getBit(APBitBuffer, APBitBufferIndex) == 0x01);
-                                        CLTUbitCounter += 1;
-                                        if(CLTUbitCounter >= 8*64){
-                                            CLTUbitCounter = 0;
-                                            serial.println("PILOT SEQUENCE RECEIVED!");
-                                            bool decoded = false;
-                                            for(int decoder_iter = 0; decoder_iter<10; decoder_iter++){
-                                                if(LDPCDecoder::iterateBitflip(pilotCLTU)){
-                                                    serial.print("LDPC Iterations:  ");
-                                                    serial.print(decoder_iter, DEC);
-                                                    serial.println();
-                                                    decoded = true;
-                                                    break;
-                                                }
-                                            }
-                                            if(decoded){
-                                                pilotReceived = true;
-                                                incomingCLTUs = pilotCLTU[0];
-                                                for(int w = 0; w < 32; w++){
-                                                    serial.print(pilotCLTU[w], HEX);
-                                                    serial.print("|");
-                                                }
-                                            }else{
-                                                serial.print("!! PILOT DECODING FAILED !!");
-                                                this->synchronizerState = 1;
-                                            }
-                                            serial.println();
-                                        }
-                                    }else if(incomingCLTUs > 0){
-                                        BitArray::setBit(this->rxCLTU[*rxCLTUBufferIndex].data, CLTUbitCounter, BitArray::getBit(APBitBuffer, APBitBufferIndex) == 0x01);
-                                        CLTUbitCounter++;
-                                        if(CLTUbitCounter >= 8*64){
-                                            CLTUbitCounter = 0;
-                                            rxCLTU[*rxCLTUBufferIndex].packetSize = 64;
-
-                                            rxCLTU[*rxCLTUBufferIndex].isLocked = false;
-                                            rxCLTU[*rxCLTUBufferIndex].isCoded = true;
-                                            rxCLTU[*rxCLTUBufferIndex].isReady = true;
+                    rxCLTU[*rxCLTUBufferIndex].isLocked = false;
+                    rxCLTU[*rxCLTUBufferIndex].isCoded = true;
+                    rxCLTU[*rxCLTUBufferIndex].isReady = true;
 
 
-                                            serial.print(*rxCLTUBufferIndex, DEC);
-                                            serial.print("  -  ");
-                                            serial.print(this->rxCLTU[*rxCLTUBufferIndex].packetSize, DEC);
-                                            serial.println();
-                                            *rxCLTUBufferIndex = mod(*rxCLTUBufferIndex + 1, RX_FRAME_BUFFER);
-                                            incomingCLTUs--;
+                    serial.print(*rxCLTUBufferIndex, DEC);
+                    serial.print("  -  ");
+                    serial.print(this->rxCLTU[*rxCLTUBufferIndex].packetSize, DEC);
+                    serial.println();
+                    *rxCLTUBufferIndex = mod(*rxCLTUBufferIndex + 1, RX_FRAME_BUFFER);
 
-                                            rxCLTU[*rxCLTUBufferIndex].isLocked = true;
-                                            rxCLTU[*rxCLTUBufferIndex].isCoded = false;
-                                            rxCLTU[*rxCLTUBufferIndex].isReady = false;
+                    rxCLTU[*rxCLTUBufferIndex].isLocked = true;
+                    rxCLTU[*rxCLTUBufferIndex].isCoded = false;
+                    rxCLTU[*rxCLTUBufferIndex].isReady = false;
 
-                                        }
-                                    }else{
-                                        this->synchronizerState = 1;
-                                    }
-                                    break;
-                                default : //should not happen
-                                    this->synchronizerState = 0;
-                                    break;
-                            }
-                            //Detect Start Sequence:
-//                            serial.print("APBitBufferIndex: ");
-//                            serial.print(APBitBufferIndex);
-//                            serial.print("  :  ");
-//                            serial.print(BitArray::getBit(APBitBuffer, APBitBufferIndex), HEX);
-                            APBitBufferIndex = mod(APBitBufferIndex + 1, 8 * AP_BYTE_BUFFER_SIZE);
-
-                        }
-
+                    incomingCLTUs++;
+                    if(incomingCLTUs >= 5){
+                        incomingCLTUs = 0;
+                        this->synchronizerState = 1;
                     }
 
-
-
-
-
-
-
-
-                    //
-                    //
-                    //
-                    //
-                    //
-                    //
-                    //
-                    //
-
+                }else if(CLTUbitCounter > 8*64){
+                    serial.println("Impossible state, should not happen!");
+                    CLTUbitCounter = 0;
+                    this->synchronizerState = 1;
                 }
-                bitCounter = 0;
-            }else{
-                bitCounter = 0;
-            }
+                break;
+            default : //should not happen
+                this->synchronizerState = 1;
+                break;
         }
-        bitBufferIndex = mod(bitBufferIndex + 1, 8* AP_BYTE_BUFFER_SIZE);
-
     }
 
     return packetReceived;

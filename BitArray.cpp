@@ -16,3 +16,13 @@ void BitArray::setBit(uint8_t byteArray[], int bitIndex, bool state){
         xorBit(byteArray,bitIndex);
     }
 }
+
+int BitArray::compareArrays(uint8_t byteArray1[], uint8_t byteArray2[], int bitSize){
+    int score = 0;
+    for( int k = 0; k < bitSize; k++){
+        if(getBit(byteArray1, k) != getBit(byteArray1, k)){
+            score += 1;
+        }
+    }
+    return score;
+}

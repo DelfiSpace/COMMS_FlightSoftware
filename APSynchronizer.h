@@ -15,7 +15,7 @@
 #define APSYNC_H_
 #define AX25_RX_FRAME_BUFFER 10
 
-#define AP_BYTE_BUFFER_SIZE    100*64
+#define AP_BYTE_BUFFER_SIZE    8
 #define AP_BYTE_QUE_SIZE       1024
 
 class APSynchronizer
@@ -24,22 +24,17 @@ protected:
     uint8_t byteQue[AP_BYTE_QUE_SIZE];
     int byteQueIndex = 0;
 
-    uint8_t bitBuffer[AP_BYTE_BUFFER_SIZE];
+    uint8_t tailSeq[2] = {0xEB, 0x90};
+    uint8_t startSeq[8] = {0x00, 0x00, 0xEB, 0x90, 0x00, 0x00, 0xEB, 0x90};
 
-    uint8_t destuffedBitBuffer[AP_BYTE_BUFFER_SIZE];
+    uint8_t flagDetectBuffer[64];
+    int flagDetectBitIndex = 0;
 
-    int bitBufferIndex = 0;
-    int bitCounter = 0;
-
-    uint8_t APBitBuffer[AP_BYTE_BUFFER_SIZE];
-    int APBitBufferIndex = 0;
     int synchronizerState = 1;
     int allowedSeqError = 2;
-    //0 = Inactive, 1 = Searching, 2 = Reading Pilot CLTU, 3 = obtaining CLTUs
-    uint8_t pilotCLTU[64];
-    int CLTUbitCounter = 0;
     int incomingCLTUs = 0;
-    bool pilotReceived = false;
+
+    int CLTUbitCounter = 0;
 
     CLTUPacket* rxCLTU;
     int* rxCLTUBufferIndex;

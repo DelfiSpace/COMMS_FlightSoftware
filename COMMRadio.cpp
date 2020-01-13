@@ -46,7 +46,8 @@ void COMMRadio::runTask(){
     }else{
         for(int k = 0; k < 10; k++){
             AX25Sync.rxBit();
-            if(AX25Sync.bytesInQue <= 0){
+            APSync.rxBit();
+            if(AX25Sync.bytesInQue <= 0 && APSync.bytesInQue <= 0 ){
                 break;
             }
         }
@@ -157,6 +158,7 @@ void COMMRadio::onReceive(uint8_t data)
             APSync.queByte(data);
         }else{
             AX25Sync.queByte(data);
+            APSync.queByte(data);
         }
     }
 };
