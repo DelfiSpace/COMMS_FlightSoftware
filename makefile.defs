@@ -17,11 +17,10 @@ SW_GIT_HASH := D$(shell git rev-parse --short HEAD)
 endif
 
 ifeq ($(shell cd $(WORKSPACE_FOLDER) && git diff --stat),)
-WORKSPACE_GIT_HASH := 0$(shell cd $(WORKSPACE_FOLDER) && git rev-parse --short HEAD)
+SW_GIT_HASH := $(SW_GIT_HASH)0$(shell cd $(WORKSPACE_FOLDER) && git rev-parse --short HEAD)
 else
-WORKSPACE_GIT_HASH := D$(shell cd $(WORKSPACE_FOLDER) && git rev-parse --short HEAD)
+SW_GIT_HASH := $(SW_GIT_HASH)D$(shell cd $(WORKSPACE_FOLDER) && git rev-parse --short HEAD)
 endif
 
 
 GEN_OPTS__FLAG += --define=SW_VERSION=""${SW_GIT_HASH}""
-GEN_OPTS__FLAG += --define=WORKSPACE_VERSION=""${WORKSPACE_GIT_HASH}""

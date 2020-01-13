@@ -1,11 +1,14 @@
 
 #include "COMMS.h"
 
-#ifndef STRINGIFY_H_
-#define STRINGIFT_H
-#define xstr(s) str(s)
-#define str(s) #s
+#ifndef SW_VERSION
+#define HAS_SW_VERSION 0
+#else
+#define HAS_SW_VERSION 1
 #endif
+
+// SW Version
+uint8_t softwareVersion[8];
 
 // I2C busses
 DWire I2Cinternal(0);
@@ -83,11 +86,12 @@ void rxcallback()
     rx.GPIO_IRQHandler();
 }
 
+
 /**
  * main.c
  */
 void main(void)
-{
+    {
     // initialize the MCU:
     // - clock source
     // - clock tree
@@ -141,10 +145,18 @@ void main(void)
     rx.init();
 
     serial.println("COMMS booting...");
-    serial.print("SOFTWARE VERSION: ");
-    serial.println(xstr(SW_VERSION));
-    serial.print("WORKSPACE VERION: ");
-    serial.println(xstr(WORKSPACE_VERSION));
+
+    //get SW Number
+    if(HAS_SW_VERSION == 1){
+        serial.println("has SW Version!");
+        serial.print("SOFTWARE VERSION:  ");
+        serial.println(xstr(SW_VERSION));
+        uint8_t versionString[] = xstr(SW_VERSION);
+        SWversion = SoftwareVersionService(versionString);
+    }else{
+        serial.println("WARNING: no SW Version!");
+        SWversion = SoftwareVersionService();
+    }
 
     TaskManager::start(tasks, 2);
 }
