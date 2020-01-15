@@ -16,6 +16,6 @@
 class TestService: public Service
 {
  public:
-     virtual bool process( PQ9Frame &command, DataBus &interface, PQ9Frame &workingBbuffer );
+     virtual bool process( DataFrame &command, DataBus &interface, DataFrame &workingBbuffer );
 };
 #endif /* TESTSERVICE_H_ */

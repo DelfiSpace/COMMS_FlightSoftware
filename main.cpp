@@ -21,7 +21,7 @@ SoftwareUpdateService SWUpdate;
 Service* services[] = { &hk, &ping, &reset, &SWUpdate, &tst };
 
 // COMMS board tasks
-PQ9CommandHandler cmdHandler(pq9bus, services, 5);
+CommandHandler<PQ9Frame> cmdHandler(pq9bus, services, 5);
 PeriodicTask timerTask(FCLOCK, periodicTask);
 Task* tasks[] = { &cmdHandler, &timerTask };
 
@@ -34,7 +34,7 @@ SX1276 rx(controlSPI, &RXpins);
 unsigned long uptime = 0;
 
 // TODO: remove when bug in CCS has been solved
-void kickWatchdog(PQ9Frame &newFrame)
+void kickWatchdog(DataFrame &newFrame)
 {
     cmdHandler.received(newFrame);
 }
