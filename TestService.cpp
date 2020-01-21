@@ -11,7 +11,7 @@ extern DSerial serial;
 extern DSPI controlSPI;
 extern SX1276 tx, rx;
 
-bool TestService::process(DataFrame &command, DataBus &interface, DataFrame &workingBuffer)
+bool TestService::process(DataMessage &command, DataMessage &workingBuffer)
 {
     if (command.getPayload()[0] == 0)
     {

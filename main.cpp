@@ -22,8 +22,10 @@ Service* services[] = { &hk, &ping, &reset, &SWUpdate, &tst };
 
 // COMMS board tasks
 CommandHandler<PQ9Frame> cmdHandler(pq9bus, services, 5);
-PeriodicTask timerTask(FCLOCK, periodicTask);
-Task* tasks[] = { &cmdHandler, &timerTask };
+Task timerTask(periodicTask);
+Task* periodicTasks[] = {&timerTask};
+PeriodicTaskNotifier periodicNotifier = PeriodicTaskNotifier(FCLOCK, periodicTasks, 1);
+Task* tasks[] = { &cmdHandler, &timerTask};
 
 SX1276Pins TXpins, RXpins;
 
@@ -86,6 +88,13 @@ void main(void)
     // - clock tree
     DelfiPQcore::initMCU();
 
+    // Initialize SPI master
+    controlSPI.initMaster(DSPI::MODE0, DSPI::MSBFirst, 1000000);
+
+    serial.begin( );                        // baud rate: 9600 bps
+    pq9bus.begin(115200, COMMS_ADDRESS);    // baud rate: 115200 bps
+                                            // address COMMS (4)
+
     // initialize the reset handler:
     // - prepare the watch-dog
     // - initialize the pins for the hardware watch-dog
@@ -95,13 +104,6 @@ void main(void)
     // Initialize I2C masters
     I2Cinternal.setFastMode();
     I2Cinternal.begin();
-
-    // Initialize SPI master
-    controlSPI.initMaster(DSPI::MODE0, DSPI::MSBFirst, 1000000);
-
-    serial.begin( );                        // baud rate: 9600 bps
-    pq9bus.begin(115200, COMMS_ADDRESS);    // baud rate: 115200 bps
-                                            // address COMMS (4)
 
     // link the command handler to the PQ9 bus:
     // every time a new command is received, it will be forwarded to the command handler
@@ -135,5 +137,5 @@ void main(void)
 
     serial.println("COMMS booting...");
 
-    TaskManager::start(tasks, 2);
+    TaskManager::start(tasks, 3);
 }
