@@ -137,5 +137,5 @@ void main(void)
 
     serial.println("COMMS booting...");
 
-    TaskManager::start(tasks, 3);
+    TaskManager::start(tasks, 2);
 }
