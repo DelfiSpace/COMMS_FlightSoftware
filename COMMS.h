@@ -32,7 +32,7 @@
 
 #define FCLOCK 48000000
 
-#define COMMS_ADDRESS     4
+#define COMMS_ADDRESS     204
 
 // callback functions
 void acquireTelemetry(COMMSTelemetryContainer *tc);
