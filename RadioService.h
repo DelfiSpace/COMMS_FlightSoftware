@@ -39,6 +39,6 @@ protected:
 public:
     RadioService(COMMRadio &radio_in);
 
-    virtual bool process( PQ9Frame &command, PQ9Sender &interface, PQ9Frame &workingBbuffer );
+    virtual bool process( DataMessage &command, DataMessage &workingBbuffer );
 };
 

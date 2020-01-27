@@ -11,7 +11,7 @@ extern DSerial serial;
 extern DSPI controlSPI;
 extern SX1276 tx, rx;
 
-bool TestService::process(PQ9Frame &command, PQ9Sender &interface, PQ9Frame &workingBuffer)
+bool TestService::process(DataMessage &command, DataMessage &workingBuffer)
 {
     if (command.getPayload()[0] == 0)
     {

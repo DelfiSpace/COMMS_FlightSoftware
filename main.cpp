@@ -36,15 +36,17 @@ SoftwareUpdateService SWUpdate;
 Service* services[] = {&radioService, &hk, &ping, &reset, &SWUpdate, &tst };
 
 // COMMS board tasks
-PQ9CommandHandler cmdHandler(pq9bus, services, 5);
-PeriodicTask timerTask(FCLOCK, periodicTask);
-Task* tasks[] = { &cmdHandler, &timerTask, &commRadio };
+CommandHandler<PQ9Frame> cmdHandler(pq9bus, services, 5);
+Task timerTask(periodicTask);
+Task* periodicTasks[] = {&timerTask};
+PeriodicTaskNotifier periodicNotifier = PeriodicTaskNotifier(FCLOCK, periodicTasks, 1);
+Task* tasks[] = { &cmdHandler, &timerTask, &commRadio};
 
 // system uptime
 unsigned long uptime = 0;
 
 // TODO: remove when bug in CCS has been solved
-void kickWatchdog(PQ9Frame &newFrame)
+void kickWatchdog(DataFrame &newFrame)
 {
     cmdHandler.received(newFrame);
 }
@@ -95,6 +97,13 @@ void main(void)
     // - clock source
     // - clock tree
     DelfiPQcore::initMCU();
+
+    // Initialize SPI master
+    controlSPI.initMaster(DSPI::MODE0, DSPI::MSBFirst, 1000000);
+
+    serial.begin( );                        // baud rate: 9600 bps
+    pq9bus.begin(115200, COMMS_ADDRESS);    // baud rate: 115200 bps
+                                            // address COMMS (4)
 
     // initialize the reset handler:
     // - prepare the watch-dog
