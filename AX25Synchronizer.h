@@ -2,6 +2,7 @@
 #include "AX25Frame.h"
 #include "AX25Encoder.h"
 #include "CLTUPacket.h"
+#include "BitArray.h"
 
 #ifndef AX25SYNC_H_
 #define AX25SYNC_H_
@@ -16,7 +17,6 @@ protected:
     uint8_t byteQue[BYTE_QUE_SIZE];
     int byteQueIndex = 0;
 
-    int byteBufferIndex = 0;
     int bitBufferIndex = 0;
     int bitCounter = 0;
 

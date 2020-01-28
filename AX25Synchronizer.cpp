@@ -26,7 +26,7 @@ bool AX25Synchronizer::compareBitArrays(uint8_t array1[], uint8_t array2[], uint
 }
 
 //void AX25Synchronizer::queBit(uint8_t inBit){
-//    bitBuffer[byteBufferIndex] = inBit;
+//    byteBuffer[byteBufferIndex] = inBit;
 //    byteBufferIndex = (byteBufferIndex + 1)%BYTE_BUFFER_SIZE;
 //}
 bool AX25Synchronizer::queByte(uint8_t inByte){
@@ -51,23 +51,12 @@ bool AX25Synchronizer::rxBit(){
 
     for(int i = 0; i < 8; i++){
         //serial.print(byteBufferIndex);
-        uint8_t inBit = encoder.NRZIdecodeBit((inByte >> (7-i))& 0x01);
+        uint8_t inBit = encoder.NRZIdecodeBit(BitArray::getBit(&inByte, i, 8));
         inBit = encoder.descrambleBit(inBit);
-        bitBuffer[byteBufferIndex] = inBit;
+        BitArray::setBit(bitBuffer, bitBufferIndex, inBit == 0x01);
         bitCounter++;
-        //for(int i = 7; i >= 0; i--){
-        //    serial.print(byteBuffer[(byteBufferIndex - i)%BYTE_BUFFER_SIZE], DEC);
-        //}
-        //serial.println();
-        if(     bitBuffer[mod(byteBufferIndex - 7, BYTE_BUFFER_SIZE)] == 0 &&
-                bitBuffer[mod(byteBufferIndex - 6, BYTE_BUFFER_SIZE)] == 1 &&
-                bitBuffer[mod(byteBufferIndex - 5, BYTE_BUFFER_SIZE)] == 1 &&
-                bitBuffer[mod(byteBufferIndex - 4, BYTE_BUFFER_SIZE)] == 1 &&
-                bitBuffer[mod(byteBufferIndex - 3, BYTE_BUFFER_SIZE)] == 1 &&
-                bitBuffer[mod(byteBufferIndex - 2, BYTE_BUFFER_SIZE)] == 1 &&
-                bitBuffer[mod(byteBufferIndex - 1, BYTE_BUFFER_SIZE)] == 1 &&
-                bitBuffer[mod(byteBufferIndex - 0, BYTE_BUFFER_SIZE)] == 0
-            ){
+
+        if(BitArray::getByte(bitBuffer, bitBufferIndex - 7, 8*BYTE_BUFFER_SIZE) == 0x7E ){
             //last received bit completed a flag, the tail of a transfer exists of flags, hence check byteBuffer for packet;
             //minimum frame length is 4 bytes, maximum bits is decided by Buffer.
 
@@ -76,38 +65,32 @@ bool AX25Synchronizer::rxBit(){
                 int destuffIndex = 0;
                 int destuffBitIndex = 0;
                 int destuffCount = 0;
-                int destuffs = 0;
 
                 //destuff Bits and Fix Ordering (every octet is received LSB first).
                 this->receivedFrameBuffer[*AX25RXbufferIndex].data[0] = 0;
                 for(int k = 0; k < bitCounter - 8; k++){
-                    this->receivedFrameBuffer[*AX25RXbufferIndex].data[destuffIndex] |= ((bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, BYTE_BUFFER_SIZE)] & 0x01) << destuffBitIndex);
-                    //serial.print(destuffBuffer[destuffIndex], HEX);
-                    //serial.print(destuffIndex + destuffBitIndex, DEC);
-                    //serial.println();
-                    if(bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, BYTE_BUFFER_SIZE)] == 0x01){
+                    if(BitArray::getBit(bitBuffer, bitBufferIndex - bitCounter + 1 + k, 8*BYTE_BUFFER_SIZE) == 0x01){
+                        BitArray::setBit(&receivedFrameBuffer[*AX25RXbufferIndex].data[destuffIndex], 7-destuffBitIndex, true);
                         destuffCount++;
                         //serial.print("1");
-                    }
-                    if(bitBuffer[mod(byteBufferIndex - bitCounter + 1 + k, BYTE_BUFFER_SIZE)] == 0x00){
+                    }else{
+                        BitArray::setBit(&receivedFrameBuffer[*AX25RXbufferIndex].data[destuffIndex], 7-destuffBitIndex, false);
                         destuffCount = 0;
                         //serial.print("0");
                     }
                     if(destuffCount == 5){
                         destuffCount = 0;
-                        destuffs++;;
                         k = k + 1; //skip next bit.
                     }
                     destuffBitIndex++;
                     if(destuffBitIndex >= 8){
                         destuffBitIndex = 0;
                         destuffIndex++;
-                        this->receivedFrameBuffer[*AX25RXbufferIndex].data[destuffIndex] = 0;
                     }
                 }
-                int packetBits = bitCounter - destuffs - 8;
 
-                if(mod(packetBits, 8) == 0 ){//&& receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] == 0x82){ // 'correct' packets are always whole bytes
+                if(destuffBitIndex == 0 ){//&& receivedFrameBuffer[*AX25RXbufferIndex].FrameBytes[0] == 0x82){ // 'correct' packets are always whole bytes
+                    int packetBits = destuffIndex*8;
                     int oldSize = receivedFrameBuffer[*AX25RXbufferIndex].packetSize;
                     receivedFrameBuffer[*AX25RXbufferIndex].packetSize = packetBits/8;
 
@@ -122,8 +105,7 @@ bool AX25Synchronizer::rxBit(){
                         serial.print(this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize, DEC);
                         serial.println();
 
-                        *AX25RXbufferIndex = *AX25RXbufferIndex + 1;
-//*AX25RXbufferIndex = (*AX25RXbufferIndex)%RX_FRAME_BUFFER;
+                        *AX25RXbufferIndex = (*AX25RXbufferIndex + 1)%RX_FRAME_BUFFER;
 
                         receivedFrameBuffer[*AX25RXbufferIndex].isLocked = true;
                         receivedFrameBuffer[*AX25RXbufferIndex].isReady = false;
@@ -138,8 +120,7 @@ bool AX25Synchronizer::rxBit(){
                 bitCounter = 0;
             }
         }
-
-        byteBufferIndex = mod(byteBufferIndex + 1, BYTE_BUFFER_SIZE);
+        bitBufferIndex = mod(bitBufferIndex + 1, BYTE_BUFFER_SIZE*8);
     }
 
     return packetReceived;

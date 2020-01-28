@@ -22,11 +22,6 @@ APSynchronizer::APSynchronizer(CLTUPacket rxCLTU[], int &rxCLTUBufferIndex){
     this->rxCLTUBufferIndex = &rxCLTUBufferIndex;
 }
 
-
-//void APSynchronizer::queBit(uint8_t inBit){
-//    bitBuffer[byteBufferIndex] = inBit;
-//    byteBufferIndex = (byteBufferIndex + 1)%AP_BYTE_BUFFER_SIZE;
-//}
 bool APSynchronizer::queByte(uint8_t inByte){
     byteQue[this->byteQueIndex] = inByte;
     byteQueIndex = mod(byteQueIndex+1, AP_BYTE_QUE_SIZE);
@@ -48,8 +43,7 @@ bool APSynchronizer::rxBit(){
     bytesInQue = bytesInQue - 1;
 
     for(int i = 0; i < 8; i++){
-        //serial.print(byteBufferIndex);
-        uint8_t inBit = encoder.NRZIdecodeBit((inByte >> (7-i))& 0x01);
+        uint8_t inBit = encoder.NRZIdecodeBit(BitArray::getBit(&inByte, i,8));
         inBit = encoder.descrambleBit(inBit);
         switch(synchronizerState){
             case 0 : //Inactive
@@ -62,7 +56,7 @@ bool APSynchronizer::rxBit(){
                 for(int p = 0; p < 64; p++){
                     //serial.print(BitArray::getBit(flagDetectBuffer, this->mod(flagDetectBitIndex-64+p,64)), DEC);
                     //serial.print(BitArray::getBit(this->startSeq, p), DEC);
-                    matchErrors += (flagDetectBuffer[this->mod(flagDetectBitIndex-64+p,64)] == BitArray::getBit(this->startSeq, p)) ? 0 : 1;
+                    matchErrors += (flagDetectBuffer[this->mod(flagDetectBitIndex-64+p,64)] == BitArray::getBit(this->startSeq, p, 64)) ? 0 : 1;
                 }
                 //serial.println();
                 if(matchErrors <= this->allowedSeqError){
@@ -87,7 +81,7 @@ bool APSynchronizer::rxBit(){
                     for(int p = 0; p < 16; p++){
                         //serial.print(BitArray::getBit(flagDetectBuffer, this->mod(flagDetectBitIndex-64+p,64)), DEC);
                         //serial.print(BitArray::getBit(this->startSeq, p), DEC);
-                        matchErrors += (BitArray::getBit(flagDetectBuffer, this->mod(flagDetectBitIndex-16+p,64)) == BitArray::getBit(this->tailSeq, p)) ? 0 : 1;
+                        matchErrors += (BitArray::getBit(flagDetectBuffer, flagDetectBitIndex-16+p,64) == BitArray::getBit(this->tailSeq, p, 16)) ? 0 : 1;
                     }
                     if(matchErrors <= this->allowedSeqError){
                         serial.print(matchErrors, DEC);
