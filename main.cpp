@@ -32,8 +32,8 @@ RadioService radioService(commRadio);
 ResetService reset( GPIO_PORT_P5, GPIO_PIN0 );
 
 
-SoftwareUpdateService SWUpdate;
-Service* services[] = {&radioService, &hk, &ping, &reset, &SWUpdate, &tst };
+//SoftwareUpdateService SWUpdate;
+Service* services[] = {&radioService, &hk, &ping, &reset, &tst };//{&radioService, &hk, &ping, &reset, &SWUpdate, &tst };
 
 // COMMS board tasks
 CommandHandler<PQ9Frame> cmdHandler(pq9bus, services, 5);

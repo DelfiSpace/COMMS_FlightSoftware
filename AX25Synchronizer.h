@@ -7,13 +7,13 @@
 #define AX25SYNC_H_
 
 #define BYTE_BUFFER_SIZE    1024
-#define BYTE_QUE_SIZE       512
+#define BYTE_QUE_SIZE       2048
 
 class AX25Synchronizer
 {
 protected:
     uint8_t bitBuffer[BYTE_BUFFER_SIZE];
-    uint8_t byteQue[BYTE_BUFFER_SIZE];
+    uint8_t byteQue[BYTE_QUE_SIZE];
     int byteQueIndex = 0;
 
     int byteBufferIndex = 0;
