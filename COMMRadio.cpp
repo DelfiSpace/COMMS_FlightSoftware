@@ -214,7 +214,7 @@ void COMMRadio::initRX(){
         rxConfig.fdev = 4800;
         rxConfig.datarate = 9600;
 
-        rxRadio->setFrequency(435000000);
+        rxRadio->setFrequency(145000000);
 
         rxRadio->RxChainCalibration();
         rxRadio->enableBitMode(*bitSPI_rx, onReceiveWrapper, 0);
@@ -234,7 +234,7 @@ bool COMMRadio::transmitData(uint8_t data[], uint8_t size){
         serial.println("Setting Timer");
 
         MAP_Timer32_registerInterrupt(TIMER32_1_INTERRUPT, &sendPacketWrapper);
-        MAP_Timer32_setCount(TIMER32_1_BASE, 48000000);
+        MAP_Timer32_setCount(TIMER32_1_BASE, 48000000/10);
         MAP_Timer32_startTimer(TIMER32_1_BASE, true);
         txTimeout = true;
     }
@@ -286,18 +286,18 @@ bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
         //txSize = txCLTUBuffer[0].getSize();
         //txRFMessageBuffer = txCLTUBuffer[txCLTUBufferIndex].getBytes();
         // Print RF Packet for Debug
-        serial.println("============================");
-        serial.print("PACKETIndex : ");
-        serial.print(txCLTUBufferIndex, DEC);
-        serial.print("  == AVAILABLE : ");
-        serial.print(txCLTUInBuffer+1, DEC);
-        serial.println();
-        for(int i = 0; i < txCLTUBuffer[txCLTUBufferIndex].getSize(); i++){
-            serial.print(this->txCLTUBuffer[txCLTUBufferIndex].getBytes()[i], HEX);
-            serial.print("|");
-        }
-        serial.println("");
-        serial.println("============================");
+//        serial.println("============================");
+//        serial.print("PACKETIndex : ");
+//        serial.print(txCLTUBufferIndex, DEC);
+//        serial.print("  == AVAILABLE : ");
+//        serial.print(txCLTUInBuffer+1, DEC);
+//        serial.println();
+//        for(int i = 0; i < txCLTUBuffer[txCLTUBufferIndex].getSize(); i++){
+//            serial.print(this->txCLTUBuffer[txCLTUBufferIndex].getBytes()[i], HEX);
+//            serial.print("|");
+//        }
+//        serial.println("");
+//        serial.println("============================");
         txCLTUBufferIndex = mod(txCLTUBufferIndex + 1, TX_FRAME_BUFFER);
         txCLTUInBuffer++;
 

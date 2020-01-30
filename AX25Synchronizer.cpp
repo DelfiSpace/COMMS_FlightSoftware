@@ -100,10 +100,10 @@ bool AX25Synchronizer::rxBit(){
                         receivedFrameBuffer[*AX25RXbufferIndex].isLocked = false;
                         receivedFrameBuffer[*AX25RXbufferIndex].isReady = true;
 
-                        serial.print(*AX25RXbufferIndex, DEC);
-                        serial.print("  -  ");
-                        serial.print(this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize, DEC);
-                        serial.println();
+//                        serial.print(*AX25RXbufferIndex, DEC);
+//                        serial.print("  -  ");
+//                        serial.print(this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize, DEC);
+//                        serial.println();
 
                         *AX25RXbufferIndex = (*AX25RXbufferIndex + 1)%RX_FRAME_BUFFER;
 

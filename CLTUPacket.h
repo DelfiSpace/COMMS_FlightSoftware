@@ -12,7 +12,7 @@
 
 #define CLTU_MAX_SIZE   64
 #define TX_FRAME_BUFFER 8
-#define RX_FRAME_BUFFER 100
+#define RX_FRAME_BUFFER 600
 
 class CLTUPacket
 {
