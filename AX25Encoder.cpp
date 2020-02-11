@@ -89,3 +89,28 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing){
     return outBit;
 }
 
+int AX25Encoder::destuffBits(uint8_t inBuffer[], uint8_t outBuffer[], int bitCount_in){
+    int bitCount_out = 0;
+    int stuffCount = 0;
+    for(int k = 0; k < bitCount_in; k++){
+        uint8_t inBit = BitArray::getBit(inBuffer, k);
+
+        if(inBit == 0x01){
+            BitArray::setBit(outBuffer, bitCount_out, true);
+            //serial.print(inBit, DEC);
+            bitCount_out++;
+            stuffCount = stuffCount + 1;
+        }else{
+            if(stuffCount < 5){
+                BitArray::setBit(outBuffer, bitCount_out, false);
+                //serial.println(inBit, DEC);
+                bitCount_out++;
+            }else{
+                //serial.print("Destuff!");
+            }
+            stuffCount = 0;
+        }
+    }
+    return bitCount_out;
+}
+
