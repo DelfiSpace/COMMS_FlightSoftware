@@ -13,19 +13,21 @@
 class AX25Synchronizer
 {
 protected:
+    uint8_t flagBuffer = 0;
+    int flagBufferIndex = 0;
+
     uint8_t bitBuffer[BYTE_BUFFER_SIZE];
+    int bitBufferIndex = 0;
+
     uint8_t byteQue[BYTE_QUE_SIZE];
     int byteQueIndex = 0;
 
-    int bitBufferIndex = 0;
-    int bitCounter = 0;
+    int synchronizerState = 0;
 
-    bool compareBitArrays(uint8_t array1[], uint8_t array[2], uint8_t size);
     CLTUPacket* receivedFrameBuffer;
     int* AX25RXbufferIndex;
 
     int mod(int a, int b);
-    int clip(int a, int b);
 
     AX25Encoder encoder;
 
