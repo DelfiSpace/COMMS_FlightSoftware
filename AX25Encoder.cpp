@@ -90,6 +90,10 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing){
 }
 
 int AX25Encoder::destuffBits(uint8_t inBuffer[], uint8_t outBuffer[], int bitCount_in){
+    for(int k = 0; k < bitCount_in/8; k++){
+        outBuffer[k] = 0;
+    }
+
     int bitCount_out = 0;
     int stuffCount = 0;
     for(int k = 0; k < bitCount_in; k++){
