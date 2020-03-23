@@ -9,6 +9,7 @@
 #define EPS_H_
 
 #include <driverlib.h>
+#include "MB85RS.h"
 #include "msp.h"
 #include "DelfiPQcore.h"
 #include "PQ9Bus.h"

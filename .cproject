@@ -37,6 +37,7 @@
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/DWire"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/DSPI"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/INA226"/>
+									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/MB85RS"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/DelfiPQcore"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/TMP100"/>
 									<listOptionValue builtIn="false" value="${COM_TI_SIMPLELINK_MSP432_SDK_INSTALL_DIR}/source/ti/devices/msp432p4xx/driverlib"/>
@@ -79,6 +80,7 @@
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.linkerID.LIBRARY.442759538" name="Include library file or command file as input (--library, -l)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.linkerID.LIBRARY" valueType="libs">
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/PQ9Bus/${ConfigName}/PQ9Bus.lib"/>
+									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/MB85RS/${ConfigName}/MB85RS.lib"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/INA226/${ConfigName}/INA226.lib"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/DelfiPQcore/${ConfigName}/DelfiPQcore.lib"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/TMP100/${ConfigName}/TMP100.lib"/>
@@ -116,6 +118,7 @@
 				<externalSettings containerId="TMP100;com.ti.ccstudio.buildDefinitions.MSP432.Debug.1175418372" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 				<externalSettings containerId="DSPI;com.ti.ccstudio.buildDefinitions.MSP432.Debug.2101333069" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 				<externalSettings containerId="SX1276;com.ti.ccstudio.buildDefinitions.MSP432.Debug.659501639" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="MB85RS;com.ti.ccstudio.buildDefinitions.MSP432.Debug.693809774" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 			</storageModule>
 		</cconfiguration>
 		<cconfiguration id="com.ti.ccstudio.buildDefinitions.MSP432.Release.2110840172">
@@ -140,6 +143,8 @@
 								<listOptionValue builtIn="false" value="LINKER_COMMAND_FILE=msp432p401r.cmd"/>
 								<listOptionValue builtIn="false" value="RUNTIME_SUPPORT_LIBRARY=libc.a"/>
 								<listOptionValue builtIn="false" value="CCS_MBS_VERSION=6.1.3"/>
+								<listOptionValue builtIn="false" value="PRODUCTS="/>
+								<listOptionValue builtIn="false" value="PRODUCT_MACRO_IMPORTS={}"/>
 								<listOptionValue builtIn="false" value="OUTPUT_TYPE=executable"/>
 							</option>
 							<option id="com.ti.ccstudio.buildDefinitions.core.OPT_CODEGEN_VERSION.744248953" name="Compiler version" superClass="com.ti.ccstudio.buildDefinitions.core.OPT_CODEGEN_VERSION" value="18.12.3.LTS" valueType="string"/>
@@ -153,6 +158,7 @@
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/DWire"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/SX1276"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/DSPI"/>
+									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/MB85RS"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/DelfiPQcore"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/INA226"/>
 									<listOptionValue builtIn="false" value="${COM_TI_SIMPLELINK_MSP432_SDK_INSTALL_DIR}/source/ti/devices/msp432p4xx/driverlib"/>
@@ -196,6 +202,7 @@
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.MSP432_18.12.linkerID.LIBRARY.1699733007" name="Include library file or command file as input (--library, -l)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_18.12.linkerID.LIBRARY" valueType="libs">
 									<listOptionValue builtIn="false" value="libc.a"/>
+									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/MB85RS/${ConfigName}/MB85RS.lib"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/DSPI/${ConfigName}/DSPI.lib"/>
 									<listOptionValue builtIn="false" value="${WORKSPACE_LOC}/TMP100/${ConfigName}/TMP100.lib"/>
 									<listOptionValue builtIn="false" value="${COM_TI_SIMPLELINK_MSP432_SDK_INSTALL_DIR}/source/ti/devices/msp432p4xx/driverlib/ccs/msp432p4xx_driverlib.lib"/>
@@ -233,6 +240,7 @@
 				<externalSettings containerId="TMP100;com.ti.ccstudio.buildDefinitions.MSP432.Release.657703763" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 				<externalSettings containerId="DSPI;com.ti.ccstudio.buildDefinitions.MSP432.Release.1504546256" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 				<externalSettings containerId="SX1276;com.ti.ccstudio.buildDefinitions.MSP432.Release.1786018168" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="MB85RS;com.ti.ccstudio.buildDefinitions.MSP432.Release.1876856181" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 			</storageModule>
 		</cconfiguration>
 	</storageModule>

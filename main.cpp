@@ -16,15 +16,15 @@ DSerial serial;
 HousekeepingService<COMMSTelemetryContainer> hk;
 TestService tst;
 PingService ping;
-ResetService reset( GPIO_PORT_P5, GPIO_PIN0 );
-SoftwareUpdateService SWUpdate;
-Service* services[] = { &hk, &ping, &reset, &SWUpdate, &tst };
+ResetService reset(GPIO_PORT_P5, GPIO_PIN0 );
+
+Service* services[] = { &hk, &ping, &reset, &tst };
 
 // COMMS board tasks
-CommandHandler<PQ9Frame> cmdHandler(pq9bus, services, 5);
-Task timerTask(periodicTask);
-Task* periodicTasks[] = {&timerTask};
-PeriodicTaskNotifier periodicNotifier = PeriodicTaskNotifier(FCLOCK, periodicTasks, 1);
+CommandHandler<PQ9Frame> cmdHandler(pq9bus, services, 4);
+PeriodicTask timerTask(10, periodicTask);
+PeriodicTask* periodicTasks[] = {&timerTask};
+PeriodicTaskNotifier taskNotifier = PeriodicTaskNotifier(periodicTasks, 1);
 Task* tasks[] = { &cmdHandler, &timerTask};
 
 SX1276Pins TXpins, RXpins;
