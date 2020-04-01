@@ -17,7 +17,6 @@
 #include "PQ9Frame.h"
 #include "DWire.h"
 #include "DSPI.h"
-#include "DSerial.h"
 #include "CommandHandler.h"
 #include "Task.h"
 #include "PeriodicTask.h"
