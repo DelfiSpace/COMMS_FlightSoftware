@@ -135,7 +135,11 @@ void main(void)
     tx.init();
     rx.init();
 
-    serial.println("COMMS booting...");
+    Console::log("COMMS booting...SLOT: %d", (int) Bootloader::getCurrentSlot());
+
+    if(HAS_SW_VERSION == 1){
+        Console::log("SW_VERSION: %s", (const char*)xtr(SW_VERSION));
+    }
 
     TaskManager::start(tasks, 2);
 }
