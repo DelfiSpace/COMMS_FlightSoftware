@@ -10,8 +10,6 @@ DSPI controlSPI(3);      // used EUSCI_B3
 // CDHS bus handler
 PQ9Bus pq9bus(3, GPIO_PORT_P9, GPIO_PIN0);
 
-// debug console handler
-DSerial serial;
 // services running in the system
 HousekeepingService<COMMSTelemetryContainer> hk;
 TestService tst;
@@ -91,7 +89,7 @@ void main(void)
     // Initialize SPI master
     controlSPI.initMaster(DSPI::MODE0, DSPI::MSBFirst, 1000000);
 
-    serial.begin( );                        // baud rate: 9600 bps
+    Console::init( 115200 );                      // baud rate: 9600 bps
     pq9bus.begin(115200, COMMS_ADDRESS);    // baud rate: 115200 bps
                                             // address COMMS (4)
 
