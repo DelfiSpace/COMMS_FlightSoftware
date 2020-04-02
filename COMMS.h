@@ -30,6 +30,9 @@
 #include "SoftwareUpdateService.h"
 #include "SX1276.h"
 #include "PeriodicTaskNotifier.h"
+#include "HWMonitor.h"
+#include "ADCManager.h"
+
 
 #define FCLOCK 48000000
 

@@ -7,6 +7,9 @@ DWire I2Cinternal(0);
 // SPI busses
 DSPI controlSPI(3);      // used EUSCI_B3
 
+// HardwareMonitor
+HWMonitor hwMonitor;
+
 // CDHS bus handler
 PQ9Bus pq9bus(3, GPIO_PORT_P9, GPIO_PIN0);
 
@@ -64,6 +67,7 @@ void acquireTelemetry(COMMSTelemetryContainer *tc)
 {
     // set uptime in telemetry
     tc->setUpTime(uptime);
+    //tc->setMCUTemperature(hwMonitor.getMCUTemp());
 }
 
 void txcallback()
@@ -86,6 +90,11 @@ void main(void)
     // - clock tree
     DelfiPQcore::initMCU();
 
+    // initialize the ADC
+    // - ADC14 and FPU Module
+    // - MEM0 for internal temperature measurements
+    ADCManager::initADC();
+
     // Initialize SPI master
     controlSPI.initMaster(DSPI::MODE0, DSPI::MSBFirst, 1000000);
 
@@ -98,6 +107,10 @@ void main(void)
     // - initialize the pins for the hardware watch-dog
     // - prepare the pin for power cycling the system
     reset.init();
+
+    // initialize HWMonitor readings
+    hwMonitor.readResetStatus();
+    hwMonitor.readCSStatus();
 
     // Initialize I2C masters
     I2Cinternal.setFastMode();
