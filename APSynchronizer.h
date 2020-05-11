@@ -6,8 +6,8 @@
  */
 #include <CLTUPacket.h>
 #include <LDPCDecoder.h>
-#include "DSerial.h"
 #include "BitArray.h"
+#include "Console.h"
 #include "AX25Frame.h"
 #include "AX25Encoder.h"
 

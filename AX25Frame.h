@@ -1,5 +1,6 @@
-#include "DSerial.h"
 #include "CLTUPacket.h"
+#include "Console.h"
+#include <stdint.h>
 
 #ifndef AX25FRAME_H_
 #define AX25FRAME_H_

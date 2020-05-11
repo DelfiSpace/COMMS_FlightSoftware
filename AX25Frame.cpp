@@ -1,7 +1,5 @@
 #include "AX25Frame.h"
 
-extern DSerial serial;
-
 unsigned char AX25Frame::reverseByteOrder(unsigned char x)
 {
     static const unsigned char table[] = {

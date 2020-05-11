@@ -1,7 +1,6 @@
 #include "RadioService.h"
 #include "AX25Frame.h"
 
-extern DSerial serial;
 
 RadioService::RadioService(COMMRadio &radio_in):
     radio(&radio_in){
@@ -18,7 +17,7 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
 
         if (command.getPayload()[1] == RADIO_CMD_INIT_TX)
         {
-            serial.println("RadioService: Initialise TX Request");
+            Console::log("RadioService: Initialise TX Request");
             // respond to ping
             radio->initTX();
             workingBuffer.setSize(2);
@@ -27,7 +26,7 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
         }
         else if (command.getPayload()[1] == RADIO_CMD_INIT_TX)
         {
-            serial.println("RadioService: Initialise TX Request");
+            Console::log("RadioService: Initialise TX Request");
             // respond to ping
             radio->initTX();
             workingBuffer.setSize(2);

@@ -42,9 +42,11 @@
 
 --retain=flashMailbox
 
+#include "SLOT_SELECT.h"
+
 MEMORY
 {
-    MAIN       (RX) : origin = 0x00000000, length = 0x00040000
+    MAIN       (RX) : origin = SELECTED_SLOT, length = SLOTSIZE
     INFO       (RX) : origin = 0x00200000, length = 0x00004000
 #ifdef  __TI_COMPILER_VERSION__
 #if     __TI_COMPILER_VERSION__ >= 15009000
@@ -58,7 +60,7 @@ MEMORY
     /* and SRAM_DATA memory areas are overlapping. You need to take measures to separate       */
     /* data from code in RAM. This is only valid for Compiler version earlier than 15.09.0.STS.*/ 
     SRAM_CODE  (RWX): origin = 0x01000000, length = 0x00010000
-    SRAM_DATA  (RW) : origin = 0x20000000, length = 0x00010000
+    SRAM_DATA  (RW) : origin = 0x20000004, length = 0x00010000
 #endif
 #endif
 }
@@ -81,7 +83,7 @@ MEMORY
 SECTIONS
 {
 #ifndef gen_crc_table
-    .intvecs:   > 0x00000000
+    .intvecs:   > SELECTED_SLOT
     .text   :   > MAIN
     .const  :   > MAIN
     .cinit  :   > MAIN
@@ -99,7 +101,7 @@ SECTIONS
     /* BSL area for device bootstrap loader                                  */
     .bslArea      : > 0x00202000
 #else
-    .intvecs:   > 0x00000000, crc_table(crc_table_for_intvecs)
+    .intvecs:   > SELECTED_SLOT, crc_table(crc_table_for_intvecs)
     .text   :   > MAIN, crc_table(crc_table_for_text)
     .const  :   > MAIN, crc_table(crc_table_for_const)
     .cinit  :   > MAIN, crc_table(crc_table_for_cinit)

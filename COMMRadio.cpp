@@ -1,7 +1,5 @@
 #include "COMMRadio.h"
 
-extern DSerial serial;
-
 #ifndef MODFUNC
 #define MODFUNC
 int mod(int a, int b)
@@ -62,15 +60,13 @@ void COMMRadio::runTask(){
                 if(LDPCDecoder::iterateBitflip(rxCLTUBuffer[buf_index].data)){
                     rxCLTUBuffer[buf_index].packetSize = 32;
                     rxCLTUBuffer[buf_index].isCoded = false;
-                    serial.print("DECODED PACKET!  :");
-                    serial.print(j,DEC);
-                    serial.println();
+                    Console::log("DECODED PACKET!  : %d", j);
                     decoded = true;
                     break;
                 }
             }
             if(!decoded){
-                serial.println("BROKEN PACKET!");
+                Console::log("BROKEN PACKET!");
                 rxCLTUBuffer[buf_index].isCoded = false;
                 rxCLTUBuffer[buf_index].isNotRecoverable = true;
                 break;
@@ -164,7 +160,7 @@ void COMMRadio::onReceive(uint8_t data)
 };
 
 void COMMRadio::init(){
-    serial.println("COMMS booting...");
+    Console::log("COMMS booting...");
     this->initTX();
     this->initRX();
     MAP_Timer32_initModule(TIMER32_1_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT,
@@ -193,10 +189,10 @@ void COMMRadio::initTX(){
         txRadio->enableBitMode(*bitSPI_tx, 0, onTransmitWrapper);
         txRadio->setTxConfig(&txConfig);
 
-        serial.println("TX Radio Settings Set");
+        Console::log("TX Radio Settings Set");
     }
     else{
-        serial.println("TX Radio not Found");
+        Console::log("TX Radio not Found");
     }
 
     txReady = true;
@@ -221,9 +217,9 @@ void COMMRadio::initRX(){
 
         rxRadio->setRxConfig(&rxConfig);
         rxRadio->startReceiver();
-        serial.println("RX Radio Settings Set");
+        Console::log("RX Radio Settings Set");
     }else{
-        serial.println("RX Radio not Found");
+        Console::log("RX Radio not Found");
     }
 };
 
@@ -231,7 +227,7 @@ bool COMMRadio::transmitData(uint8_t data[], uint8_t size){
     this->quePacketAX25(data, size);
 
     if(!txTimeout){
-        serial.println("Setting Timer");
+        Console::log("Setting Timer");
 
         MAP_Timer32_registerInterrupt(TIMER32_1_INTERRUPT, &sendPacketWrapper);
         MAP_Timer32_setCount(TIMER32_1_BASE, 48000000/10);
@@ -325,29 +321,24 @@ void COMMRadio::toggleReceivePrint(){
     //serial.print("Toggle RX Print: ");
     //serial.println(rxReady);
 
-    serial.println();
-    serial.println(" ============ ");
-    serial.println("Printing Buffer:");
-    serial.println(" ============ ");
+    Console::log("");
+    Console::log(" ============ ");
+    Console::log("Printing Buffer:");
+    Console::log(" ============ ");
     for(int k = 0; k < RX_FRAME_BUFFER; k++){
         int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_FRAME_BUFFER);
         if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true){
-            serial.println("*******");
+            Console::log("*******");
             int packet_size = rxCLTUBuffer[buf_index].packetSize;
 
-            serial.print("Index of Packet:  ");
-            serial.print(buf_index, DEC);
-            serial.print("  |   Packet Size:  ");
-            serial.print(packet_size, DEC);
-            serial.println();
-            serial.println("*******");
+            Console::log("Index of Packet: %d |  Packet Size:  %d", buf_index, packet_size);
+            Console::log("*******");
             uint8_t* frameData = this->rxCLTUBuffer[buf_index].data;
             for(int j = 0; j < packet_size; j++){
-                serial.print(frameData[j], HEX);
-                serial.print("|");
+                Console::log("%x ",frameData[j]);
             }
-            serial.println();
-            serial.println(" ============ ");
+            Console::log("");
+            Console::log(" ============ ");
         }
     }
     //TODO: OPMODE
@@ -355,7 +346,7 @@ void COMMRadio::toggleReceivePrint(){
 };
 
 void COMMRadio::toggleMode(){
-    serial.println("Toggle ProtocolMode ");
+    Console::log("Toggle ProtocolMode ");
     advancedMode = !advancedMode;
 };
 

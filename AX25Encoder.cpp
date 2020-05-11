@@ -1,7 +1,5 @@
 #include "AX25Encoder.h"
 
-extern DSerial serial;
-
 uint8_t AX25Encoder::scrambleBit(uint8_t bit){
     int isHigh = (bit >= 0x01) ? 0x01:0x00;
     G3RUHscramble_bit = (((G3RUHscramble >> 11) & 0x01) ^ ((G3RUHscramble >> 16) & 0x01)) ^ (isHigh & 0x01);

@@ -1,4 +1,3 @@
-#include "DSerial.h"
 #include "BitArray.h"
 
 #ifndef LDPCDECODER_H_

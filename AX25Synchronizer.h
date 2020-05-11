@@ -1,8 +1,8 @@
-#include "DSerial.h"
 #include "AX25Frame.h"
 #include "AX25Encoder.h"
 #include "CLTUPacket.h"
 #include "BitArray.h"
+#include "Console.h"
 
 #ifndef AX25SYNC_H_
 #define AX25SYNC_H_

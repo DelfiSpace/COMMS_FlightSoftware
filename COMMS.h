@@ -9,14 +9,15 @@
 #define EPS_H_
 
 #include <driverlib.h>
-#include <LDPCDecoder.h>
+#include "SLOT_SELECT.h"
+#include "MB85RS.h"
+#include "LDPCDecoder.h"
 #include "msp.h"
 #include "DelfiPQcore.h"
 #include "PQ9Bus.h"
 #include "PQ9Frame.h"
 #include "DWire.h"
 #include "DSPI.h"
-#include "DSerial.h"
 #include "CommandHandler.h"
 #include "Task.h"
 #include "PeriodicTask.h"
@@ -32,6 +33,8 @@
 #include "RadioService.h"
 #include "COMMRadio.h"
 #include "PeriodicTaskNotifier.h"
+#include "HWMonitor.h"
+#include "ADCManager.h"
 
 
 #define FCLOCK 48000000

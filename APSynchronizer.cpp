@@ -6,8 +6,6 @@
  */
 #include "APSynchronizer.h"
 
-extern DSerial serial;
-
 int APSynchronizer::mod(int a, int b)
 { return a>0 ? (a%b) : (a%b+b)%b; }
 
@@ -60,8 +58,7 @@ bool APSynchronizer::rxBit(){
                 }
                 //serial.println();
                 if(matchErrors <= this->allowedSeqError){
-                    serial.print(matchErrors, DEC);
-                    serial.println("  START SEQ DETECTED!");
+                    Console::log("%d  START SEQ DETECTED!", matchErrors);
                     flagDetectBitIndex = 0;
                     this->synchronizerState = 2;
                 }
@@ -84,8 +81,7 @@ bool APSynchronizer::rxBit(){
                         matchErrors += (BitArray::getBit(flagDetectBuffer, flagDetectBitIndex-16+p,64) == BitArray::getBit(this->tailSeq, p, 16)) ? 0 : 1;
                     }
                     if(matchErrors <= this->allowedSeqError){
-                        serial.print(matchErrors, DEC);
-                        serial.println("  TAIL SEQ DETECTED!");
+                        Console::log("%d  TAIL SEQ DETECTED!", matchErrors);
                         CLTUbitCounter = 0;
                         this->synchronizerState = 1;
                     }
@@ -100,11 +96,8 @@ bool APSynchronizer::rxBit(){
                     rxCLTU[*rxCLTUBufferIndex].isCoded = true;
                     rxCLTU[*rxCLTUBufferIndex].isReady = true;
 
+                    Console::log("%d - %d", *rxCLTUBufferIndex, this->rxCLTU[*rxCLTUBufferIndex].packetSize);
 
-                    serial.print(*rxCLTUBufferIndex, DEC);
-                    serial.print("  -  ");
-                    serial.print(this->rxCLTU[*rxCLTUBufferIndex].packetSize, DEC);
-                    serial.println();
                     *rxCLTUBufferIndex = mod(*rxCLTUBufferIndex + 1, RX_FRAME_BUFFER);
 
                     rxCLTU[*rxCLTUBufferIndex].isLocked = true;
@@ -118,7 +111,7 @@ bool APSynchronizer::rxBit(){
                     }
 
                 }else if(CLTUbitCounter > 8*64){
-                    serial.println("Impossible state, should not happen!");
+                    Console::log("Impossible state, should not happen!");
                     CLTUbitCounter = 0;
                     this->synchronizerState = 1;
                 }

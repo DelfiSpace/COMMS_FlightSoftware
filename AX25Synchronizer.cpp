@@ -1,7 +1,5 @@
 #include "AX25Synchronizer.h"
 
-extern DSerial serial;
-
 
 int AX25Synchronizer::mod(int a, int b)
 { return a<0 ? (a%b+b)%b : a%b; }
@@ -97,7 +95,7 @@ bool AX25Synchronizer::rxBit(){
 //                        }serial.println();
                         if(AX25Frame::checkFCS(this->receivedFrameBuffer[*AX25RXbufferIndex])){
 
-                            serial.print("!");
+                            Console::log("!");
                             this->hasReceivedFrame = true;
                             packetReceived = true;
                             receivedFrameBuffer[*AX25RXbufferIndex].isLocked = false;
@@ -112,7 +110,7 @@ bool AX25Synchronizer::rxBit(){
 //                                serial.print(" ");
 //                            }
 //                            serial.println();
-                            serial.println(this->receivedFrameBuffer[*AX25RXbufferIndex].data[16], DEC);
+                            Console::log("%d",this->receivedFrameBuffer[*AX25RXbufferIndex].data[16]);
 
                             *AX25RXbufferIndex = (*AX25RXbufferIndex + 1)%RX_FRAME_BUFFER;
 

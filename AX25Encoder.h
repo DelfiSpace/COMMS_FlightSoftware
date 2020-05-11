@@ -1,7 +1,6 @@
 #include "SX1276.h"
 #include "DSPI.h"
 #include "sx1276Enums.h"
-#include "DSerial.h"
 #include "BitArray.h"
 
 #ifndef AX25ENCODER_H_

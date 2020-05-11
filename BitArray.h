@@ -1,4 +1,4 @@
-#include "DSerial.h"
+#include <stdint.h>
 
 #ifndef BITARRAY_H_
 #define BITARRAY_H_

@@ -1,6 +1,3 @@
-#define xstr(s) str(s)
-#define str(s) #s
-
 #include "COMMS.h"
 
 // I2C busses
@@ -17,11 +14,12 @@ SX1276 rx(controlSPI, &RXpins);
 
 COMMRadio commRadio(lineTX, lineRX, controlSPI, tx, rx);
 
+// HardwareMonitor
+HWMonitor hwMonitor;
+
 // CDHS bus handler
 PQ9Bus pq9bus(3, GPIO_PORT_P9, GPIO_PIN0);
 
-// debug console handler
-DSerial serial;
 // services running in the system
 HousekeepingService<COMMSTelemetryContainer> hk;
 TestService tst;
@@ -36,10 +34,11 @@ ResetService reset( GPIO_PORT_P5, GPIO_PIN0 );
 Service* services[] = {&radioService, &hk, &ping, &reset, &tst };//{&radioService, &hk, &ping, &reset, &SWUpdate, &tst };
 
 // COMMS board tasks
+PeriodicTask timerTask(1000, periodicTask);
+PeriodicTask* periodicTasks[] = {&timerTask};
+PeriodicTaskNotifier taskNotifier = PeriodicTaskNotifier(periodicTasks, 1);
+
 CommandHandler<PQ9Frame> cmdHandler(pq9bus, services, 5);
-Task timerTask(periodicTask);
-Task* periodicTasks[] = {&timerTask};
-PeriodicTaskNotifier periodicNotifier = PeriodicTaskNotifier(FCLOCK, periodicTasks, 1);
 Task* tasks[] = { &cmdHandler, &timerTask, &commRadio};
 
 // system uptime
@@ -76,6 +75,7 @@ void acquireTelemetry(COMMSTelemetryContainer *tc)
 {
     // set uptime in telemetry
     tc->setUpTime(uptime);
+    //tc->setMCUTemperature(hwMonitor.getMCUTemp());
 }
 
 void txcallback()
@@ -98,10 +98,15 @@ void main(void)
     // - clock tree
     DelfiPQcore::initMCU();
 
+    // initialize the ADC
+    // - ADC14 and FPU Module
+    // - MEM0 for internal temperature measurements
+    ADCManager::initADC();
+
     // Initialize SPI master
     controlSPI.initMaster(DSPI::MODE0, DSPI::MSBFirst, 1000000);
 
-    serial.begin( );                        // baud rate: 9600 bps
+    Console::init( 115200 );                      // baud rate: 9600 bps
     pq9bus.begin(115200, COMMS_ADDRESS);    // baud rate: 115200 bps
                                             // address COMMS (4)
 
@@ -111,6 +116,13 @@ void main(void)
     // - prepare the pin for power cycling the system
     reset.init();
 
+    // initialize Task Notifier
+    taskNotifier.init();
+
+    // initialize HWMonitor readings
+    hwMonitor.readResetStatus();
+    hwMonitor.readCSStatus();
+
     // Initialize I2C masters
     I2Cinternal.setFastMode();
     I2Cinternal.begin();
@@ -118,7 +130,7 @@ void main(void)
     // Initialize SPI master
     controlSPI.initMaster(DSPI::MODE0, DSPI::MSBFirst, 1000000);
 
-    serial.begin( );                        // baud rate: 9600 bps
+    Console::init( 115200 );                        // baud rate: 9600 bps
     pq9bus.begin(115200, COMMS_ADDRESS);    // baud rate: 115200 bps
                                             // address COMMS (4)
 
@@ -152,11 +164,11 @@ void main(void)
     tx.init();
     rx.init();
 
-    serial.println("COMMS booting...");
-    commRadio.init();
-    serial.println("COMMS Booted.");
-    serial.print("SOFTWARE VERSION:  ");
-    serial.println(xstr(SW_VERSION));
+    Console::log("COMMS booting...SLOT: %d", (int) Bootloader::getCurrentSlot());
+
+    if(HAS_SW_VERSION == 1){
+        Console::log("SW_VERSION: %s", (const char*)xtr(SW_VERSION));
+    }
 
     TaskManager::start(tasks, 3);
 }
