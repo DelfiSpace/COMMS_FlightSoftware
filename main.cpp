@@ -22,7 +22,7 @@ ResetService reset(GPIO_PORT_P5, GPIO_PIN0 );
 Service* services[] = { &hk, &ping, &reset, &tst };
 
 // COMMS board tasks
-CommandHandler<PQ9Frame> cmdHandler(pq9bus, services, 4);
+CommandHandler<PQ9Frame,PQ9Message> cmdHandler(pq9bus, services, 4);
 PeriodicTask timerTask(1000, periodicTask);
 PeriodicTask* periodicTasks[] = {&timerTask};
 PeriodicTaskNotifier taskNotifier = PeriodicTaskNotifier(periodicTasks, 1);
