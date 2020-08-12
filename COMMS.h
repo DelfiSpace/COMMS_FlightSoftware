@@ -18,6 +18,8 @@
 #include "PQ9Message.h"
 #include "DWire.h"
 #include "DSPI.h"
+#include "INA226.h"
+#include "TMP100.h"
 #include "CommandHandler.h"
 #include "Task.h"
 #include "PeriodicTask.h"
