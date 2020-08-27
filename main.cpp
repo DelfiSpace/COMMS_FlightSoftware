@@ -10,10 +10,10 @@ TMP100 TCXOtemperature(I2Cinternal, 0x4F);
 DSPI controlSPI(3);      // used EUSCI_B3
 
 // FRAM
-MB85RS fram(controlSPI, GPIO_PORT_P10, GPIO_PIN0, true );
+MB85RS fram(controlSPI, GPIO_PORT_P10, GPIO_PIN0, MB85RS::MB85RS1MT );
 
 // HardwareMonitor
-HWMonitor hwMonitor;
+HWMonitor hwMonitor(&fram);
 
 // Bootloader
 Bootloader bootLoader = Bootloader(fram);
@@ -23,14 +23,20 @@ PQ9Bus pq9bus(3, GPIO_PORT_P9, GPIO_PIN0);
 
 // services running in the system
 HousekeepingService<COMMSTelemetryContainer> hk;
-TestService tst;
+TestService test;
 PingService ping;
 ResetService reset(GPIO_PORT_P8, GPIO_PIN0, GPIO_PORT_P8, GPIO_PIN1 );
+#ifndef SW_VERSION
+SoftwareUpdateService SWupdate(fram);
+#else
+SoftwareUpdateService SWupdate(fram, (uint8_t*)xtr(SW_VERSION));
+#endif
 
-Service* services[] = { &hk, &ping, &reset, &tst };
+Service* services[] = { &ping, &reset, &hk, &test, &SWupdate };
+
 
 // COMMS board tasks
-CommandHandler<PQ9Frame,PQ9Message> cmdHandler(pq9bus, services, 4);
+CommandHandler<PQ9Frame,PQ9Message> cmdHandler(pq9bus, services, 5);
 PeriodicTask timerTask(1000, periodicTask);
 PeriodicTask* periodicTasks[] = {&timerTask};
 PeriodicTaskNotifier taskNotifier = PeriodicTaskNotifier(periodicTasks, 1);
