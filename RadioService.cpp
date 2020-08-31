@@ -8,14 +8,17 @@ RadioService::RadioService(COMMRadio &radio_in):
 };
 bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
 {
-    if (command.getPayload()[0] == RADIO_SERVICE)
+    if (command.getService() == RADIO_SERVICE)
     {
         // serial.println("RadioService: Service started.");
         // prepare response frame
         //workingBuffer.setDestination(command.getSource());
         //workingBuffer.setSource(interface.getAddress());
+        workingBuffer.setService(RADIO_SERVICE);
+        workingBuffer.setMessageType(SERVICE_RESPONSE_REPLY);
 
-        if (command.getPayload()[1] == RADIO_CMD_INIT_TX)
+
+        if (command.getDataPayload()[0] == RADIO_CMD_INIT_TX)
         {
             Console::log("RadioService: Initialise TX Request");
             // respond to ping
@@ -24,7 +27,7 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             workingBuffer.getPayload()[0] = RADIO_SERVICE;
             workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
         }
-        else if (command.getPayload()[1] == RADIO_CMD_INIT_TX)
+        else if (command.getDataPayload()[0] == RADIO_CMD_INIT_TX)
         {
             Console::log("RadioService: Initialise TX Request");
             // respond to ping
@@ -33,16 +36,15 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             workingBuffer.getPayload()[0] = RADIO_SERVICE;
             workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
         }
-        else if(command.getPayload()[1] == RADIO_CMD_SENDFRAME)
+        else if(command.getDataPayload()[0] == RADIO_CMD_SENDFRAME)
         {
-            workingBuffer.setSize(2);
-            workingBuffer.getPayload()[0] = RADIO_SERVICE;
+            workingBuffer.setPayloadSize(1);
 
-            uint8_t packetSize = command.getPayload()[2];
-            if(radio->transmitData(&command.getPayload()[3], packetSize)){
-                workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
+            uint8_t packetSize = command.getPayloadSize() - 1;
+            if(radio->transmitData(&command.getDataPayload()[1], packetSize)){
+                workingBuffer.getDataPayload()[0] = RADIO_CMD_ACCEPT;
             }else{
-                workingBuffer.getPayload()[1] = RADIO_CMD_REJECT;
+                workingBuffer.getDataPayload()[0] = RADIO_CMD_REJECT;
             }
         }
         else if(command.getPayload()[1] == RADIO_CMD_GETFRAME)

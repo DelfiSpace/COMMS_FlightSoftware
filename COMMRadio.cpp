@@ -16,7 +16,7 @@ void onReceiveWrapper(uint8_t data){
     radioStub->onReceive(data);
 };
 void sendPacketWrapper(){
-    //serial.println("SEND PACKET (stub)!");
+    Console::log("SEND PACKET !");
     MAP_Timer32_clearInterruptFlag(TIMER32_1_BASE);
     radioStub->txTimeout = false;
     radioStub->sendPacketAX25();
@@ -78,8 +78,9 @@ void COMMRadio::runTask(){
 
 uint8_t COMMRadio::onTransmit(){
     //NOTE, SPI Bus is configured to MSB_first, meaning that the bit transmitted first should be the MSB.
-
+//    Console::log("onTransmit!");
     uint8_t outputByte = 0;
+
     if(txPacketReady){
         for(int i = 0; i < 8; i++){// Send 8bits per call
             //Start Sending
@@ -179,7 +180,6 @@ void COMMRadio::initTX(){
         txConfig.modem = MODEM_FSK;
         txConfig.filtertype = BT_0_5;
         txConfig.bandwidth = 15000;
-        txConfig.power = 14;
         txConfig.fdev = 4800;
         txConfig.datarate = 9600;
 
@@ -216,6 +216,7 @@ void COMMRadio::initRX(){
 
         rxRadio->setRxConfig(&rxConfig);
         rxRadio->startReceiver();
+
         Console::log("RX Radio Settings Set");
     }else{
         Console::log("RX Radio not Found");
@@ -224,15 +225,16 @@ void COMMRadio::initRX(){
 
 bool COMMRadio::transmitData(uint8_t data[], uint8_t size){
     this->quePacketAX25(data, size);
-
+//
     if(!txTimeout){
         Console::log("Setting Timer");
 
         MAP_Timer32_registerInterrupt(TIMER32_1_INTERRUPT, &sendPacketWrapper);
-        MAP_Timer32_setCount(TIMER32_1_BASE, 48000000/10);
+        MAP_Timer32_setCount(TIMER32_1_BASE, 48000000/2);
         MAP_Timer32_startTimer(TIMER32_1_BASE, true);
         txTimeout = true;
     }
+//    radioStub->sendPacketAX25();
 
     return true;
 

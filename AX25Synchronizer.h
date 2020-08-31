@@ -13,7 +13,7 @@
 class AX25Synchronizer
 {
 protected:
-    uint16_t flagBuffer = 0;
+    uint8_t flagBuffer = 0;
     int flagBufferIndex = 0;
 
     uint8_t bitBuffer[BYTE_BUFFER_SIZE];

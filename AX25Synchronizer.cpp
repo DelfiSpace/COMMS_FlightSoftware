@@ -20,7 +20,7 @@ bool AX25Synchronizer::queByte(uint8_t inByte){
     bytesInQue = bytesInQue + 1;
 
     if(bytesInQue > BYTE_QUE_SIZE){
-//        serial.println("[!!]");
+        Console::log("[!!]");
     }
 
     return true;
@@ -44,11 +44,15 @@ bool AX25Synchronizer::rxBit(){
 
                 if(BitArray::getByte(&flagBuffer, flagBufferIndex - 7, 8) == 0x7E ){
                     //serial.println("Flag!");
+//                    Console::log("Flag!");
                     bitBuffer[0] = 0;
                     bitBufferIndex = 0;
                     synchronizerState = 1;
                 }
                 flagBufferIndex = mod(flagBufferIndex + 1, 8);
+//                if(flagBufferIndex == 0){
+//                    Console::log("%x", flagBuffer);
+//                }
                 break;
             case 1:
                 //checkForStart
@@ -95,22 +99,20 @@ bool AX25Synchronizer::rxBit(){
 //                        }serial.println();
                         if(AX25Frame::checkFCS(this->receivedFrameBuffer[*AX25RXbufferIndex])){
 
-                            Console::log("!");
+//                            Console::log("!");
                             this->hasReceivedFrame = true;
                             packetReceived = true;
                             receivedFrameBuffer[*AX25RXbufferIndex].isLocked = false;
                             receivedFrameBuffer[*AX25RXbufferIndex].isReady = true;
 
 
-//                            serial.print(*AX25RXbufferIndex, DEC);
-//                            serial.print("  -  ");
-//                            serial.print(this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize, DEC);
-//                            for(int p = 0; p < rxBits_n/8; p++){
-//                                serial.print(this->receivedFrameBuffer[*AX25RXbufferIndex].data[p], HEX);
-//                                serial.print(" ");
-//                            }
-//                            serial.println();
-                            Console::log("%d",this->receivedFrameBuffer[*AX25RXbufferIndex].data[16]);
+                            Console::log("RX! Bufferpos: %d - size: %d", *AX25RXbufferIndex,this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize);
+                            Console::log("==");
+                            for(int p = 0; p < rxBits_n/8; p++){
+                                Console::log(" %d ", this->receivedFrameBuffer[*AX25RXbufferIndex].data[p]);
+                            }
+                            Console::log("==");
+                            //Console::log("%d",this->receivedFrameBuffer[*AX25RXbufferIndex].data[16]);
 
                             *AX25RXbufferIndex = (*AX25RXbufferIndex + 1)%RX_FRAME_BUFFER;
 
