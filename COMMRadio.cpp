@@ -32,7 +32,6 @@ COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeS
 };
 
 void COMMRadio::runTask(){
-
     // Receive bits out of buffer:
     if(advancedMode){
         for(int k = 0; k < 10; k++){
@@ -160,7 +159,7 @@ void COMMRadio::onReceive(uint8_t data)
 };
 
 void COMMRadio::init(){
-    Console::log("COMMS booting...");
+    Console::log("Radio Object Starting...");
     this->initTX();
     this->initRX();
     MAP_Timer32_initModule(TIMER32_1_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT,

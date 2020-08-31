@@ -30,7 +30,7 @@
 *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  
 * 
-*  MSP432P401R Interrupt Vector Table
+*  MSP432P4111 Interrupt Vector Table
 * 
 *****************************************************************************/
 
@@ -71,7 +71,7 @@ extern void CS_IRQHandler       (void) __attribute__((weak,alias("Default_Handle
 extern void PCM_IRQHandler      (void) __attribute__((weak,alias("Default_Handler")));
 extern void WDT_A_IRQHandler    (void) __attribute__((weak,alias("Default_Handler")));
 extern void FPU_IRQHandler      (void) __attribute__((weak,alias("Default_Handler")));
-extern void FLCTL_IRQHandler    (void) __attribute__((weak,alias("Default_Handler")));
+extern void FLCTL_A_IRQHandler  (void) __attribute__((weak,alias("Default_Handler")));
 extern void COMP_E0_IRQHandler  (void) __attribute__((weak,alias("Default_Handler")));
 extern void COMP_E1_IRQHandler  (void) __attribute__((weak,alias("Default_Handler")));
 extern void TA0_0_IRQHandler    (void) __attribute__((weak,alias("Default_Handler")));
@@ -107,6 +107,7 @@ extern void PORT3_IRQHandler    (void) __attribute__((weak,alias("Default_Handle
 extern void PORT4_IRQHandler    (void) __attribute__((weak,alias("Default_Handler")));
 extern void PORT5_IRQHandler    (void) __attribute__((weak,alias("Default_Handler")));
 extern void PORT6_IRQHandler    (void) __attribute__((weak,alias("Default_Handler")));
+extern void LCD_F_IRQHandler    (void) __attribute__((weak,alias("Default_Handler")));
 
 /* Interrupt vector table.  Note that the proper constructs must be placed on this to */
 /* ensure that it ends up at physical address 0x0000.0000 or at the start of          */
@@ -137,7 +138,7 @@ void (* const interruptVectors[])(void) =
     PCM_IRQHandler,                        /* PCM Interrupt             */
     WDT_A_IRQHandler,                      /* WDT_A Interrupt           */
     FPU_IRQHandler,                        /* FPU Interrupt             */
-    FLCTL_IRQHandler,                      /* Flash Controller Interrupt*/
+    FLCTL_A_IRQHandler,                    /* Flash Controller Interrupt*/
     COMP_E0_IRQHandler,                    /* COMP_E0 Interrupt         */
     COMP_E1_IRQHandler,                    /* COMP_E1 Interrupt         */
     TA0_0_IRQHandler,                      /* TA0_0 Interrupt           */
@@ -172,7 +173,8 @@ void (* const interruptVectors[])(void) =
     PORT3_IRQHandler,                      /* Port3 Interrupt           */
     PORT4_IRQHandler,                      /* Port4 Interrupt           */
     PORT5_IRQHandler,                      /* Port5 Interrupt           */
-    PORT6_IRQHandler                       /* Port6 Interrupt           */
+    PORT6_IRQHandler,                      /* Port6 Interrupt           */
+    LCD_F_IRQHandler                       /* LCD_F Interrupt           */
 };
 
 /* Forward declaration of the default fault handlers. */
@@ -197,6 +199,7 @@ void configVectorTable(void)
     SCB->VTOR = (uint32_t)SELECTED_SLOT;
 }
 
+
 /* This is the code that gets called when the processor receives an unexpected  */
 /* interrupt.  This simply enters an infinite loop, preserving the system state */
 /* for examination by a debugger.                                               */
@@ -206,10 +209,10 @@ void Default_Handler(void)
     #pragma diag_push
     #pragma CHECK_ULP("-2.1")
 
-    /* Enter an infinite loop. */
-    while(1)
-    {
-    }
+	/* Enter an infinite loop. */
+	while(1)
+	{
+	}
 
-    #pragma diag_pop
+	#pragma diag_pop
 }

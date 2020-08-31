@@ -1,6 +1,7 @@
 #include "AX25Synchronizer.h"
 
 
+
 int AX25Synchronizer::mod(int a, int b)
 { return a<0 ? (a%b+b)%b : a%b; }
 
@@ -36,7 +37,6 @@ bool AX25Synchronizer::rxBit(){
     for(int i = 0; i < 8; i++){
         uint8_t inBit = encoder.NRZIdecodeBit(BitArray::getBit(&inByte, i, 8));
         inBit = encoder.descrambleBit(inBit);
-
         switch(this->synchronizerState){
             case 0:
                 //flagDetect
