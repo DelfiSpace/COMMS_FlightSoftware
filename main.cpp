@@ -41,19 +41,16 @@ SoftwareUpdateService SWupdate(fram, (uint8_t*)xtr(SW_VERSION));
 
 RadioService radioService(commRadio);
 
-ResetService reset( GPIO_PORT_P5, GPIO_PIN0 );
-
 
 //SoftwareUpdateService SWUpdate;
-Service* services[] = {&radioService, &hk, &ping, &reset, &tst };//{&radioService, &hk, &ping, &reset, &SWUpdate, &tst };
+Service* services[] = {&radioService, &hk, &ping, &reset, &test, &SWupdate };//{&radioService, &hk, &ping, &reset, &SWUpdate, &tst };
 
 // COMMS board tasks
-CommandHandler<PQ9Frame,PQ9Message> cmdHandler(pq9bus, services, 5);
+CommandHandler<PQ9Frame,PQ9Message> cmdHandler(pq9bus, services, 6);
 PeriodicTask timerTask(1000, periodicTask);
 PeriodicTask* periodicTasks[] = {&timerTask};
 PeriodicTaskNotifier taskNotifier = PeriodicTaskNotifier(periodicTasks, 1);
 
-CommandHandler<PQ9Frame> cmdHandler(pq9bus, services, 5);
 Task* tasks[] = { &cmdHandler, &timerTask, &commRadio};
 
 // system uptime
@@ -184,6 +181,8 @@ void main(void)
 
     tx.init();
     rx.init();
+
+    commRadio.init();
 
     Console::log("COMMS booting...SLOT: %d", (int) Bootloader::getCurrentSlot());
 
