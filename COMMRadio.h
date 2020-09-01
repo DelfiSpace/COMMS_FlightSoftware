@@ -48,6 +48,7 @@ protected:
 
     PQPacket rxPacketBuffer[RX_MAX_FRAMES];
     int rxPacketBufferIndex = 0;
+    int rxPacketsInBuffer = 0;
 
     AX25Synchronizer AX25Sync = AX25Synchronizer(rxPacketBuffer, rxPacketBufferIndex);
 

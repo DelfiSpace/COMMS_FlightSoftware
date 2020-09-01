@@ -101,22 +101,18 @@ bool AX25Synchronizer::rxBit(){
 //                            Console::log("!");
                             this->hasReceivedFrame = true;
                             packetReceived = true;
-//                            receivedFrameBuffer[*AX25RXbufferIndex].isLocked = false;
-                            receivedFrameBuffer[*AX25RXbufferIndex].isReady = true;
 
 
-                            Console::log("RX! Bufferpos: %d - size: %d", *AX25RXbufferIndex,this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize);
-                            Console::log("==");
-                            for(int p = 0; p < rxBits_n/8; p++){
-                                Console::log(" %d ", this->receivedFrameBuffer[*AX25RXbufferIndex].data[p]);
-                            }
-                            Console::log("==");
+
+//                            Console::log("RX! Bufferpos: %d - size: %d", *AX25RXbufferIndex,this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize);
+//                            Console::log("==");
+//                            for(int p = 0; p < rxBits_n/8; p++){
+//                                Console::log(" %d ", this->receivedFrameBuffer[*AX25RXbufferIndex].data[p]);
+//                            }
+//                            Console::log("==");
                             //Console::log("%d",this->receivedFrameBuffer[*AX25RXbufferIndex].data[16]);
 
                             *AX25RXbufferIndex = (*AX25RXbufferIndex + 1) % RX_MAX_FRAMES;
-
-//                            receivedFrameBuffer[*AX25RXbufferIndex].isLocked = true;
-                            receivedFrameBuffer[*AX25RXbufferIndex].isReady = false;
 
                         }
                     }

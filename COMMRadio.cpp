@@ -32,43 +32,37 @@ COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeS
 };
 
 bool COMMRadio::notified(){
-    return (AX25Sync.bytesInQue > 0 || true);  //return true if bytes in Queue or Packets waiting to be processed.
+    return (AX25Sync.bytesInQue > 0);  //return true if bytes in Queue.
 }
 
 
 void COMMRadio::runTask(){
     // Process 10 bytes out of buffer:
     for(int k = 0; k < 80; k++){
-        AX25Sync.rxBit();
-        //APSync.rxBit();
+        if(AX25Sync.rxBit())
+        {
+            if(this->rxPacketBuffer[rxPacketBufferIndex-1].getBytes()[17] == 8) //packet to be processed instead of stored
+            {
+                //process and put pointer one back
+                rxPacketBufferIndex--;
+                Console::log("Packet Processed!  (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
+            }
+            else
+            {
+                //keep pointer one forward and increase packetsinBuffer
+                rxPacketsInBuffer++;
+                if(rxPacketsInBuffer > RX_MAX_FRAMES){
+                    rxPacketsInBuffer = RX_MAX_FRAMES;
+                }
+                Console::log("Packet Buffered! (Size: %d) - Packets In Buffer: %d",rxPacketBuffer[rxPacketBufferIndex-1].getSize(),  rxPacketsInBuffer);
+            }
+        }
         if(AX25Sync.bytesInQue <= 0){// && APSync.bytesInQue <= 0 ){
             break;
         }
     }
 
-    // If codeblock ready, decode
-//    for(int k = 0; k < RX_MAX_FRAMES; k++){
-//        int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_MAX_FRAMES);
-//        if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true && rxCLTUBuffer[buf_index].isCoded == true){
-//            bool decoded = false;
-//            for(int j = 0; j < 20; j++){
-//                if(LDPCDecoder::iterateBitflip(rxCLTUBuffer[buf_index].data)){
-//                    rxCLTUBuffer[buf_index].packetSize = 32;
-//                    rxCLTUBuffer[buf_index].isCoded = false;
-//                    Console::log("DECODED PACKET!  : %d", j);
-//                    decoded = true;
-//                    break;
-//                }
-//            }
-//            if(!decoded){
-//                Console::log("BROKEN PACKET!");
-//                rxCLTUBuffer[buf_index].isCoded = false;
-//                rxCLTUBuffer[buf_index].isNotRecoverable = true;
-//                break;
-//            }
-//        }
-//    }
-
+   //process Received Packets
 
 }
 
