@@ -80,10 +80,18 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             break;
         case RADIO_CMD_SET_TX_IDLE_STATE:
-            //todo
             Console::log("RadioService: set TX idle mode:");
-            workingBuffer.setPayloadSize(1);
-            workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
+            if(command.getPayloadSize() == 2)
+            {
+                workingBuffer.setPayloadSize(1);
+                workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
+                radio->setIdleMode(command.getDataPayload()[1] == 1);
+            }
+            else
+            {
+                workingBuffer.setPayloadSize(1);
+                workingBuffer.getDataPayload()[0] = RADIO_CMD_INVALID_VALUE;
+            }
             break;
         case RADIO_CMD_SET_TX_BITRATE:
             //todo
@@ -98,69 +106,6 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             break;
         }
 
-//  if(command.getDataPayload()[0] == RADIO_CMD_SENDFRAME)
-//        {
-//            workingBuffer.setPayloadSize(1);
-//
-//            uint8_t packetSize = command.getPayloadSize() - 1;
-//            if(radio->transmitData(&command.getDataPayload()[1], packetSize)){
-//                workingBuffer.getDataPayload()[0] = RADIO_CMD_ACCEPT;
-//            }else{
-//                workingBuffer.getDataPayload()[0] = RADIO_CMD_REJECT;
-//            }
-//        }
-//        else if(command.getPayload()[1] == RADIO_CMD_GETFRAME)
-//        {
-//            if (radio->getNumberOfRXFrames() > 0){
-//                //frames in buffer
-//                //int frameSize = radio->getSizeOfRXFrame() - 2;
-//                int frameSize = radio->getSizeOfRXFrame() - 18;
-//                workingBuffer.setSize(2 + frameSize);
-//                workingBuffer.getPayload()[0] = RADIO_SERVICE;
-//                workingBuffer.getPayload()[1] = SERVICE_RESPONSE_REPLY;
-//                uint8_t * frameData = radio->getRXFrame();
-//                for(int j = 0; j < frameSize; j++){
-//                    workingBuffer.getPayload()[2+j] = frameData[16+j];
-//                }
-//                radio->popFrame();
-//            }else{
-//                //no frames in buffer
-//                workingBuffer.setSize(2);
-//                workingBuffer.getPayload()[0] = RADIO_SERVICE;
-//                workingBuffer.getPayload()[1] = SERVICE_RESPONSE_ERROR;
-//            }
-//            //radio->toggleReceivePrint();
-//            //workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
-//        }
-//        else if(command.getPayload()[1] == RADIO_CMD_PRINT_RX)
-//        {
-//            //serial.println("TOGGLE RX PRINTING");
-//            //radio->toggleReceivePrint();
-//            radio->toggleReceivePrint();
-//            workingBuffer.setSize(2);
-//            workingBuffer.getPayload()[0] = RADIO_SERVICE;
-//            workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
-//        }
-//        else if(command.getPayload()[1] == RADIO_CMD_TOGGLE_MODE)
-//        {
-//            //serial.println("TOGGLE RX PRINTING");
-//            //radio->toggleReceivePrint();
-//            radio->toggleMode();
-//            workingBuffer.setSize(2);
-//            workingBuffer.getPayload()[0] = RADIO_SERVICE;
-//            workingBuffer.getPayload()[1] = RADIO_CMD_ACCEPT;
-//        }
-//        else
-//        {
-//            // unknown request
-//            workingBuffer.setSize(2);
-//            workingBuffer.getPayload()[1] = RADIO_CMD_ERROR;
-//            workingBuffer.getPayload()[0] = RADIO_SERVICE;
-//        }
-
-        // send response
-        //interface.transmit(workingBuffer);
-        // command processed
         return true;
     }
     else

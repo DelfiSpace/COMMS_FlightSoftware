@@ -79,7 +79,7 @@ uint8_t COMMRadio::onTransmit(){
                if(txIdleMode)
                {
                    txFlagQue++; //stay Idle by transmitting a flag
-                   Console::log("TX: stuffing");
+//                   Console::log("TX: stuffing");
                }
                else
                {
@@ -275,13 +275,12 @@ void COMMRadio::enableTransmit(){
 }
 
 
-void COMMRadio::toggleIdleMode(){
-    Console::log("Toggle TX Idle Mode ");
-    this->txIdleMode = !txIdleMode;
+void COMMRadio::setIdleMode(bool idle){
+    Console::log("Toggle TX Idle Mode: %s ", idle ? "ON":"OFF");
+    this->txIdleMode = idle;
     if(txIdleMode){
         //device should be idling, so turn on.
-        txEnabled = true;
-        txRadio->setIdleMode(true);
+        enableTransmit();
     }
 };
 

@@ -67,7 +67,7 @@ public:
     uint8_t onTransmit();
 
     bool transmitData(uint8_t data[], uint8_t size);
-    void toggleIdleMode();
+    void setIdleMode(bool idle);
 
     bool quePacketAX25(uint8_t dataIn[], uint8_t size);
     void enableTransmit();
