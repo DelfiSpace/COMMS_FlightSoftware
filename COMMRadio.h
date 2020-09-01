@@ -7,7 +7,6 @@
 #include "AX25Frame.h"
 #include "AX25Synchronizer.h"
 #include "Task.h"
-#include "APSynchronizer.h"
 #include "Console.h"
 
 #ifndef COMMRADIO_H_
@@ -18,6 +17,8 @@
 
 #define TX_MAX_FRAMES 10
 #define RX_MAX_FRAMES 10
+
+#define TX_TIMEOUT 5 //timeout to transmit packages
 
 class COMMRadio : public Task
 {
@@ -66,12 +67,10 @@ public:
     uint8_t onTransmit();
 
     bool transmitData(uint8_t data[], uint8_t size);
-    void toggleReceivePrint();
-    void toggleMode();
+    void toggleIdleMode();
 
-    void sendPacket();
     bool quePacketAX25(uint8_t dataIn[], uint8_t size);
-    void sendPacketAX25();
+    void enableTransmit();
 
     uint8_t TXDestination[7] = {0x82,0x98,0x98,0x40,0x40,0x40,0xFF};
     uint8_t TXSource[7]      = {0x40,0x40,0x40,0x40,0x40,0x40,0xFF};

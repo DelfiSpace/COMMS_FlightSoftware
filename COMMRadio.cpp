@@ -3,7 +3,7 @@
 #ifndef MODFUNC
 #define MODFUNC
 int mod(int a, int b)
-{ return (a%b+b)%b; }
+{ return a<0 ? (a%b+b)%b : a%b; }
 #endif
 
 COMMRadio* radioStub;
@@ -16,10 +16,9 @@ void onReceiveWrapper(uint8_t data){
     radioStub->onReceive(data);
 };
 void sendPacketWrapper(){
-    Console::log("SEND PACKET !");
     MAP_Timer32_clearInterruptFlag(TIMER32_1_BASE);
     radioStub->txTimeout = false;
-    radioStub->sendPacketAX25();
+    radioStub->enableTransmit();
 }
 void taskWrapper(){
     radioStub->runTask();
@@ -41,10 +40,10 @@ void COMMRadio::runTask(){
     for(int k = 0; k < 80; k++){
         if(AX25Sync.rxBit())
         {
-            if(this->rxPacketBuffer[rxPacketBufferIndex-1].getBytes()[17] == 8) //packet to be processed instead of stored
+            if(this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[17] == 8) //packet to be processed instead of stored
             {
                 //process and put pointer one back
-                rxPacketBufferIndex--;
+                rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
                 Console::log("Packet Processed!  (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
             }
             else
@@ -54,7 +53,7 @@ void COMMRadio::runTask(){
                 if(rxPacketsInBuffer > RX_MAX_FRAMES){
                     rxPacketsInBuffer = RX_MAX_FRAMES;
                 }
-                Console::log("Packet Buffered! (Size: %d) - Packets In Buffer: %d",rxPacketBuffer[rxPacketBufferIndex-1].getSize(),  rxPacketsInBuffer);
+                Console::log("Packet Buffered! (Size: %d) - Packets In Buffer: %d",rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getSize(),  rxPacketsInBuffer);
             }
         }
         if(AX25Sync.bytesInQue <= 0){// && APSync.bytesInQue <= 0 ){
@@ -80,6 +79,7 @@ uint8_t COMMRadio::onTransmit(){
                if(txIdleMode)
                {
                    txFlagQue++; //stay Idle by transmitting a flag
+                   Console::log("TX: stuffing");
                }
                else
                {
@@ -106,7 +106,9 @@ uint8_t COMMRadio::onTransmit(){
                //check if txBitIndex is high enough to roll over to next byte
                if(txBitIndex>=8){
                    txBitIndex = 0;
+                   txIndex = 0;
                    txFlagQue--;
+//                   Console::log("TX: FLAG!");
                }
 
            }
@@ -126,24 +128,24 @@ uint8_t COMMRadio::onTransmit(){
                //check if bitindex is high enough to roll over next byte
                if(txBitIndex >= 8)
                {
-                  txIndex++;
-                  txBitIndex = 0;
-               }
-
-               //check if we are out of bytes in packet
-               if(txIndex >= (txPacketBuffer[mod((txPacketBufferIndex - txPacketsInBuffer), TX_MAX_FRAMES)]).getSize())
-               {
-                   //roll over to next packet
-                  txIndex = 0;
-                  txPacketsInBuffer--;
-                  if(txPacketsInBuffer != 0)
-                  {
-                      txFlagQue += 3; //if next packet available add, 3 flags to stack
-                  }
-                  else
-                  {
-                      txFlagQue += DOWNRAMP_BYTES;
-                  }
+                   txIndex++;
+                   txBitIndex = 0;
+//                   Console::log("TX: Byte: %d, Packet: %d", txIndex, txPacketBufferIndex);
+                   //check if we are out of bytes in packet
+                   if(txIndex >= (txPacketBuffer[mod((txPacketBufferIndex - txPacketsInBuffer), TX_MAX_FRAMES)]).getSize())
+                   {
+                       //roll over to next packet
+                      txIndex = 0;
+                      txPacketsInBuffer--;
+                      if(txPacketsInBuffer != 0)
+                      {
+                          txFlagQue += 3; //if next packet available add, 3 flags to stack
+                      }
+                      else
+                      {
+                          txFlagQue += DOWNRAMP_BYTES;
+                      }
+                   }
                }
            }
            else // no flags are qued, and no data available, but radio is enabled, just idle the flag
@@ -210,10 +212,10 @@ void COMMRadio::initRX(){
     if(rxRadio->ping()){
         rxConfig.modem = MODEM_FSK;
         rxConfig.filtertype = BT_0_5;
-        rxConfig.bandwidth = 15000;
+        rxConfig.bandwidth = 1.5*3600;
         rxConfig.bandwidthAfc = 83333;
-        rxConfig.fdev = 4800;
-        rxConfig.datarate = 9600;
+        rxConfig.fdev = 3600/2;
+        rxConfig.datarate = 3600;
 
         rxRadio->setFrequency(145000000);
 
@@ -229,23 +231,6 @@ void COMMRadio::initRX(){
     }
 };
 
-bool COMMRadio::transmitData(uint8_t data[], uint8_t size){
-    this->quePacketAX25(data, size);
-//
-    if(!txTimeout){
-        Console::log("Setting Timer");
-
-        MAP_Timer32_registerInterrupt(TIMER32_1_INTERRUPT, &sendPacketWrapper);
-        MAP_Timer32_setCount(TIMER32_1_BASE, 48000000/2);
-        MAP_Timer32_startTimer(TIMER32_1_BASE, true);
-        txTimeout = true;
-    }
-//    radioStub->sendPacketAX25();
-
-    return true;
-
-};
-
 
 bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
     //return false is unsuccesful
@@ -258,23 +243,19 @@ bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
         AX25Frame::setPacket(txPacketBuffer[txPacketBufferIndex], data, size);
         AX25Frame::calculateFCS(txPacketBuffer[txPacketBufferIndex]);
 
-        //txSize = txCLTUBuffer[0].getSize();
-        //txRFMessageBuffer = txCLTUBuffer[txCLTUBufferIndex].getBytes();
-        // Print RF Packet for Debug
-//        serial.println("============================");
-//        serial.print("PACKETIndex : ");
-//        serial.print(txCLTUBufferIndex, DEC);
-//        serial.print("  == AVAILABLE : ");
-//        serial.print(txCLTUInBuffer+1, DEC);
-//        serial.println();
-//        for(int i = 0; i < txCLTUBuffer[txCLTUBufferIndex].getSize(); i++){
-//            serial.print(this->txCLTUBuffer[txCLTUBufferIndex].getBytes()[i], HEX);
-//            serial.print("|");
-//        }
-//        serial.println("");
-//        serial.println("============================");
         txPacketBufferIndex = mod(txPacketBufferIndex + 1, TX_MAX_FRAMES);
         txPacketsInBuffer++;
+
+        Console::log("TX - packetsInBuffer : %d", txPacketsInBuffer);
+
+        if(!txTimeout && !txEnabled){
+            Console::log("Setting Timer");
+
+            MAP_Timer32_registerInterrupt(TIMER32_1_INTERRUPT, &sendPacketWrapper);
+            MAP_Timer32_setCount(TIMER32_1_BASE, 48000000 * TX_TIMEOUT);
+            MAP_Timer32_startTimer(TIMER32_1_BASE, true);
+            txTimeout = true;
+        }
 
         return true;
     }else{
@@ -282,89 +263,58 @@ bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
     }
 }
 
-void COMMRadio::sendPacketAX25(){
-    if(!txPacketReady){
-        txFlagQue += UPRAMP_BYTES;
-        txEnabled = true;
-        txRadio->setIdleMode(true);
-    }
+void COMMRadio::enableTransmit(){
+    Console::log("Enabling Transmitter!");
+    txFlagQue += UPRAMP_BYTES;
+    txEnabled = true;
+    txRadio->setIdleMode(true);
     // else the radio is already on.
 
     //rxPrint = true;
     //rxReady = false;
 }
 
-void COMMRadio::toggleReceivePrint(){
-    //serial.print("Toggle RX Print: ");
-    //serial.println(rxReady);
 
-//    Console::log("");
-//    Console::log(" ============ ");
-//    Console::log("Printing Buffer:");
-//    Console::log(" ============ ");
-//    for(int k = 0; k < RX_MAX_FRAMES; k++){
-//        int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_MAX_FRAMES);
-//        if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true){
-//            Console::log("*******");
-//            int packet_size = rxCLTUBuffer[buf_index].packetSize;
-//
-//            Console::log("Index of Packet: %d |  Packet Size:  %d", buf_index, packet_size);
-//            Console::log("*******");
-//            uint8_t* frameData = this->rxCLTUBuffer[buf_index].data;
-//            for(int j = 0; j < packet_size; j++){
-//                Console::log("%x ",frameData[j]);
-//            }
-//            Console::log("");
-//            Console::log(" ============ ");
-//        }
-//    }
-    //TODO: OPMODE
-    //serial.print(rxReady);
-};
-
-void COMMRadio::toggleMode(){
-    Console::log("Toggle ProtocolMode ");
-//    advancedMode = !advancedMode;
+void COMMRadio::toggleIdleMode(){
+    Console::log("Toggle TX Idle Mode ");
+    this->txIdleMode = !txIdleMode;
+    if(txIdleMode){
+        //device should be idling, so turn on.
+        txEnabled = true;
+        txRadio->setIdleMode(true);
+    }
 };
 
 
 uint8_t COMMRadio::getNumberOfRXFrames(){
-    int count = 0;
-//    for(int k = 0; k < RX_MAX_FRAMES; k++){
-//        int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_MAX_FRAMES);
-//        if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true){
-//            count++;
-//        }
-//    }
-    return count;
+    return rxPacketsInBuffer;
 };
 
 uint8_t COMMRadio::getSizeOfRXFrame(){
-//    for(int k = 0; k < RX_MAX_FRAMES; k++){
-//        int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_MAX_FRAMES);
-//        if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true){
-//            return rxCLTUBuffer[buf_index].packetSize;
-//        }
-//    }
-    return 0;
+    if(rxPacketsInBuffer)
+    {
+        return rxPacketBuffer[mod(rxPacketBufferIndex - rxPacketsInBuffer, RX_MAX_FRAMES)].getSize();
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 uint8_t* COMMRadio::getRXFrame(){
-//    for(int k = 0; k < RX_MAX_FRAMES; k++){
-//        int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_MAX_FRAMES);
-//        if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true){
-//            return rxCLTUBuffer[buf_index].data;
-//        }
-//    }
-    return 0;
+    if(rxPacketsInBuffer)
+    {
+        return rxPacketBuffer[mod(rxPacketBufferIndex - rxPacketsInBuffer, RX_MAX_FRAMES)].getBytes();
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 void COMMRadio::popFrame(){
-//    for(int k = 0; k < RX_MAX_FRAMES; k++){
-//        int buf_index = mod((rxCLTUBufferIndex + 1 + k), RX_MAX_FRAMES);
-//        if(rxCLTUBuffer[buf_index].isLocked == false && rxCLTUBuffer[buf_index].isReady == true){
-//            rxCLTUBuffer[buf_index].isReady = false;
-//            break;
-//        }
-//    }
+    if(rxPacketsInBuffer)
+    {
+        rxPacketsInBuffer--;
+    }
 }

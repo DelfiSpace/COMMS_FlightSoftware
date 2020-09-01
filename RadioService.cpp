@@ -33,44 +33,49 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             workingBuffer.getDataPayload()[1] = radio->getNumberOfRXFrames();
             break;
         case RADIO_CMD_GETFRAME_RX:
-            //todo
             Console::log("RadioService: get RX Frame: ");
-            workingBuffer.setPayloadSize(1);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
+            workingBuffer.setPayloadSize(radio->getSizeOfRXFrame()+1);
+            unsigned char* rxFrame = radio->getRXFrame();
+            if(radio->getNumberOfRXFrames()){
+                for(int i = 0; i < radio->getSizeOfRXFrame(); i++){
+                    workingBuffer.getDataPayload()[1+i] = rxFrame[i];
+                }
+            }
             break;
         case RADIO_CMD_REMOVEFRAME_RX:
-            //todo
             Console::log("RadioService: remove RX Frame: ");
             workingBuffer.setPayloadSize(1);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
+            radio->popFrame();
             break;
         case RADIO_CMD_GET_RSSI_RX:
             //todo
-            Console::log("RadioService: get RX RSSI");
+            Console::log("#TODO# RadioService: get RX RSSI");
             workingBuffer.setPayloadSize(1);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             break;
         case RADIO_CMD_SENDFRAME:
-            //todo
-            Console::log("RadioService: Add frame to txbuffer");
+            Console::log("RadioService: Add frame to txbuffer (size:%d)", command.getPayloadSize()-1);
             workingBuffer.setPayloadSize(1);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
+            radio->quePacketAX25(&command.getDataPayload()[1], command.getPayloadSize()-1);
             break;
         case RADIO_CMD_SENDFRAME_OC:
             //todo
-            Console::log("RadioService: Add frame to txbuffer + override callsign");
+            Console::log("#TODO# RadioService: Add frame to txbuffer + override callsign");
             workingBuffer.setPayloadSize(1);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             break;
         case RADIO_CMD_SET_CS_TO:
             //todo
-            Console::log("RadioService: set TX -TO- callsign: ");
+            Console::log("#TODO# RadioService: set TX -TO- callsign: ");
             workingBuffer.setPayloadSize(1);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             break;
         case RADIO_CMD_SET_CS_FROM:
             //todo
-            Console::log("RadioService: set TX -FROM- callsign: ");
+            Console::log("#TODO# RadioService: set TX -FROM- callsign: ");
             workingBuffer.setPayloadSize(1);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             break;
@@ -82,7 +87,7 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             break;
         case RADIO_CMD_SET_TX_BITRATE:
             //todo
-            Console::log("RadioService: Set TX bitrate to: %d", 0);
+            Console::log("#TODO# RadioService: Set TX bitrate to: %d", 0);
             workingBuffer.setPayloadSize(1);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             break;
