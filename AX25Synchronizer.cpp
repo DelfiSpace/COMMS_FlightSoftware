@@ -1,11 +1,10 @@
 #include "AX25Synchronizer.h"
-
-
+#include "COMMRadio.h"
 
 int AX25Synchronizer::mod(int a, int b)
 { return a<0 ? (a%b+b)%b : a%b; }
 
-AX25Synchronizer::AX25Synchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXbufferIndex){
+AX25Synchronizer::AX25Synchronizer(PQPacket AX25FrameBuffer[], int &AX25RXbufferIndex){
     this->receivedFrameBuffer = AX25FrameBuffer;
     this->AX25RXbufferIndex = &AX25RXbufferIndex;
 }
@@ -102,7 +101,7 @@ bool AX25Synchronizer::rxBit(){
 //                            Console::log("!");
                             this->hasReceivedFrame = true;
                             packetReceived = true;
-                            receivedFrameBuffer[*AX25RXbufferIndex].isLocked = false;
+//                            receivedFrameBuffer[*AX25RXbufferIndex].isLocked = false;
                             receivedFrameBuffer[*AX25RXbufferIndex].isReady = true;
 
 
@@ -114,9 +113,9 @@ bool AX25Synchronizer::rxBit(){
                             Console::log("==");
                             //Console::log("%d",this->receivedFrameBuffer[*AX25RXbufferIndex].data[16]);
 
-                            *AX25RXbufferIndex = (*AX25RXbufferIndex + 1)%RX_FRAME_BUFFER;
+                            *AX25RXbufferIndex = (*AX25RXbufferIndex + 1) % RX_MAX_FRAMES;
 
-                            receivedFrameBuffer[*AX25RXbufferIndex].isLocked = true;
+//                            receivedFrameBuffer[*AX25RXbufferIndex].isLocked = true;
                             receivedFrameBuffer[*AX25RXbufferIndex].isReady = false;
 
                         }

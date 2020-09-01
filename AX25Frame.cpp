@@ -39,7 +39,7 @@ unsigned char AX25Frame::reverseByteOrder(unsigned char x)
     return table[x];
 }
 
-void AX25Frame::setData(CLTUPacket &inPacket, uint8_t data[], uint8_t size){
+void AX25Frame::setData(PQPacket &inPacket, uint8_t data[], uint8_t size){
     AX25Frame::setAdress(inPacket, &data[0], &data[7]);
     AX25Frame::setControl(inPacket, data[14]);
     AX25Frame::setPID(inPacket, data[15]);
@@ -47,13 +47,13 @@ void AX25Frame::setData(CLTUPacket &inPacket, uint8_t data[], uint8_t size){
     AX25Frame::setFCS(inPacket, &data[size-2]);
 };
 
-void AX25Frame::setFCS(CLTUPacket &inPacket, uint8_t FCS[]){
+void AX25Frame::setFCS(PQPacket &inPacket, uint8_t FCS[]){
     inPacket.data[inPacket.packetSize-2] = FCS[0];
     inPacket.data[inPacket.packetSize-1] = FCS[1];
     //AX25Frame::FCSField = ( (uint16_t)  (FCS[1] << 8)) | FCS[0];
 };
 
-void AX25Frame::setAdress(CLTUPacket &inPacket, uint8_t Destination[], uint8_t Source[]){
+void AX25Frame::setAdress(PQPacket &inPacket, uint8_t Destination[], uint8_t Source[]){
     for(int i = 0; i < 7; i++){
         //AX25Frame::addressField[i] = Destination[i];
         inPacket.data[i] = Destination[i];
@@ -65,7 +65,7 @@ void AX25Frame::setAdress(CLTUPacket &inPacket, uint8_t Destination[], uint8_t S
 
 };
 
-void AX25Frame::setControl(CLTUPacket &inPacket, bool PF){
+void AX25Frame::setControl(PQPacket &inPacket, bool PF){
     if(PF){
         //AX25Frame::controlField = 0x13; //000 1 00 11
         inPacket.data[14] = 0x13;
@@ -76,18 +76,18 @@ void AX25Frame::setControl(CLTUPacket &inPacket, bool PF){
     //inPacket.data[14] = controlField;
 };
 
-void AX25Frame::setControl(CLTUPacket &inPacket, uint8_t controlByte){
+void AX25Frame::setControl(PQPacket &inPacket, uint8_t controlByte){
     //AX25Frame::controlField = controlByte; //000 1 00 11
     inPacket.data[14] = controlByte;//controlField;
 };
 
-void AX25Frame::setPID(CLTUPacket &inPacket, uint8_t PIDByte){
+void AX25Frame::setPID(PQPacket &inPacket, uint8_t PIDByte){
     //AX25Frame::PIDField = PIDByte; //000 1 00 11
     inPacket.data[15] = PIDByte;
 };
 
 
-void AX25Frame::setPacket(CLTUPacket &inPacket, uint8_t packet[], uint8_t size){
+void AX25Frame::setPacket(PQPacket &inPacket, uint8_t packet[], uint8_t size){
     for(int i = 0; i < size; i++){
         //AX25Frame::packetField[i] = packet[i];
         inPacket.data[16+i] = packet[i];
@@ -97,7 +97,7 @@ void AX25Frame::setPacket(CLTUPacket &inPacket, uint8_t packet[], uint8_t size){
     inPacket.packetSize = size + 18;
 };
 
-void AX25Frame::calculateFCS(CLTUPacket &inPacket){
+void AX25Frame::calculateFCS(PQPacket &inPacket){
     //serial.println("calculating?");
     //fcs poly: 1 0001 0000 0010 0001  (17bits);
 
@@ -132,7 +132,7 @@ void AX25Frame::calculateFCS(CLTUPacket &inPacket){
     inPacket.data[inPacket.packetSize - 1] = FCSByte2;
 };
 
-bool AX25Frame::checkFCS(CLTUPacket &inPacket){
+bool AX25Frame::checkFCS(PQPacket &inPacket){
     //serial.println("calculating?");
     //fcs poly: 1 0001 0000 0010 0001  (17bits);
 
@@ -177,7 +177,7 @@ bool AX25Frame::checkFCS(CLTUPacket &inPacket){
     }
 }
 
-bool AX25Frame::checkFCS(CLTUPacket &inPacket, int size){
+bool AX25Frame::checkFCS(PQPacket &inPacket, int size){
     //serial.println("calculating?");
     //fcs poly: 1 0001 0000 0010 0001  (17bits);
 
@@ -222,6 +222,6 @@ bool AX25Frame::checkFCS(CLTUPacket &inPacket, int size){
     }
 }
 
-uint8_t AX25Frame::getPacketSize(CLTUPacket &inPacket){
+uint8_t AX25Frame::getPacketSize(PQPacket &inPacket){
     return inPacket.packetSize - 18;
 }

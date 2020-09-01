@@ -1,5 +1,5 @@
-#include <CLTUPacket.h>
 #include <LDPCDecoder.h>
+#include <PQPacket.h>
 #include "AX25Encoder.h"
 #include "SX1276.h"
 #include "DSPI.h"
@@ -16,6 +16,9 @@
 #define UPRAMP_BYTES   70
 #define DOWNRAMP_BYTES 20
 
+#define TX_MAX_FRAMES 10
+#define RX_MAX_FRAMES 10
+
 class COMMRadio : public Task
 {
 protected:
@@ -29,41 +32,35 @@ protected:
     TxConfig_t txConfig;
     RxConfig_t rxConfig;
 
-    uint8_t txPacketBuffer[PACKET_SIZE] = {0};
-    //uint8_t* txRFMessageBuffer;
-
-    volatile bool txReady = false;
+    volatile bool txEnabled = false;
     volatile bool txPacketReady = false;
 
-    volatile bool rxReady = false;
-
-    int txIndex = 0;
-    int txBitIndex = 0;
-    int txFlagInsert = 0;
+    int txIndex = 0;    //current byte index in TX frame
+    int txBitIndex = 0; //current bit index in TX frame
+    int txFlagQue = 0;  //how many flags are qued. (priority over frame)
+    bool txIdleMode = false; //false: turn off tx after transmission, true: stay on after transmission
 
     AX25Encoder encoder;
 
-    CLTUPacket txCLTUBuffer[TX_FRAME_BUFFER];
-    int txCLTUInBuffer = 0;
-    int txCLTUBufferIndex = 0;
+    PQPacket txPacketBuffer[TX_MAX_FRAMES];
+    int txPacketsInBuffer = 0;
+    int txPacketBufferIndex = 0;
 
-    CLTUPacket rxCLTUBuffer[RX_FRAME_BUFFER];
-    int rxCLTUBufferIndex = 0;
+    PQPacket rxPacketBuffer[RX_MAX_FRAMES];
+    int rxPacketBufferIndex = 0;
 
-    APSynchronizer APSync = APSynchronizer(rxCLTUBuffer, rxCLTUBufferIndex);
-    AX25Synchronizer AX25Sync = AX25Synchronizer(rxCLTUBuffer, rxCLTUBufferIndex);
+    AX25Synchronizer AX25Sync = AX25Synchronizer(rxPacketBuffer, rxPacketBufferIndex);
 
-    LDPCDecoder LDPCdecoder;
-
-    bool advancedMode = false;
-    //true = AP, false = AX25;
 
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);
+    bool notified( void );
+
     void runTask();
     void init();
     void initTX();
     void initRX();
+
     void onReceive(uint8_t data);
     uint8_t onTransmit();
 

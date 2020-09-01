@@ -1,4 +1,4 @@
-#include "CLTUPacket.h"
+#include <PQPacket.h>
 #include "Console.h"
 #include <stdint.h>
 
@@ -17,19 +17,19 @@ protected:
 
 public:
      static unsigned char reverseByteOrder(unsigned char x);
-     static void setAdress(CLTUPacket &inPacket, uint8_t Destination[], uint8_t Source[]);
-     static void setControl(CLTUPacket &inPacket, bool PF);
-     static void setControl(CLTUPacket &inPacket, uint8_t byte);
-     static void setPID(CLTUPacket &inPacket, uint8_t byte);
-     static void setFCS(CLTUPacket &inPacket, uint8_t FCS[]);
+     static void setAdress(PQPacket &inPacket, uint8_t Destination[], uint8_t Source[]);
+     static void setControl(PQPacket &inPacket, bool PF);
+     static void setControl(PQPacket &inPacket, uint8_t byte);
+     static void setPID(PQPacket &inPacket, uint8_t byte);
+     static void setFCS(PQPacket &inPacket, uint8_t FCS[]);
 
-     static void setPacket(CLTUPacket &inPacket, uint8_t packet[], uint8_t size);
-     static void setData(CLTUPacket &inPacket, uint8_t data[], uint8_t size);
-     static void calculateFCS(CLTUPacket &inPacket);
-     static bool checkFCS(CLTUPacket &inPacket);
-     static bool checkFCS(CLTUPacket &inPacket, int size);
+     static void setPacket(PQPacket &inPacket, uint8_t packet[], uint8_t size);
+     static void setData(PQPacket &inPacket, uint8_t data[], uint8_t size);
+     static void calculateFCS(PQPacket &inPacket);
+     static bool checkFCS(PQPacket &inPacket);
+     static bool checkFCS(PQPacket &inPacket, int size);
 
-     static uint8_t getPacketSize(CLTUPacket &inPacket);
+     static uint8_t getPacketSize(PQPacket &inPacket);
 };
 
 #endif

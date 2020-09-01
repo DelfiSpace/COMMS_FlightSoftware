@@ -57,12 +57,12 @@ uint8_t AX25Encoder::NRZIdecodeByte(uint8_t inByte){
 
 uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing){
     uint8_t outBit;
-    if(bitsInBuffer == 0){
+    if(StuffBitsInBuffer == 0){
         outBit = inBit;
     }else{
         //take bit from buffer
         outBit = 0x00;
-        bitsInBuffer--;
+        StuffBitsInBuffer--;
         //serial.print("[s]");
     }
 
@@ -76,7 +76,7 @@ uint8_t AX25Encoder::txBit(uint8_t inBit, bool bitStuffing){
             //serial.print("0");
         }
         if(bitCounter >= 5){
-            bitsInBuffer++;
+            StuffBitsInBuffer++;
             bitCounter = 0;
             //serial.print("[stuffing!]");
         }

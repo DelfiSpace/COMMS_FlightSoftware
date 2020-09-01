@@ -4,8 +4,8 @@
  *  Created on: 12 Dec 2019
  *      Author: Casper Broekhuizen
  */
-#include <CLTUPacket.h>
 #include <LDPCDecoder.h>
+#include <PQPacket.h>
 #include "BitArray.h"
 #include "Console.h"
 #include "AX25Frame.h"
@@ -36,7 +36,7 @@ protected:
 
     int CLTUbitCounter = 0;
 
-    CLTUPacket* rxCLTU;
+    PQPacket* rxCLTU;
     int* rxCLTUBufferIndex;
 
     int mod(int a, int b);
@@ -46,7 +46,7 @@ protected:
 
 
 public:
-    APSynchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXbufferIndex);
+    APSynchronizer(PQPacket AX25FrameBuffer[], int &AX25RXbufferIndex);
 
     //AX25Frame receivedFrame;
     bool queByte(uint8_t byte);

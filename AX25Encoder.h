@@ -37,7 +37,7 @@ public:
     uint8_t NRZIdecodeByte(uint8_t inbyte);
 
     uint8_t txBit(uint8_t inBit, bool bitStuff);
-    uint8_t bitsInBuffer = 0;
+    uint8_t StuffBitsInBuffer = 0;
 
     int destuffBits(uint8_t inBuffer[], uint8_t outBuffer[], int bitCount);
 };

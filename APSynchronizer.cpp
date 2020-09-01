@@ -5,6 +5,7 @@
  *      Author: Casper Broekhuizen
  */
 #include "APSynchronizer.h"
+#include "COMMRadio.h"
 
 int APSynchronizer::mod(int a, int b)
 { return a>0 ? (a%b) : (a%b+b)%b; }
@@ -15,7 +16,7 @@ int APSynchronizer::clip(int a, int b)
 
 
 
-APSynchronizer::APSynchronizer(CLTUPacket rxCLTU[], int &rxCLTUBufferIndex){
+APSynchronizer::APSynchronizer(PQPacket rxCLTU[], int &rxCLTUBufferIndex){
     this->rxCLTU = rxCLTU;
     this->rxCLTUBufferIndex = &rxCLTUBufferIndex;
 }
@@ -92,16 +93,16 @@ bool APSynchronizer::rxBit(){
                     CLTUbitCounter = 0;
                     rxCLTU[*rxCLTUBufferIndex].packetSize = 64;
 
-                    rxCLTU[*rxCLTUBufferIndex].isLocked = false;
-                    rxCLTU[*rxCLTUBufferIndex].isCoded = true;
+//                    rxCLTU[*rxCLTUBufferIndex].isLocked = false;
+//                    rxCLTU[*rxCLTUBufferIndex].isCoded = true;
                     rxCLTU[*rxCLTUBufferIndex].isReady = true;
 
                     Console::log("%d - %d", *rxCLTUBufferIndex, this->rxCLTU[*rxCLTUBufferIndex].packetSize);
 
-                    *rxCLTUBufferIndex = mod(*rxCLTUBufferIndex + 1, RX_FRAME_BUFFER);
-
-                    rxCLTU[*rxCLTUBufferIndex].isLocked = true;
-                    rxCLTU[*rxCLTUBufferIndex].isCoded = false;
+                    *rxCLTUBufferIndex = mod(*rxCLTUBufferIndex + 1, RX_MAX_FRAMES);
+//
+//                    rxCLTU[*rxCLTUBufferIndex].isLocked = true;
+//                    rxCLTU[*rxCLTUBufferIndex].isCoded = false;
                     rxCLTU[*rxCLTUBufferIndex].isReady = false;
 
                     incomingCLTUs++;

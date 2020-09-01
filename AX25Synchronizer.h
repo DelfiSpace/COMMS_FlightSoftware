@@ -1,6 +1,6 @@
+#include <PQPacket.h>
 #include "AX25Frame.h"
 #include "AX25Encoder.h"
-#include "CLTUPacket.h"
 #include "BitArray.h"
 #include "Console.h"
 
@@ -24,7 +24,7 @@ protected:
 
     int synchronizerState = 0;
 
-    CLTUPacket* receivedFrameBuffer;
+    PQPacket* receivedFrameBuffer;
     int* AX25RXbufferIndex;
 
     int mod(int a, int b);
@@ -32,7 +32,7 @@ protected:
     AX25Encoder encoder;
 
 public:
-    AX25Synchronizer(CLTUPacket AX25FrameBuffer[], int &AX25RXbufferIndex);
+    AX25Synchronizer(PQPacket AX25FrameBuffer[], int &AX25RXbufferIndex);
 
     //AX25Frame receivedFrame;
     bool queByte(uint8_t byte);
