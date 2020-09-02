@@ -1,5 +1,4 @@
-#include <LDPCDecoder.h>
-#include <PQPacket.h>
+#include "PQPacket.h"
 #include "AX25Encoder.h"
 #include "SX1276.h"
 #include "DSPI.h"
@@ -8,15 +7,18 @@
 #include "AX25Synchronizer.h"
 #include "Task.h"
 #include "Console.h"
+#include "InternalCommandHandler.h"
+#include "PQ9Frame.h"
+#include "PQ9Message.h"
 
 #ifndef COMMRADIO_H_
 #define COMMRADIO_H_
 #define PACKET_SIZE    100
-#define UPRAMP_BYTES   70
+#define UPRAMP_BYTES   100
 #define DOWNRAMP_BYTES 20
 
-#define TX_MAX_FRAMES 10
-#define RX_MAX_FRAMES 10
+#define TX_MAX_FRAMES 100
+#define RX_MAX_FRAMES 100
 
 #define TX_TIMEOUT 5 //timeout to transmit packages
 
@@ -29,6 +31,8 @@ protected:
 
     SX1276 *txRadio;
     SX1276 *rxRadio;
+
+    InternalCommandHandler<PQ9Frame,PQ9Message> *cmdHandler;
 
     TxConfig_t txConfig;
     RxConfig_t rxConfig;
@@ -57,6 +61,8 @@ protected:
 
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);
+    void setcmdHandler(InternalCommandHandler<PQ9Frame,PQ9Message> &cmdhand);
+
     bool notified( void );
 
     void runTask();

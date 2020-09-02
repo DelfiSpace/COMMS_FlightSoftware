@@ -61,9 +61,9 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             Console::log("RadioService: get RX RSSI of last packet");
             workingBuffer.setPayloadSize(3); //OK + short
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
-            signed short rssi = radio->lastRSSI;
-            workingBuffer.getDataPayload()[1] = ((uint8_t*) &rssi)[0];
-            workingBuffer.getDataPayload()[2] = ((uint8_t*) &rssi)[0];
+            signed short lastrssi = radio->lastRSSI;
+            workingBuffer.getDataPayload()[1] = ((uint8_t*) &lastrssi)[0];
+            workingBuffer.getDataPayload()[2] = ((uint8_t*) &lastrssi)[0];
             break;
         case RADIO_CMD_GET_LAST_FREQERROR_RX:
             Console::log("RadioService: get RX Frequency Error of last packet");

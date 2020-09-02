@@ -47,6 +47,7 @@ Service* services[] = {&radioService, &hk, &ping, &reset, &test, &SWupdate };//{
 
 // COMMS board tasks
 CommandHandler<PQ9Frame,PQ9Message> cmdHandler(pq9bus, services, 6);
+InternalCommandHandler<PQ9Frame,PQ9Message> internalCmdHandler(services, 6);
 PeriodicTask timerTask(1000, periodicTask);
 PeriodicTask* periodicTasks[] = {&timerTask};
 PeriodicTaskNotifier taskNotifier = PeriodicTaskNotifier(periodicTasks, 1);
@@ -70,6 +71,16 @@ void periodicTask()
 
     // kick hardware watch-dog after every telemetry collection happens
     reset.kickExternalWatchDog();
+
+//    signed short rssi = rx.GetRssi(ModemType::MODEM_FSK);
+//    if(rssi < 0)
+//    {
+//        Console::log("Received Command! Current RSSI: -%d dBm", -rssi);
+//    }
+//    else
+//    {
+//        Console::log("Received Command! Current RSSI: %d dBm", rssi);
+//    }
 }
 
 void acquireTelemetry(COMMSTelemetryContainer *tc)
@@ -183,6 +194,7 @@ void main(void)
     rx.init();
 
     commRadio.init();
+    commRadio.setcmdHandler(internalCmdHandler);
 
     Console::log("COMMS booting...SLOT: %d", (int) Bootloader::getCurrentSlot());
 

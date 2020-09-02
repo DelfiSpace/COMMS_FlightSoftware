@@ -30,6 +30,11 @@ COMMRadio::COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeS
     radioStub = this;
 };
 
+void COMMRadio::setcmdHandler(InternalCommandHandler<PQ9Frame,PQ9Message> &cmdhand)
+{
+    cmdHandler = &cmdhand;
+}
+
 bool COMMRadio::notified(){
     return (AX25Sync.bytesInQue > 0);  //return true if bytes in Queue.
 }
@@ -51,16 +56,16 @@ void COMMRadio::runTask(){
 //            }
 
             lastFreqError = rxRadio->getFrequencyError();
-            if(lastFreqError < 0)
-            {
-                Console::log("Received Command! Freq Error: -%d Hz", -lastFreqError);
-            }
-            else
-            {
-                Console::log("Received Command! Freq Error: %d Hz", lastFreqError);
-            }
-
-            switch(this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[17])
+//            if(lastFreqError < 0)
+//            {
+//                Console::log("Received Command! Freq Error: -%d Hz", -lastFreqError);
+//            }
+//            else
+//            {
+//                Console::log("Received Command! Freq Error: %d Hz", lastFreqError);
+//            }
+//            Console::log("%d", this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[16]);
+            switch(this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[16])
             {
             case 0xAA:  //RESET COMMAND
                 //process and put pointer one back
@@ -70,7 +75,30 @@ void COMMRadio::runTask(){
             case 0x01:  //Internal Command
                 //process command in internal commandHandler
                 rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
-                Console::log("INTERNAL COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
+                if(cmdHandler){
+                    uint8_t internalCommandNumber = this->rxPacketBuffer[rxPacketBufferIndex].getBytes()[17];
+                    PQ9Frame internalCommand;
+                    internalCommand.setDestination(4);
+                    internalCommand.setSource(8);
+                    internalCommand.setPayloadSize(rxPacketBuffer[rxPacketBufferIndex].getSize()-18-2);
+                    for (int i = 0; i < internalCommand.getPayloadSize(); i++)
+                    {
+                        internalCommand.getPayload()[i] = rxPacketBuffer[rxPacketBufferIndex].getBytes()[18+i];
+                    }
+                    Console::log("INTERNAL COMMAND! (Size: %d, ID: %d) CMD = DEST:%d SRC:%d SIZE:%d", rxPacketBuffer[rxPacketBufferIndex].getSize()-18,internalCommandNumber,internalCommand.getDestination(),internalCommand.getSource(),internalCommand.getPayloadSize());
+                    cmdHandler->received(internalCommand);
+                    cmdHandler->run();
+                    PQ9Frame* internalResponse = cmdHandler->getTxBuffer();
+                    int packetSize = internalResponse->getPayloadSize()+1;
+                    Console::log("pSize: %d", packetSize);
+                    uint8_t responsePacket[MAX_PQPACKET_MAX_SIZE];
+                    responsePacket[0] = internalCommandNumber;
+                    for(int k = 0; k < internalResponse->getPayloadSize(); k++){
+                        responsePacket[1+k] = internalResponse->getPayload()[k];
+                    }
+                    this->quePacketAX25(responsePacket, packetSize);
+
+                }
                 break;
             case 0x02: //Bus override command
                 //process command onto the bus
