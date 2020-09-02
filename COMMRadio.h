@@ -54,6 +54,7 @@ protected:
     AX25Synchronizer AX25Sync = AX25Synchronizer(rxPacketBuffer, rxPacketBufferIndex);
 
 
+
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);
     bool notified( void );
@@ -80,6 +81,12 @@ public:
     uint8_t getSizeOfRXFrame();
     uint8_t* getRXFrame();
     void popFrame();
+
+    signed short getRXRSSI();
+
+    signed short lastFreqError;
+    signed short lastRSSI;
+
 };
 
 #endif

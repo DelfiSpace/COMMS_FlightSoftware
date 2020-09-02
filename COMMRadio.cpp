@@ -40,29 +40,59 @@ void COMMRadio::runTask(){
     for(int k = 0; k < 80; k++){
         if(AX25Sync.rxBit())
         {
-            if(this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[17] == 8) //packet to be processed instead of stored
+            lastRSSI = getRXRSSI();
+//            if(lastRSSI < 0)
+//            {
+//                Console::log("Received Command! Current RSSI: -%d dBm", -lastRSSI);
+//            }
+//            else
+//            {
+//                Console::log("Received Command! Current RSSI: %d dBm", lastRSSI);
+//            }
+
+            lastFreqError = rxRadio->getFrequencyError();
+            if(lastFreqError < 0)
             {
-                //process and put pointer one back
-                rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
-                Console::log("Packet Processed!  (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
+                Console::log("Received Command! Freq Error: -%d Hz", -lastFreqError);
             }
             else
             {
+                Console::log("Received Command! Freq Error: %d Hz", lastFreqError);
+            }
+
+            switch(this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[17])
+            {
+            case 0xAA:  //RESET COMMAND
+                //process and put pointer one back
+                rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
+                Console::log("RESET COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
+                break;
+            case 0x01:  //Internal Command
+                //process command in internal commandHandler
+                rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
+                Console::log("INTERNAL COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
+                break;
+            case 0x02: //Bus override command
+                //process command onto the bus
+                rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
+                Console::log("BUSOVERRIDE COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
+                break;
+            case 0x03: //OBC buffered command
+                //Buffer command (dont move pointer back)
+                Console::log("BUSOVERRIDE COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
                 //keep pointer one forward and increase packetsinBuffer
                 rxPacketsInBuffer++;
                 if(rxPacketsInBuffer > RX_MAX_FRAMES){
                     rxPacketsInBuffer = RX_MAX_FRAMES;
                 }
-                Console::log("Packet Buffered! (Size: %d) - Packets In Buffer: %d",rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getSize(),  rxPacketsInBuffer);
+                Console::log("BUFFER COMMAND! (Size: %d) - Packets In Buffer: %d",rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getSize(),  rxPacketsInBuffer);
+                break;
             }
         }
-        if(AX25Sync.bytesInQue <= 0){// && APSync.bytesInQue <= 0 ){
+        if(AX25Sync.bytesInQue <= 0){ // no more bits to process form receive buffer.
             break;
         }
     }
-
-   //process Received Packets
-
 }
 
 uint8_t COMMRadio::onTransmit(){
@@ -212,10 +242,10 @@ void COMMRadio::initRX(){
     if(rxRadio->ping()){
         rxConfig.modem = MODEM_FSK;
         rxConfig.filtertype = BT_0_5;
-        rxConfig.bandwidth = 1.5*3600;
+        rxConfig.bandwidth = 15000;
         rxConfig.bandwidthAfc = 83333;
-        rxConfig.fdev = 3600/2;
-        rxConfig.datarate = 3600;
+        rxConfig.fdev = 9600/2;
+        rxConfig.datarate = 9600;
 
         rxRadio->setFrequency(145000000);
 
@@ -316,4 +346,8 @@ void COMMRadio::popFrame(){
     {
         rxPacketsInBuffer--;
     }
+}
+
+signed short COMMRadio::getRXRSSI(){
+    return rxRadio->GetRssi(ModemType::MODEM_FSK);
 }
