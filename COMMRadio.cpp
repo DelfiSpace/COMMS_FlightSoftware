@@ -108,12 +108,15 @@ void COMMRadio::runTask(){
             case 0x03: //OBC buffered command
                 //Buffer command (dont move pointer back)
                 int packetSize = rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getSize()-18-1;
-                Console::log("BUFFER COMMAND! (Size: %d) - Packets In Buffer: %d - cmdSize: %d",rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getSize(),  rxPacketsInBuffer, packetSize);
+
                 //keep pointer one forward and increase packetsinBuffer
                 rxPacketsInBuffer++;
                 if(rxPacketsInBuffer > RX_MAX_FRAMES){
                     rxPacketsInBuffer = RX_MAX_FRAMES;
                 }
+
+                Console::log("BUFFER COMMAND! (Size: %d) - Packets In Buffer: %d - cmdSize: %d",rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getSize(),  rxPacketsInBuffer, packetSize);
+
                 uint8_t rxBuffer[256];
                 rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].packetSize = packetSize;
                 for(int j = 0; j < packetSize; j++){
