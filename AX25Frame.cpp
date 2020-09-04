@@ -173,6 +173,7 @@ bool AX25Frame::checkFCS(PQPacket &inPacket){
     if( FCSByte1 == inPacket.data[inPacket.packetSize-2] && FCSByte2 == inPacket.data[inPacket.packetSize-1]){
         return true;
     }else{
+        Console::log("Calculated: %d %d | Expected: %d %d",FCSByte1, FCSByte2,  inPacket.data[inPacket.packetSize-2], inPacket.data[inPacket.packetSize-1] );
         return false;
     }
 }

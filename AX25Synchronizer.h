@@ -24,20 +24,16 @@ protected:
 
     int synchronizerState = 0;
 
-    PQPacket* receivedFrameBuffer;
-    int* AX25RXbufferIndex;
-
-    int mod(int a, int b);
+    PQPacket receivedFrameBuffer;
 
     AX25Encoder encoder;
 
 public:
-    AX25Synchronizer(PQPacket AX25FrameBuffer[], int &AX25RXbufferIndex);
+    AX25Synchronizer();
 
     //AX25Frame receivedFrame;
     bool queByte(uint8_t byte);
-    bool rxBit();
-    volatile bool hasReceivedFrame = false;
+    PQPacket* rxBit();
     int bytesInQue = 0;
 };
 

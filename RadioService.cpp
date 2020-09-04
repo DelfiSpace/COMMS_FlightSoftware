@@ -8,7 +8,7 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
 {
     if (command.getService() == RADIO_SERVICE)
     {
-        Console::log("RadioService: Service started");
+//        Console::log("RadioService: Service started");
         workingBuffer.setService(RADIO_SERVICE);
         workingBuffer.setMessageType(SERVICE_RESPONSE_REPLY);
 
@@ -27,13 +27,13 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             break;
         case RADIO_CMD_NR_OF_RX:
-            Console::log("RadioService: Get nr of RX frames: %d", radio->getNumberOfRXFrames());
+//            Console::log("RadioService: Get nr of RX frames: %d", radio->getNumberOfRXFrames());
             workingBuffer.setPayloadSize(2);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             workingBuffer.getDataPayload()[1] = radio->getNumberOfRXFrames();
             break;
         case RADIO_CMD_GETFRAME_RX:
-            Console::log("RadioService: get RX Frame: ");
+//            Console::log("RadioService: get RX Frame: ");
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             workingBuffer.setPayloadSize(radio->getSizeOfRXFrame()+1);
             unsigned char* rxFrame = radio->getRXFrame();
@@ -44,7 +44,7 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             }
             break;
         case RADIO_CMD_REMOVEFRAME_RX:
-            Console::log("RadioService: remove RX Frame: ");
+//            Console::log("RadioService: remove RX Frame: ");
             workingBuffer.setPayloadSize(1);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             radio->popFrame();
@@ -74,7 +74,7 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             workingBuffer.getDataPayload()[2] = ((uint8_t*) &fError)[0];
             break;
         case RADIO_CMD_SENDFRAME:
-            Console::log("RadioService: Add frame to txbuffer (size:%d)", command.getPayloadSize()-1);
+//            Console::log("RadioService: Add frame to txbuffer (size:%d)", command.getPayloadSize()-1);
             workingBuffer.setPayloadSize(1);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             radio->quePacketAX25(&command.getDataPayload()[1], command.getPayloadSize()-1);
