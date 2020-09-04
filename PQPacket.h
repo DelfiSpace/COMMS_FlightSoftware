@@ -24,12 +24,6 @@ public:
 
     int getSize();
     uint8_t* getBytes();
-
-    void clear(){
-        for(int i = 0; i < PQPACKET_MAX_SIZE; i++){
-            data[i] = 0;
-        }
-    }
 };
 
 

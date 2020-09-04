@@ -1,7 +1,12 @@
 #include "AX25Synchronizer.h"
 #include "COMMRadio.h"
 
-AX25Synchronizer::AX25Synchronizer(){
+int AX25Synchronizer::mod(int a, int b)
+{ return a<0 ? (a%b+b)%b : a%b; }
+
+AX25Synchronizer::AX25Synchronizer(PQPacket AX25FrameBuffer[], int &AX25RXbufferIndex){
+    this->receivedFrameBuffer = AX25FrameBuffer;
+    this->AX25RXbufferIndex = &AX25RXbufferIndex;
 }
 
 //void AX25Synchronizer::queBit(uint8_t inBit){
@@ -10,7 +15,7 @@ AX25Synchronizer::AX25Synchronizer(){
 //}
 bool AX25Synchronizer::queByte(uint8_t inByte){
     byteQue[this->byteQueIndex] = inByte;
-    byteQueIndex = BitArray::mod(byteQueIndex+1, BYTE_QUE_SIZE);
+    byteQueIndex = mod(byteQueIndex+1, BYTE_QUE_SIZE);
     bytesInQue = bytesInQue + 1;
 
     if(bytesInQue > BYTE_QUE_SIZE){
@@ -20,11 +25,12 @@ bool AX25Synchronizer::queByte(uint8_t inByte){
     return true;
 }
 
-PQPacket* AX25Synchronizer::rxBit(){
+bool AX25Synchronizer::rxBit(){
+    bool packetReceived = false;
     if(bytesInQue <= 0){
-        return 0;
+        return packetReceived;
     }
-    uint8_t inByte = byteQue[BitArray::mod(byteQueIndex - bytesInQue, BYTE_QUE_SIZE)];
+    uint8_t inByte = byteQue[mod(byteQueIndex - bytesInQue, BYTE_QUE_SIZE)];
     bytesInQue = bytesInQue - 1;
 
     for(int i = 0; i < 8; i++){
@@ -34,104 +40,97 @@ PQPacket* AX25Synchronizer::rxBit(){
             case 0:
                 //flagDetect
                 BitArray::setBit(&flagBuffer, flagBufferIndex, inBit == 0x01);
-                flagBufferIndex = BitArray::mod(flagBufferIndex + 1, 8);
 
-                if(BitArray::getByte(&flagBuffer, flagBufferIndex - 8, 8) == 0x7E ){
-                    //Flag detected, wait for Msg Start
-                    flagBuffer = 0;
-                    flagBufferIndex = 0;
-
-                    bitBufferIndex = 0;
+                if(BitArray::getByte(&flagBuffer, flagBufferIndex - 7, 8) == 0x7E ){
+                    //serial.println("Flag!");
+//                    Console::log("Flag!");
                     bitBuffer[0] = 0;
+                    bitBufferIndex = 0;
                     synchronizerState = 1;
                 }
+                flagBufferIndex = mod(flagBufferIndex + 1, 8);
+//                if(flagBufferIndex == 0){
+//                    Console::log("%x", flagBuffer);
+//                }
                 break;
             case 1:
                 //checkForStart
                 BitArray::setBit(bitBuffer, bitBufferIndex, inBit == 0x01);
-                bitBufferIndex++;
-                if(bitBufferIndex == 8){ //check if there's another flag or data.
+                if(bitBufferIndex == 7){
                     if(bitBuffer[0] == 0x7E ){
-                        // Another Flag
-                        bitBuffer[0] = 0;
+                        //serial.println("Another Flag!");
                         bitBufferIndex = 0;
+                        bitBuffer[0] = 0;
+                        synchronizerState = 1;
+                        break; //early break due to bitBufferIndex reset
                     }else{
-                        // Start of Msg?!
+                        //serial.print("Msg start? ");
+                        //serial.println(bitBuffer[0], HEX);
                         synchronizerState = 2;
                     }
                 }
+                bitBufferIndex = mod(bitBufferIndex + 1, BYTE_BUFFER_SIZE*8);
                 break;
             case 2:
                 //receivingMsg
                 BitArray::setBit(bitBuffer, bitBufferIndex, inBit == 0x01);
-                bitBufferIndex++;
-
-                //Detect End Flag!
-                if(BitArray::getByte(bitBuffer, bitBufferIndex - 8, 8*BYTE_BUFFER_SIZE) == 0x7E ){
-//                    Console::log("EndFlag Received!");
-
-                    //get Size of Msg (minus the end flag)
-                    int rxBits_n = bitBufferIndex - 8;
-
-                    //Wether this turns out a package or not, next iteration we're back at detecting flags.
-                    bitBufferIndex = 0;
-                    synchronizerState = 0;
-
-                    //Destuff the received BitSequence
-                    rxBits_n = this->encoder.destuffBits(bitBuffer, receivedFrameBuffer.getBytes(), rxBits_n);
-
-                    if(rxBits_n % 8 == 0){ //packet always has whole bytes!
-
+                if(bitBufferIndex >= 7 && BitArray::getByte(bitBuffer, bitBufferIndex - 7, 8*BYTE_BUFFER_SIZE) == 0x7E ){
+                    //serial.println("EndSeq Received!");
+                    //destuff received BitSequence
+                    int rxBits_n = this->encoder.destuffBits(bitBuffer, receivedFrameBuffer[*AX25RXbufferIndex].data, bitBufferIndex-7);
+                    //This could be a packet?
+                    if(rxBits_n % 8 == 0){ //packet has whole bytes!
                         //reverseOrder on all bytes
+
                         for(int p = 0; p < rxBits_n/8; p++){
-                            this->receivedFrameBuffer.data[p] = AX25Frame::reverseByteOrder(this->receivedFrameBuffer.data[p]);
+                            this->receivedFrameBuffer[*AX25RXbufferIndex].data[p] = AX25Frame::reverseByteOrder(this->receivedFrameBuffer[*AX25RXbufferIndex].data[p]);
                         }
+                        this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize = rxBits_n/8;
+//                        serial.println("#");
+//                        serial.println(receivedFrameBuffer[*AX25RXbufferIndex].packetSize , DEC);
+//                        for(int p = 0; p < (bitBufferIndex-7)/8; p++){
+//                            serial.print(bitBuffer[p],HEX);
+//                            serial.print(" ");
+//                        }serial.println();
+//                        for(int p = 0; p < rxBits_n/8; p++){
+//                            serial.print(receivedFrameBuffer[*AX25RXbufferIndex].data[p],HEX);
+//                            serial.print(" ");
+//                        }serial.println();
+                        if(AX25Frame::checkFCS(this->receivedFrameBuffer[*AX25RXbufferIndex])){
 
-                        //set Packet Length
-                        this->receivedFrameBuffer.packetSize = rxBits_n/8;
+//                            Console::log("!");
+                            this->hasReceivedFrame = true;
+                            packetReceived = true;
 
-                        if(AX25Frame::checkFCS(this->receivedFrameBuffer)){
-                            //FCS Hit! Packet Received!
-//                            Console::log("    RX! (size:%d)%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %d %d %d %d %d %d %d %d %d %d %d", rxBits_n/8,
-//                                     receivedFrameBuffer.getBytes()[0],
-//                                     receivedFrameBuffer.getBytes()[1],
-//                                     receivedFrameBuffer.getBytes()[2],
-//                                     receivedFrameBuffer.getBytes()[3],
-//                                     receivedFrameBuffer.getBytes()[4],
-//                                     receivedFrameBuffer.getBytes()[5],
-//                                     receivedFrameBuffer.getBytes()[6],
-//                                     receivedFrameBuffer.getBytes()[7],
-//                                     receivedFrameBuffer.getBytes()[8],
-//                                     receivedFrameBuffer.getBytes()[9],
-//                                     receivedFrameBuffer.getBytes()[10],
-//                                     receivedFrameBuffer.getBytes()[11],
-//                                     receivedFrameBuffer.getBytes()[12],
-//                                     receivedFrameBuffer.getBytes()[13],
-//                                     receivedFrameBuffer.getBytes()[14],
-//                                     receivedFrameBuffer.getBytes()[15],
-//                                     receivedFrameBuffer.getBytes()[16],
-//                                     receivedFrameBuffer.getBytes()[17],
-//                                     receivedFrameBuffer.getBytes()[18],
-//                                     receivedFrameBuffer.getBytes()[19],
-//                                     receivedFrameBuffer.getBytes()[20],
-//                                     receivedFrameBuffer.getBytes()[21],
-//                                     receivedFrameBuffer.getBytes()[22],
-//                                     receivedFrameBuffer.getBytes()[23],
-//                                     receivedFrameBuffer.getBytes()[24],
-//                                     receivedFrameBuffer.getBytes()[25]);
 
-                            return &receivedFrameBuffer;
 
-                    } //else { Console::log("FCS Failed!"); }
-                } //else { Console::log("No Whole Bytes !"); }
-                if(bitBufferIndex > 253*8){
-                    Console::log("No Msg! Too Long!");
+//                            Console::log("RX! Bufferpos: %d - size: %d", *AX25RXbufferIndex,this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize);
+//                            Console::log("==");
+//                            for(int p = 0; p < rxBits_n/8; p++){
+//                                Console::log(" %d ", this->receivedFrameBuffer[*AX25RXbufferIndex].data[p]);
+//                            }
+//                            Console::log("==");
+                            //Console::log("%d",this->receivedFrameBuffer[*AX25RXbufferIndex].data[16]);
+
+                            *AX25RXbufferIndex = (*AX25RXbufferIndex + 1) % RX_MAX_FRAMES;
+
+                        }
+                    }
+                    flagBuffer = 0;
                     synchronizerState = 0;
                 }
+                if(bitBufferIndex > 255*8){
+                    //serial.println("No Msg! Too Long!");
+                    flagBuffer = 0;
+                    synchronizerState = 0;
+                }
+                bitBufferIndex = mod(bitBufferIndex + 1, BYTE_BUFFER_SIZE*8);
+                if(bitBufferIndex%8 == 0){
+                    bitBuffer[bitBufferIndex/8] = 0;
+                }
                 break;
-            }
         }
     }
 
-    return 0;
+    return packetReceived;
 }
