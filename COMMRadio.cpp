@@ -64,7 +64,7 @@ void COMMRadio::runTask(){
 //                Console::log("Received Command! Freq Error: %d Hz", lastFreqError);
 //            }
 //            Console::log("%d", this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[16]);
-        switch(this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[16])
+        switch(AX25Sync.rcvdFrame.getBytes()[16])
         {
         case 0xAA:  //RESET COMMAND
             //process and put pointer one back
@@ -73,18 +73,17 @@ void COMMRadio::runTask(){
             break;
         case 0x01:  //Internal Command
             //process command in internal commandHandler
-            rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
             if(cmdHandler){
-                uint8_t internalCommandNumber = this->rxPacketBuffer[rxPacketBufferIndex].getBytes()[17];
+                uint8_t internalCommandNumber = AX25Sync.rcvdFrame.getBytes()[17];
                 PQ9Frame internalCommand;
                 internalCommand.setDestination(4);
                 internalCommand.setSource(8);
-                internalCommand.setPayloadSize(rxPacketBuffer[rxPacketBufferIndex].getSize()-18-2);
+                internalCommand.setPayloadSize(AX25Sync.rcvdFrame.getSize()-18-2);
                 for (int i = 0; i < internalCommand.getPayloadSize(); i++)
                 {
-                    internalCommand.getPayload()[i] = rxPacketBuffer[rxPacketBufferIndex].getBytes()[18+i];
+                    internalCommand.getPayload()[i] = AX25Sync.rcvdFrame.getBytes()[18+i];
                 }
-                Console::log("INTERNAL COMMAND! (Size: %d, ID: %d) CMD = DEST:%d SRC:%d SIZE:%d", rxPacketBuffer[rxPacketBufferIndex].getSize()-18,internalCommandNumber,internalCommand.getDestination(),internalCommand.getSource(),internalCommand.getPayloadSize());
+                Console::log("INTERNAL COMMAND! (Size: %d, ID: %d) CMD = DEST:%d SRC:%d SIZE:%d", AX25Sync.rcvdFrame.getSize()-18,internalCommandNumber,internalCommand.getDestination(),internalCommand.getSource(),internalCommand.getPayloadSize());
                 cmdHandler->received(internalCommand);
                 cmdHandler->run();
                 PQ9Frame* internalResponse = cmdHandler->getTxBuffer();
@@ -101,12 +100,11 @@ void COMMRadio::runTask(){
         case 0x02: //Bus override command
             //process command onto the bus
             // Todo: probably steal a busMaster object from OBC implementation
-            rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
-            Console::log("BUSOVERRIDE COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
+            Console::log("BUSOVERRIDE COMMAND! (Size: %d)", AX25Sync.rcvdFrame.getSize());
             break;
         case 0x03: //OBC buffered command
             //Buffer command (dont move pointer back)
-            int packetSize = rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getSize()-18-1;
+            int packetSize = AX25Sync.rcvdFrame.getSize()-18-1;
 
             //keep pointer one forward and increase packetsinBuffer
             rxPacketsInBuffer++;
@@ -114,18 +112,14 @@ void COMMRadio::runTask(){
                 rxPacketsInBuffer = RX_MAX_FRAMES;
             }
 
-            Console::log("BUFFER COMMAND! (Size: %d) - Packets In Buffer: %d - cmdSize: %d",rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getSize(),  rxPacketsInBuffer, packetSize);
+            Console::log("BUFFER COMMAND! (Size: %d) - Packets In Buffer: %d - cmdSize: %d",AX25Sync.rcvdFrame.getSize(),  rxPacketsInBuffer, packetSize);
 
-            uint8_t rxBuffer[256];
-            rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].packetSize = packetSize;
+            rxPacketBuffer[rxPacketBufferIndex].packetSize = packetSize;
             for(int j = 0; j < packetSize; j++){
-                rxBuffer[j] = rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[17+j];
+                rxPacketBuffer[rxPacketBufferIndex].getBytes()[j] = AX25Sync.rcvdFrame.getBytes()[17+j];
 //                    Console::log("%d", rxBuffer[j]);
             }
-            for(int j = 0; j < packetSize; j++){
-                rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[j] = rxBuffer[j];
-            }
-
+            rxPacketBufferIndex = (rxPacketBufferIndex + 1) % RX_MAX_FRAMES;
             break;
         }
     }

@@ -41,7 +41,6 @@ bool AX25Synchronizer::rxBit(){
                 //flagDetect
                 BitArray::setBit(&flagBuffer, flagBufferIndex, inBit == 0x01);
                 flagBufferIndex = mod(flagBufferIndex + 1, 8);
-
                 if(BitArray::getByte(&flagBuffer, flagBufferIndex - 8, 8) == 0x7E ){
                     //Flag Detected!
                     flagBuffer = 0;
@@ -56,7 +55,7 @@ bool AX25Synchronizer::rxBit(){
                 //checkForStart
                 BitArray::setBit(bitBuffer, bitBufferIndex, inBit == 0x01);
                 bitBufferIndex++;
-                if(bitBufferIndex == 7){
+                if(bitBufferIndex == 8){
                     if(bitBuffer[0] == 0x7E ){
                         //Another Flag, Reset bitBuffer
                         bitBufferIndex = 0;
@@ -81,19 +80,17 @@ bool AX25Synchronizer::rxBit(){
 
                     // Get length of Packet, destuff and update length
                     int rxBits_n = bitBufferIndex - 8;
-                    rxBits_n = this->encoder.destuffBits(bitBuffer, receivedFrameBuffer[*AX25RXbufferIndex].data, rxBits_n);
+                    rxBits_n = this->encoder.destuffBits(bitBuffer, rcvdFrame.data, rxBits_n);
 
                     //This could be a packet?
                     if(rxBits_n % 8 == 0 && rxBits_n/8 >= 18){ //packet has whole bytes and minimum length of 18 bytes!
-
                         //reverseOrder on all bytes
                         for(int p = 0; p < rxBits_n/8; p++){
-                            this->receivedFrameBuffer[*AX25RXbufferIndex].data[p] = AX25Frame::reverseByteOrder(this->receivedFrameBuffer[*AX25RXbufferIndex].data[p]);
+                            this->rcvdFrame.data[p] = AX25Frame::reverseByteOrder(this->rcvdFrame.data[p]);
                         }
-                        this->receivedFrameBuffer[*AX25RXbufferIndex].packetSize = rxBits_n/8;
+                        this->rcvdFrame.packetSize = rxBits_n/8;
 
-                        if(AX25Frame::checkFCS(this->receivedFrameBuffer[*AX25RXbufferIndex])){
-                            *AX25RXbufferIndex = (*AX25RXbufferIndex + 1) % RX_MAX_FRAMES;
+                        if(AX25Frame::checkFCS(this->rcvdFrame)){
                             packetReceived = true;
                         }
                     }

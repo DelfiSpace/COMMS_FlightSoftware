@@ -26,6 +26,7 @@ protected:
 
     int synchronizerState = 0;
 
+
     PQPacket* receivedFrameBuffer;
     int* AX25RXbufferIndex;
 
@@ -36,10 +37,11 @@ protected:
 public:
     AX25Synchronizer(PQPacket AX25FrameBuffer[], int &AX25RXbufferIndex);
 
-    //AX25Frame receivedFrame;
     bool queByte(uint8_t byte);
     bool rxBit();
     int bytesInQue();
+
+    PQPacket rcvdFrame;
 };
 
 #endif
