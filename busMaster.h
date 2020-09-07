@@ -41,7 +41,7 @@ class BusMaster{
             if(waitingForReply){
                 if(cmdReceivedFlag){
                     waitingForReply = false;
-                    Console::log("----- REPLY!! ------");
+//                    Console::log("----- REPLY!! ------");
                     return true; //We are done!
                 }else if(MAP_Timer32_getValue(TIMER32_0_BASE) <= 0){
                     Console::log("----- TIMEOUT EXPIRED!! ------");

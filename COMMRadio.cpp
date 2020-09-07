@@ -57,23 +57,35 @@ void COMMRadio::runTask(){
             for(int j = 0; j < repptr[1]+3; j++){
                 overrideReply[1+j] = repptr[j];
             }
-            Console::log("rep: %d %d %d %d %d %d %d",repptr[0],repptr[1],repptr[2],repptr[3],repptr[4],repptr[5],repptr[6]);
+//            Console::log("rep: %d %d %d %d %d %d %d",repptr[0],repptr[1],repptr[2],repptr[3],repptr[4],repptr[5],repptr[6]);
             this->quePacketAX25(overrideReply, busOverride->rxFrame.getFrameSize()+3+1);
         }
         else
         {
             Console::log("Failure!");
+            uint8_t overrideReply[256];
+            overrideReply[0] = overridePacketBuffer[mod(overridePacketBufferIndex - overridePacketsInBuffer, OVERRIDE_MAX_FRAMES)].getBytes()[0];
+            uint8_t *repptr = this->busOverride->rxFrame.getFrame();
+            overrideReply[2] = 0; //destination
+            overrideReply[3] = 2; //size
+            overrideReply[4] = 0; //Source
+            overrideReply[5] = 0; //service
+            overrideReply[6] = 2; //Reply
+            overrideReply[7] = 1; //NO_RESPONSE
+
+//            Console::log("rep: %d %d %d %d %d %d %d",repptr[0],repptr[1],repptr[2],repptr[3],repptr[4],repptr[5],repptr[6]);
+            this->quePacketAX25(overrideReply, 8);
         }
 
         overridePacketsInBuffer--;
-        Console::log("in Queue left: %d", overridePacketsInBuffer);
+//        Console::log("in Queue left: %d", overridePacketsInBuffer);
 
     }else if(overridePacketsInBuffer && !busOverride->waitingForReply && AX25Sync.bytesInQue() < BYTE_QUE_SIZE/2){
         //More frames in Buffer, so execute!
 
         //Oldest Frame to take:
         uint8_t* targetPacket = overridePacketBuffer[mod(overridePacketBufferIndex - overridePacketsInBuffer, OVERRIDE_MAX_FRAMES)].getBytes();
-        Console::log("override Buffer IDNUMBER: %d | in Queue: %d", targetPacket[0], overridePacketsInBuffer);
+//        Console::log("override Buffer IDNUMBER: %d | in Queue: %d", targetPacket[0], overridePacketsInBuffer);
 //        Console::log("req: %d %d %d %d",targetPacket[0],targetPacket[1],targetPacket[2],targetPacket[3]);
 
         //detect wether COMMS is destination in order to issue an internal command:
@@ -88,7 +100,7 @@ void COMMRadio::runTask(){
             {
                 internalCommandOverride.getPayload()[i] = targetPacket[4+i];
             }
-            Console::log("Internal command Detected!");
+//            Console::log("Internal command Detected!");
             cmdHandler->received(internalCommandOverride);
             cmdHandler->run();
             PQ9Frame* internalResponse = cmdHandler->getTxBuffer();
