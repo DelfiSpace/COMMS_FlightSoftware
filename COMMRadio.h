@@ -10,6 +10,7 @@
 #include "InternalCommandHandler.h"
 #include "PQ9Frame.h"
 #include "PQ9Message.h"
+#include "busMaster.h"
 
 #ifndef COMMRADIO_H_
 #define COMMRADIO_H_
@@ -22,6 +23,7 @@
 
 #define TX_MAX_FRAMES 300
 #define RX_MAX_FRAMES 300
+#define OVERRIDE_MAX_FRAMES 300
 
 #define TX_TIMEOUT 5 //timeout to transmit packages
 
@@ -36,6 +38,7 @@ protected:
     SX1276 *rxRadio;
 
     InternalCommandHandler<PQ9Frame,PQ9Message> *cmdHandler;
+    BusMaster<PQ9Frame, PQ9Message> *busOverride;
 
     TxConfig_t txConfig;
     RxConfig_t rxConfig;
@@ -58,6 +61,10 @@ protected:
     int rxPacketBufferIndex = 0;
     int rxPacketsInBuffer = 0;
 
+    PQPacket overridePacketBuffer[OVERRIDE_MAX_FRAMES];
+    int overridePacketBufferIndex = 0;
+    int overridePacketsInBuffer = 0;
+
     AX25Synchronizer AX25Sync = AX25Synchronizer(rxPacketBuffer, rxPacketBufferIndex);
 
 
@@ -65,6 +72,7 @@ protected:
 public:
     COMMRadio(DSPI &bitModeSPI_tx, DSPI &bitModeSPI_rx, DSPI &packetModeSPI, SX1276 &txRad, SX1276 &rxRad);
     void setcmdHandler(InternalCommandHandler<PQ9Frame,PQ9Message> &cmdhand);
+    void setbusMaster(BusMaster<PQ9Frame, PQ9Message> &busmstr);
 
     bool notified( void );
 

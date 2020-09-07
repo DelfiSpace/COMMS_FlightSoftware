@@ -40,7 +40,6 @@
 #include "ADCManager.h"
 #include "InternalCommandHandler.h"
 
-
 #define FCLOCK 48000000
 
 #define COMMS_ADDRESS     4

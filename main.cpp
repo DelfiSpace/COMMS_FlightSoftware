@@ -17,8 +17,6 @@ SX1276Pins TXpins, RXpins;
 SX1276 tx(controlSPI, &TXpins);
 SX1276 rx(controlSPI, &RXpins);
 
-COMMRadio commRadio(lineTX, lineRX, controlSPI, tx, rx);
-
 // HardwareMonitor
 HWMonitor hwMonitor(&fram);
 
@@ -27,6 +25,10 @@ Bootloader bootLoader = Bootloader(fram);
 
 // CDHS bus handler
 PQ9Bus pq9bus(3, GPIO_PORT_P9, GPIO_PIN0);
+BusMaster<PQ9Frame, PQ9Message> busHandler(pq9bus);
+
+// Radio Object
+COMMRadio commRadio(lineTX, lineRX, controlSPI, tx, rx);
 
 // services running in the system
 HousekeepingService<COMMSTelemetryContainer> hk;
@@ -56,6 +58,13 @@ Task* tasks[] = { &cmdHandler, &timerTask, &commRadio};
 
 // system uptime
 unsigned long uptime = 0;
+
+void receivedCommand(DataFrame &newFrame)
+{
+    if(!busHandler.received(newFrame)){
+        cmdHandler.received(newFrame);
+    }
+}
 
 void periodicTask()
 {
@@ -169,7 +178,7 @@ void main(void)
 
     // link the command handler to the PQ9 bus:
     // every time a new command is received, it will be forwarded to the command handler
-    pq9bus.setReceiveHandler([](DataFrame &newFrame){ cmdHandler.received(newFrame); });
+    pq9bus.setReceiveHandler( &receivedCommand );
 
     // every time a command is correctly processed, call the watch-dog
     cmdHandler.onValidCommand([]{ reset.kickInternalWatchDog(); });
@@ -195,6 +204,7 @@ void main(void)
 
     commRadio.init();
     commRadio.setcmdHandler(internalCmdHandler);
+    commRadio.setbusMaster(busHandler);
 
     Console::log("COMMS booting...SLOT: %d", (int) Bootloader::getCurrentSlot());
 

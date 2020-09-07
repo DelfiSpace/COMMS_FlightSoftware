@@ -35,13 +35,78 @@ void COMMRadio::setcmdHandler(InternalCommandHandler<PQ9Frame,PQ9Message> &cmdha
     cmdHandler = &cmdhand;
 }
 
+void COMMRadio::setbusMaster(BusMaster<PQ9Frame, PQ9Message> &busmstr)
+{
+    busOverride = &busmstr;
+}
+
 bool COMMRadio::notified(){
-    return (AX25Sync.bytesInQue() > 1);  //return true if bytes in Queue.
+    return (AX25Sync.bytesInQue() > 1) || busOverride->waitingForReply || overridePacketsInBuffer;  //return true if bytes in Queue.
 }
 
 
 void COMMRadio::runTask(){
-    // Process 10 bytes out of buffer:
+    // Process busOverride command Handler:
+    if(busOverride->checkPending()){
+        //Handle Receive and Pop Override Buffer Frame
+        if(busOverride->cmdReceivedFlag)
+        {
+            uint8_t overrideReply[256];
+            overrideReply[0] = overridePacketBuffer[mod(overridePacketBufferIndex - overridePacketsInBuffer, OVERRIDE_MAX_FRAMES)].getBytes()[0];
+            uint8_t *repptr = this->busOverride->rxFrame.getFrame();
+            for(int j = 0; j < repptr[1]+3; j++){
+                overrideReply[1+j] = repptr[j];
+            }
+            Console::log("rep: %d %d %d %d %d %d %d",repptr[0],repptr[1],repptr[2],repptr[3],repptr[4],repptr[5],repptr[6]);
+            this->quePacketAX25(overrideReply, busOverride->rxFrame.getFrameSize()+3+1);
+        }
+        else
+        {
+            Console::log("Failure!");
+        }
+
+        overridePacketsInBuffer--;
+        Console::log("in Queue left: %d", overridePacketsInBuffer);
+
+    }else if(overridePacketsInBuffer && !busOverride->waitingForReply && AX25Sync.bytesInQue() < BYTE_QUE_SIZE/2){
+        //More frames in Buffer, so execute!
+
+        //Oldest Frame to take:
+        uint8_t* targetPacket = overridePacketBuffer[mod(overridePacketBufferIndex - overridePacketsInBuffer, OVERRIDE_MAX_FRAMES)].getBytes();
+        Console::log("override Buffer IDNUMBER: %d | in Queue: %d", targetPacket[0], overridePacketsInBuffer);
+//        Console::log("req: %d %d %d %d",targetPacket[0],targetPacket[1],targetPacket[2],targetPacket[3]);
+
+        //detect wether COMMS is destination in order to issue an internal command:
+        if(targetPacket[1] == Address::COMMS)
+        {
+            //internal command
+            PQ9Frame internalCommandOverride;
+            internalCommandOverride.setDestination(Address::COMMS);
+            internalCommandOverride.setSource(Address::COMMS);
+            internalCommandOverride.setPayloadSize(targetPacket[2]);
+            for (int i = 0; i < internalCommandOverride.getPayloadSize(); i++)
+            {
+                internalCommandOverride.getPayload()[i] = targetPacket[4+i];
+            }
+            Console::log("Internal command Detected!");
+            cmdHandler->received(internalCommandOverride);
+            cmdHandler->run();
+            PQ9Frame* internalResponse = cmdHandler->getTxBuffer();
+
+            //hijack the busOverride to handle the reponse for us
+            internalResponse->copy(busOverride->rxFrame);
+            busOverride->waitingForReply = true;
+            busOverride->cmdReceivedFlag = true;
+        }
+        else
+        {
+            //override bus
+            busOverride->RequestReplyNoBlock(targetPacket[1], targetPacket[2]-2, &targetPacket[3], targetPacket[4], targetPacket[5], 100);
+        }
+    }
+
+
+    // Process bits out of buffer:
     if(AX25Sync.rxBit())
     {
         lastRSSI = getRXRSSI();
@@ -99,9 +164,22 @@ void COMMRadio::runTask(){
             }
             break;
         case 0x02: //Bus override command
-            //process command onto the bus
-            // Todo: probably steal a busMaster object from OBC implementation
+            int overridePacketSize = AX25Sync.rcvdFrame.getSize()-18-1;
+
+            //keep pointer one forward and increase packetsinBuffer
+            overridePacketsInBuffer++;
+            if(overridePacketsInBuffer > OVERRIDE_MAX_FRAMES){
+                overridePacketsInBuffer = OVERRIDE_MAX_FRAMES;
+            }
+
             Console::log("BUSOVERRIDE COMMAND! (Size: %d)", AX25Sync.rcvdFrame.getSize());
+
+            overridePacketBuffer[overridePacketBufferIndex].packetSize = overridePacketSize;
+            for(int j = 0; j < overridePacketSize; j++){
+                overridePacketBuffer[overridePacketBufferIndex].getBytes()[j] = AX25Sync.rcvdFrame.getBytes()[17+j];
+//                    Console::log("%d", rxBuffer[j]);
+            }
+            overridePacketBufferIndex = (overridePacketBufferIndex + 1) % OVERRIDE_MAX_FRAMES;
             break;
         case 0x03: //OBC buffered command
             //Buffer command (dont move pointer back)
