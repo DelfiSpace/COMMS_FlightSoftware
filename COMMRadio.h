@@ -20,8 +20,8 @@
 #define COMMS_RESET_PORT 1
 #define COMMS_RESET_PIN  1
 
-#define TX_MAX_FRAMES 200
-#define RX_MAX_FRAMES 200
+#define TX_MAX_FRAMES 300
+#define RX_MAX_FRAMES 300
 
 #define TX_TIMEOUT 5 //timeout to transmit packages
 
