@@ -20,7 +20,9 @@ protected:
     int bitBufferIndex = 0;
 
     uint8_t byteQue[BYTE_QUE_SIZE];
-    int byteQueIndex = 0;
+    int byteQueWriteIndex = 1;
+    int byteQueReadIndex = 0;
+
 
     int synchronizerState = 0;
 
@@ -37,8 +39,7 @@ public:
     //AX25Frame receivedFrame;
     bool queByte(uint8_t byte);
     bool rxBit();
-    volatile bool hasReceivedFrame = false;
-    int bytesInQue = 0;
+    int bytesInQue();
 };
 
 #endif

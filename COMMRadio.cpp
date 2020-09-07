@@ -36,16 +36,15 @@ void COMMRadio::setcmdHandler(InternalCommandHandler<PQ9Frame,PQ9Message> &cmdha
 }
 
 bool COMMRadio::notified(){
-    return (AX25Sync.bytesInQue > 0);  //return true if bytes in Queue.
+    return (AX25Sync.bytesInQue() > 1);  //return true if bytes in Queue.
 }
 
 
 void COMMRadio::runTask(){
     // Process 10 bytes out of buffer:
-    for(int k = 0; k < 80; k++){
-        if(AX25Sync.rxBit())
-        {
-            lastRSSI = getRXRSSI();
+    if(AX25Sync.rxBit())
+    {
+        lastRSSI = getRXRSSI();
 //            if(lastRSSI < 0)
 //            {
 //                Console::log("Received Command! Current RSSI: -%d dBm", -lastRSSI);
@@ -55,7 +54,7 @@ void COMMRadio::runTask(){
 //                Console::log("Received Command! Current RSSI: %d dBm", lastRSSI);
 //            }
 
-            lastFreqError = rxRadio->getFrequencyError();
+        lastFreqError = rxRadio->getFrequencyError();
 //            if(lastFreqError < 0)
 //            {
 //                Console::log("Received Command! Freq Error: -%d Hz", -lastFreqError);
@@ -65,72 +64,68 @@ void COMMRadio::runTask(){
 //                Console::log("Received Command! Freq Error: %d Hz", lastFreqError);
 //            }
 //            Console::log("%d", this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[16]);
-            switch(this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[16])
-            {
-            case 0xAA:  //RESET COMMAND
-                //process and put pointer one back
-                rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
-                Console::log("RESET COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
-                break;
-            case 0x01:  //Internal Command
-                //process command in internal commandHandler
-                rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
-                if(cmdHandler){
-                    uint8_t internalCommandNumber = this->rxPacketBuffer[rxPacketBufferIndex].getBytes()[17];
-                    PQ9Frame internalCommand;
-                    internalCommand.setDestination(4);
-                    internalCommand.setSource(8);
-                    internalCommand.setPayloadSize(rxPacketBuffer[rxPacketBufferIndex].getSize()-18-2);
-                    for (int i = 0; i < internalCommand.getPayloadSize(); i++)
-                    {
-                        internalCommand.getPayload()[i] = rxPacketBuffer[rxPacketBufferIndex].getBytes()[18+i];
-                    }
-                    Console::log("INTERNAL COMMAND! (Size: %d, ID: %d) CMD = DEST:%d SRC:%d SIZE:%d", rxPacketBuffer[rxPacketBufferIndex].getSize()-18,internalCommandNumber,internalCommand.getDestination(),internalCommand.getSource(),internalCommand.getPayloadSize());
-                    cmdHandler->received(internalCommand);
-                    cmdHandler->run();
-                    PQ9Frame* internalResponse = cmdHandler->getTxBuffer();
-                    int packetSize = internalResponse->getPayloadSize()+1;
-                    Console::log("pSize: %d", packetSize);
-                    uint8_t responsePacket[256];
-                    responsePacket[0] = internalCommandNumber;
-                    for(int j = 0; j < internalResponse->getPayloadSize(); j++){
-                        responsePacket[1+j] = internalResponse->getPayload()[j];
-                    }
-                    this->quePacketAX25(responsePacket, packetSize);
+        switch(this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[16])
+        {
+        case 0xAA:  //RESET COMMAND
+            //process and put pointer one back
+            rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
+            Console::log("RESET COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
+            break;
+        case 0x01:  //Internal Command
+            //process command in internal commandHandler
+            rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
+            if(cmdHandler){
+                uint8_t internalCommandNumber = this->rxPacketBuffer[rxPacketBufferIndex].getBytes()[17];
+                PQ9Frame internalCommand;
+                internalCommand.setDestination(4);
+                internalCommand.setSource(8);
+                internalCommand.setPayloadSize(rxPacketBuffer[rxPacketBufferIndex].getSize()-18-2);
+                for (int i = 0; i < internalCommand.getPayloadSize(); i++)
+                {
+                    internalCommand.getPayload()[i] = rxPacketBuffer[rxPacketBufferIndex].getBytes()[18+i];
                 }
-                break;
-            case 0x02: //Bus override command
-                //process command onto the bus
-                // Todo: probably steal a busMaster object from OBC implementation
-                rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
-                Console::log("BUSOVERRIDE COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
-                break;
-            case 0x03: //OBC buffered command
-                //Buffer command (dont move pointer back)
-                int packetSize = rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getSize()-18-1;
-
-                //keep pointer one forward and increase packetsinBuffer
-                rxPacketsInBuffer++;
-                if(rxPacketsInBuffer > RX_MAX_FRAMES){
-                    rxPacketsInBuffer = RX_MAX_FRAMES;
+                Console::log("INTERNAL COMMAND! (Size: %d, ID: %d) CMD = DEST:%d SRC:%d SIZE:%d", rxPacketBuffer[rxPacketBufferIndex].getSize()-18,internalCommandNumber,internalCommand.getDestination(),internalCommand.getSource(),internalCommand.getPayloadSize());
+                cmdHandler->received(internalCommand);
+                cmdHandler->run();
+                PQ9Frame* internalResponse = cmdHandler->getTxBuffer();
+                int packetSize = internalResponse->getPayloadSize()+1;
+//                    Console::log("pSize: %d", packetSize);
+                uint8_t responsePacket[256];
+                responsePacket[0] = internalCommandNumber;
+                for(int j = 0; j < internalResponse->getPayloadSize(); j++){
+                    responsePacket[1+j] = internalResponse->getPayload()[j];
                 }
-
-                Console::log("BUFFER COMMAND! (Size: %d) - Packets In Buffer: %d - cmdSize: %d",rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getSize(),  rxPacketsInBuffer, packetSize);
-
-                uint8_t rxBuffer[256];
-                rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].packetSize = packetSize;
-                for(int j = 0; j < packetSize; j++){
-                    rxBuffer[j] = rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[17+j];
-//                    Console::log("%d", rxBuffer[j]);
-                }
-                for(int j = 0; j < packetSize; j++){
-                    rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[j] = rxBuffer[j];
-                }
-
-                break;
+                this->quePacketAX25(responsePacket, packetSize);
             }
-        }
-        if(AX25Sync.bytesInQue <= 0){ // no more bits to process form receive buffer.
+            break;
+        case 0x02: //Bus override command
+            //process command onto the bus
+            // Todo: probably steal a busMaster object from OBC implementation
+            rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
+            Console::log("BUSOVERRIDE COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
+            break;
+        case 0x03: //OBC buffered command
+            //Buffer command (dont move pointer back)
+            int packetSize = rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getSize()-18-1;
+
+            //keep pointer one forward and increase packetsinBuffer
+            rxPacketsInBuffer++;
+            if(rxPacketsInBuffer > RX_MAX_FRAMES){
+                rxPacketsInBuffer = RX_MAX_FRAMES;
+            }
+
+            Console::log("BUFFER COMMAND! (Size: %d) - Packets In Buffer: %d - cmdSize: %d",rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getSize(),  rxPacketsInBuffer, packetSize);
+
+            uint8_t rxBuffer[256];
+            rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].packetSize = packetSize;
+            for(int j = 0; j < packetSize; j++){
+                rxBuffer[j] = rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[17+j];
+//                    Console::log("%d", rxBuffer[j]);
+            }
+            for(int j = 0; j < packetSize; j++){
+                rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[j] = rxBuffer[j];
+            }
+
             break;
         }
     }

@@ -8,7 +8,7 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
 {
     if (command.getService() == RADIO_SERVICE)
     {
-        Console::log("RadioService: Service started");
+//        Console::log("RadioService: Service started");
         workingBuffer.setService(RADIO_SERVICE);
         workingBuffer.setMessageType(SERVICE_RESPONSE_REPLY);
 
@@ -27,7 +27,7 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             break;
         case RADIO_CMD_NR_OF_RX:
-            Console::log("RadioService: Get nr of RX frames: %d", radio->getNumberOfRXFrames());
+//            Console::log("RadioService: Get nr of RX frames: %d", radio->getNumberOfRXFrames());
             workingBuffer.setPayloadSize(2);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             workingBuffer.getDataPayload()[1] = radio->getNumberOfRXFrames();
