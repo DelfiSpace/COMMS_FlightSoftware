@@ -70,6 +70,7 @@ void COMMRadio::runTask(){
             //process and put pointer one back
             rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
             Console::log("RESET COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
+            MAP_GPIO_setOutputHighOnPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
             break;
         case 0x01:  //Internal Command
             //process command in internal commandHandler
@@ -234,8 +235,16 @@ void COMMRadio::onReceive(uint8_t data)
 
 void COMMRadio::init(){
     Console::log("Radio Object Starting...");
+    Console::log("Drive Reset Pin Low (9.1)");
+
+    MAP_GPIO_setOutputLowOnPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
+    MAP_GPIO_setAsOutputPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
+
+    Console::log("Initialize TX and RX");
     this->initTX();
     this->initRX();
+
+    Console::log("Configure Timer module..");
     MAP_Timer32_initModule(TIMER32_1_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT,
                     TIMER32_PERIODIC_MODE);
 };
