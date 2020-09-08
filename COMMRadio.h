@@ -90,8 +90,8 @@ public:
     bool quePacketAX25(uint8_t dataIn[], uint8_t size);
     void enableTransmit();
 
-    uint8_t TXDestination[7] = {0x82,0x98,0x98,0x40,0x40,0x40,0xFF};
-    uint8_t TXSource[7]      = {0x40,0x40,0x40,0x40,0x40,0x40,0xFF};
+    uint8_t TXDestination[7] = {('G' & 0x0F) << 1,('R' & 0x0F) << 1,('O' & 0x0F) << 1,('U' & 0x0F) << 1,('N' & 0x0F) << 1,('D' & 0x0F) << 1,0xFF};
+    uint8_t TXSource[7]      = {('D' & 0x0F) << 1,('L' & 0x0F) << 1,('F' & 0x0F) << 1,('I' & 0x0F) << 1,('P' & 0x0F) << 1,('Q' & 0x0F) << 1,0xFF};
     volatile bool txTimeout = false;
 
     uint8_t getNumberOfRXFrames();

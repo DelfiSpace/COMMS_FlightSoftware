@@ -121,97 +121,100 @@ void COMMRadio::runTask(){
     // Process bits out of buffer:
     if(AX25Sync.rxBit())
     {
-        lastRSSI = getRXRSSI();
-//            if(lastRSSI < 0)
-//            {
-//                Console::log("Received Command! Current RSSI: -%d dBm", -lastRSSI);
-//            }
-//            else
-//            {
-//                Console::log("Received Command! Current RSSI: %d dBm", lastRSSI);
-//            }
-
-        lastFreqError = rxRadio->getFrequencyError();
-//            if(lastFreqError < 0)
-//            {
-//                Console::log("Received Command! Freq Error: -%d Hz", -lastFreqError);
-//            }
-//            else
-//            {
-//                Console::log("Received Command! Freq Error: %d Hz", lastFreqError);
-//            }
-//            Console::log("%d", this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[16]);
-        switch(AX25Sync.rcvdFrame.getBytes()[16])
+        if(AX25Sync.rcvdFrame.checkValidCRC())
         {
-        case 0xAA:  //RESET COMMAND
-            //process and put pointer one back
-            rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
-            Console::log("RESET COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
-            MAP_GPIO_setOutputHighOnPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
-            break;
-        case 0x01:  //Internal Command
-            //process command in internal commandHandler
-            if(cmdHandler){
-                uint8_t internalCommandNumber = AX25Sync.rcvdFrame.getBytes()[17];
-                PQ9Frame internalCommand;
-                internalCommand.setDestination(4);
-                internalCommand.setSource(8);
-                internalCommand.setPayloadSize(AX25Sync.rcvdFrame.getSize()-18-2);
-                for (int i = 0; i < internalCommand.getPayloadSize(); i++)
-                {
-                    internalCommand.getPayload()[i] = AX25Sync.rcvdFrame.getBytes()[18+i];
+            lastRSSI = getRXRSSI();
+    //            if(lastRSSI < 0)
+    //            {
+    //                Console::log("Received Command! Current RSSI: -%d dBm", -lastRSSI);
+    //            }
+    //            else
+    //            {
+    //                Console::log("Received Command! Current RSSI: %d dBm", lastRSSI);
+    //            }
+
+            lastFreqError = rxRadio->getFrequencyError();
+    //            if(lastFreqError < 0)
+    //            {
+    //                Console::log("Received Command! Freq Error: -%d Hz", -lastFreqError);
+    //            }
+    //            else
+    //            {
+    //                Console::log("Received Command! Freq Error: %d Hz", lastFreqError);
+    //            }
+    //            Console::log("%d", this->rxPacketBuffer[mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES)].getBytes()[16]);
+            switch(AX25Sync.rcvdFrame.getBytes()[16])
+            {
+            case 0xAA:  //RESET COMMAND
+                //process and put pointer one back
+                rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
+                Console::log("RESET COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
+                MAP_GPIO_setOutputHighOnPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
+                break;
+            case 0x01:  //Internal Command
+                //process command in internal commandHandler
+                if(cmdHandler){
+                    uint8_t internalCommandNumber = AX25Sync.rcvdFrame.getPQID();
+                    PQ9Frame internalCommand;
+                    internalCommand.setDestination(4);
+                    internalCommand.setSource(8);
+                    internalCommand.setPayloadSize(AX25Sync.rcvdFrame.getPQPayloadSize());
+                    for (int i = 0; i < internalCommand.getPayloadSize(); i++)
+                    {
+                        internalCommand.getPayload()[i] = AX25Sync.rcvdFrame.getPQPayload()[i];
+                    }
+                    Console::log("INTERNAL COMMAND! (Size: %d, ID: %d) CMD = DEST:%d SRC:%d SIZE:%d", AX25Sync.rcvdFrame.getSize()-18,internalCommandNumber,internalCommand.getDestination(),internalCommand.getSource(),internalCommand.getPayloadSize());
+                    cmdHandler->received(internalCommand);
+                    cmdHandler->run();
+                    PQ9Frame* internalResponse = cmdHandler->getTxBuffer();
+                    int packetSize = internalResponse->getPayloadSize()+1;
+    //                    Console::log("pSize: %d", packetSize);
+                    uint8_t responsePacket[256];
+                    responsePacket[0] = internalCommandNumber;
+                    for(int j = 0; j < internalResponse->getPayloadSize(); j++){
+                        responsePacket[1+j] = internalResponse->getPayload()[j];
+                    }
+                    this->quePacketAX25(responsePacket, packetSize);
                 }
-                Console::log("INTERNAL COMMAND! (Size: %d, ID: %d) CMD = DEST:%d SRC:%d SIZE:%d", AX25Sync.rcvdFrame.getSize()-18,internalCommandNumber,internalCommand.getDestination(),internalCommand.getSource(),internalCommand.getPayloadSize());
-                cmdHandler->received(internalCommand);
-                cmdHandler->run();
-                PQ9Frame* internalResponse = cmdHandler->getTxBuffer();
-                int packetSize = internalResponse->getPayloadSize()+1;
-//                    Console::log("pSize: %d", packetSize);
-                uint8_t responsePacket[256];
-                responsePacket[0] = internalCommandNumber;
-                for(int j = 0; j < internalResponse->getPayloadSize(); j++){
-                    responsePacket[1+j] = internalResponse->getPayload()[j];
+                break;
+            case 0x02: //Bus override command
+                int overridePacketSize = AX25Sync.rcvdFrame.getPQPayloadSize() + 1; //include ID
+
+                //keep pointer one forward and increase packetsinBuffer
+                overridePacketsInBuffer++;
+                if(overridePacketsInBuffer > OVERRIDE_MAX_FRAMES){
+                    overridePacketsInBuffer = OVERRIDE_MAX_FRAMES;
                 }
-                this->quePacketAX25(responsePacket, packetSize);
+
+                Console::log("BUSOVERRIDE COMMAND! (Size: %d)", AX25Sync.rcvdFrame.getSize());
+
+                overridePacketBuffer[overridePacketBufferIndex].packetSize = overridePacketSize;
+                for(int j = 0; j < overridePacketSize; j++){
+                    overridePacketBuffer[overridePacketBufferIndex].getBytes()[j] = AX25Sync.rcvdFrame.getPQPayload()[j-1];
+    //                    Console::log("%d", rxBuffer[j]);
+                }
+                overridePacketBufferIndex = (overridePacketBufferIndex + 1) % OVERRIDE_MAX_FRAMES;
+                break;
+            case 0x03: //OBC buffered command
+                //Buffer command (dont move pointer back)
+                int packetSize = AX25Sync.rcvdFrame.getPQPayloadSize() + 1; //include ID
+
+                //keep pointer one forward and increase packetsinBuffer
+                rxPacketsInBuffer++;
+                if(rxPacketsInBuffer > RX_MAX_FRAMES){
+                    rxPacketsInBuffer = RX_MAX_FRAMES;
+                }
+
+                Console::log("BUFFER COMMAND! (Size: %d) - Packets In Buffer: %d - cmdSize: %d",AX25Sync.rcvdFrame.getSize(),  rxPacketsInBuffer, packetSize);
+
+                rxPacketBuffer[rxPacketBufferIndex].packetSize = packetSize;
+                for(int j = 0; j < packetSize; j++){
+                    rxPacketBuffer[rxPacketBufferIndex].getBytes()[j] = AX25Sync.rcvdFrame.getPQPayload()[j-1];
+    //                    Console::log("%d", rxBuffer[j]);
+                }
+                rxPacketBufferIndex = (rxPacketBufferIndex + 1) % RX_MAX_FRAMES;
+                break;
             }
-            break;
-        case 0x02: //Bus override command
-            int overridePacketSize = AX25Sync.rcvdFrame.getSize()-18-1;
-
-            //keep pointer one forward and increase packetsinBuffer
-            overridePacketsInBuffer++;
-            if(overridePacketsInBuffer > OVERRIDE_MAX_FRAMES){
-                overridePacketsInBuffer = OVERRIDE_MAX_FRAMES;
-            }
-
-            Console::log("BUSOVERRIDE COMMAND! (Size: %d)", AX25Sync.rcvdFrame.getSize());
-
-            overridePacketBuffer[overridePacketBufferIndex].packetSize = overridePacketSize;
-            for(int j = 0; j < overridePacketSize; j++){
-                overridePacketBuffer[overridePacketBufferIndex].getBytes()[j] = AX25Sync.rcvdFrame.getBytes()[17+j];
-//                    Console::log("%d", rxBuffer[j]);
-            }
-            overridePacketBufferIndex = (overridePacketBufferIndex + 1) % OVERRIDE_MAX_FRAMES;
-            break;
-        case 0x03: //OBC buffered command
-            //Buffer command (dont move pointer back)
-            int packetSize = AX25Sync.rcvdFrame.getSize()-18-1;
-
-            //keep pointer one forward and increase packetsinBuffer
-            rxPacketsInBuffer++;
-            if(rxPacketsInBuffer > RX_MAX_FRAMES){
-                rxPacketsInBuffer = RX_MAX_FRAMES;
-            }
-
-            Console::log("BUFFER COMMAND! (Size: %d) - Packets In Buffer: %d - cmdSize: %d",AX25Sync.rcvdFrame.getSize(),  rxPacketsInBuffer, packetSize);
-
-            rxPacketBuffer[rxPacketBufferIndex].packetSize = packetSize;
-            for(int j = 0; j < packetSize; j++){
-                rxPacketBuffer[rxPacketBufferIndex].getBytes()[j] = AX25Sync.rcvdFrame.getBytes()[17+j];
-//                    Console::log("%d", rxBuffer[j]);
-            }
-            rxPacketBufferIndex = (rxPacketBufferIndex + 1) % RX_MAX_FRAMES;
-            break;
         }
     }
 }
