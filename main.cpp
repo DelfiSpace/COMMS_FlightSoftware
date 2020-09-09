@@ -3,7 +3,12 @@
 // I2C busses
 DWire I2Cinternal(0);
 INA226 powerBus(I2Cinternal, 0x40);
-TMP100 TCXOtemperature(I2Cinternal, 0x4F);
+INA226 transmitPower(I2Cinternal, 0x41);
+INA226 amplifierPower(I2Cinternal, 0x42);
+TMP100 CommsTemperature(I2Cinternal, 0x4F);
+TMP100 phasingTemperature(I2Cinternal, 0x4C);
+TMP100 amplifierTemperature(I2Cinternal, 0x4E);
+
 
 // control SPI bus
 DSPI controlSPI(3);      // used EUSCI_B3
@@ -58,6 +63,8 @@ Task* tasks[] = { &cmdHandler, &timerTask, &commRadio};
 
 // system uptime
 unsigned long uptime = 0;
+FRAMVar<unsigned long> totalUptime;
+
 
 void receivedCommand(DataFrame &newFrame)
 {
@@ -69,7 +76,8 @@ void receivedCommand(DataFrame &newFrame)
 void periodicTask()
 {
     // increase the timer, this happens every second
-    uptime++;
+    totalUptime += 1;
+    uptime += 1;
 
     // collect telemetry
     hk.acquireTelemetry(acquireTelemetry);
@@ -94,26 +102,42 @@ void periodicTask()
 
 void acquireTelemetry(COMMSTelemetryContainer *tc)
 {
-    unsigned short v;
+    unsigned short v, c;
     signed short i, t;
+    unsigned char uc;
+    unsigned long ul;
+    //Set Telemetry:
 
-    // set uptime in telemetry
-    tc->setUpTime(uptime);
+    //HouseKeeping Header:
+    tc->setStatus(Bootloader::getCurrentSlot());
+    fram.read(FRAM_RESET_COUNTER + Bootloader::getCurrentSlot(), &uc, 1);
+    tc->setBootCounter(uc);
+    tc->setResetCause(hwMonitor.getResetStatus());
+    tc->setUptime(uptime);
+    tc->setTotalUptime((unsigned long) totalUptime);
+    tc->setVersionNumber(2);
+    tc->setMCUTemp(hwMonitor.getMCUTemp());
 
-    powerBus.getVoltage(v);
-    powerBus.getCurrent(i);
-    TCXOtemperature.getTemperature(t);
-    // measure the power bus
-    //tc->setBusStatus((!powerBus.getVoltage(v)) & (!powerBus.getCurrent(i)));
-    //tc->setBusVoltage(v);
-    //tc->setBusCurrent(i);
-    //Console::log("Bus Voltage: %d mV", v);
-    //Console::log("Bus current: %d mA", i);
+    //main board sensors
+    tc->setINAStatus(!(powerBus.getVoltage(v)) & !(powerBus.getCurrent(i)));
+    tc->setVoltage(v);
+    tc->setCurrent(c);
+    tc->setTMPStatus(!(CommsTemperature.getTemperature(t)));
+    tc->setTemperature(t);
+    tc->setTransmitINAStatus(!(transmitPower.getVoltage(v)) & !(transmitPower.getCurrent(i)));
+    tc->setTransmitVoltage(v);
+    tc->setTransmitCurrent(i);
 
-    // measure the MCU temperature
-    //tc->setMCUTemperature(hwMonitor.getMCUTemp());
-    //Console::log("TCXO Temperature: %d", t);
-    //Console::log("MCU Temperature: %d", hwMonitor.getMCUTemp());
+    //Phasingboard
+    tc->setPhasingTMPStatus(!phasingTemperature.getTemperature(t));
+    tc->setPhasingTemperature(t);
+
+    //PABoard
+    tc->setAmplifierINAStatus(!(amplifierPower.getVoltage(v)) & !(amplifierPower.getCurrent(i)));
+    tc->setAmplifierVoltage(v);
+    tc->setAmplifierCurrent(i);
+    tc->setAmplifierTMPStatus(!amplifierTemperature.getTemperature(t));
+    tc->setAmplifierTemperature(t);
 }
 
 void txcallback()
@@ -145,7 +169,11 @@ void main(void)
 
     // Initialize SPI master
     controlSPI.initMaster(DSPI::MODE0, DSPI::MSBFirst, 1000000);
+
+    // Initialize fram and fram-variables
     fram.init();
+    totalUptime.init(fram, FRAM_TOTAL_UPTIME);
+
 
     Console::init( 115200 );                // baud rate: 115200 bps
     pq9bus.begin(115200, COMMS_ADDRESS);    // baud rate: 115200 bps

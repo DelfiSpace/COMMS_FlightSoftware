@@ -39,6 +39,7 @@
 #include "HWMonitor.h"
 #include "ADCManager.h"
 #include "InternalCommandHandler.h"
+#include "FRAMVar.h"
 
 #define FCLOCK 48000000
 
