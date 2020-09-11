@@ -184,75 +184,87 @@ void COMMSTelemetryContainer::setTemperature(short ushort)
     telemetry[21] = ((unsigned char *)&ushort)[1];
     telemetry[22] = ((unsigned char *)&ushort)[0];
 }
-short COMMSTelemetryContainer::getTransmitVoltage()
+short COMMSTelemetryContainer::getReceiverRSSI()
 {
     unsigned short ushort;
     ((unsigned char *)&ushort)[1] = telemetry[23];
     ((unsigned char *)&ushort)[0] = telemetry[24];
     return ushort;
 }
-void COMMSTelemetryContainer::setTransmitVoltage(short ushort)
+void COMMSTelemetryContainer::setReceiverRSSI(short ushort)
 {
     telemetry[23] = ((unsigned char *)&ushort)[1];
     telemetry[24] = ((unsigned char *)&ushort)[0];
 }
-short COMMSTelemetryContainer::getTransmitCurrent()
+short COMMSTelemetryContainer::getTransmitVoltage()
 {
     unsigned short ushort;
     ((unsigned char *)&ushort)[1] = telemetry[25];
     ((unsigned char *)&ushort)[0] = telemetry[26];
     return ushort;
 }
-void COMMSTelemetryContainer::setTransmitCurrent(short ushort)
+void COMMSTelemetryContainer::setTransmitVoltage(short ushort)
 {
     telemetry[25] = ((unsigned char *)&ushort)[1];
     telemetry[26] = ((unsigned char *)&ushort)[0];
 }
-short COMMSTelemetryContainer::getAmplifierVoltage()
+short COMMSTelemetryContainer::getTransmitCurrent()
 {
     unsigned short ushort;
     ((unsigned char *)&ushort)[1] = telemetry[27];
     ((unsigned char *)&ushort)[0] = telemetry[28];
     return ushort;
 }
-void COMMSTelemetryContainer::setAmplifierVoltage(short ushort)
+void COMMSTelemetryContainer::setTransmitCurrent(short ushort)
 {
     telemetry[27] = ((unsigned char *)&ushort)[1];
     telemetry[28] = ((unsigned char *)&ushort)[0];
 }
-short COMMSTelemetryContainer::getAmplifierCurrent()
+short COMMSTelemetryContainer::getAmplifierVoltage()
 {
     unsigned short ushort;
     ((unsigned char *)&ushort)[1] = telemetry[29];
     ((unsigned char *)&ushort)[0] = telemetry[30];
     return ushort;
 }
-void COMMSTelemetryContainer::setAmplifierCurrent(short ushort)
+void COMMSTelemetryContainer::setAmplifierVoltage(short ushort)
 {
     telemetry[29] = ((unsigned char *)&ushort)[1];
     telemetry[30] = ((unsigned char *)&ushort)[0];
 }
-short COMMSTelemetryContainer::getPhasingTemperature()
+short COMMSTelemetryContainer::getAmplifierCurrent()
 {
     unsigned short ushort;
     ((unsigned char *)&ushort)[1] = telemetry[31];
     ((unsigned char *)&ushort)[0] = telemetry[32];
     return ushort;
 }
-void COMMSTelemetryContainer::setPhasingTemperature(short ushort)
+void COMMSTelemetryContainer::setAmplifierCurrent(short ushort)
 {
     telemetry[31] = ((unsigned char *)&ushort)[1];
     telemetry[32] = ((unsigned char *)&ushort)[0];
 }
-short COMMSTelemetryContainer::getAmplifierTemperature()
+short COMMSTelemetryContainer::getPhasingTemperature()
 {
     unsigned short ushort;
     ((unsigned char *)&ushort)[1] = telemetry[33];
     ((unsigned char *)&ushort)[0] = telemetry[34];
     return ushort;
 }
-void COMMSTelemetryContainer::setAmplifierTemperature(short ushort)
+void COMMSTelemetryContainer::setPhasingTemperature(short ushort)
 {
     telemetry[33] = ((unsigned char *)&ushort)[1];
     telemetry[34] = ((unsigned char *)&ushort)[0];
+}
+short COMMSTelemetryContainer::getAmplifierTemperature()
+{
+    unsigned short ushort;
+    ((unsigned char *)&ushort)[1] = telemetry[35];
+    ((unsigned char *)&ushort)[0] = telemetry[36];
+    return ushort;
+}
+void COMMSTelemetryContainer::setAmplifierTemperature(short ushort)
+{
+    telemetry[35] = ((unsigned char *)&ushort)[1];
+    telemetry[36] = ((unsigned char *)&ushort)[0];
 }

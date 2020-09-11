@@ -121,7 +121,7 @@ void acquireTelemetry(COMMSTelemetryContainer *tc)
     //main board sensors
     tc->setINAStatus(!(powerBus.getVoltage(v)) & !(powerBus.getCurrent(i)));
     tc->setVoltage(v);
-    tc->setCurrent(c);
+    tc->setCurrent(i);
     tc->setTMPStatus(!(CommsTemperature.getTemperature(t)));
     tc->setTemperature(t);
     tc->setTransmitINAStatus(!(transmitPower.getVoltage(v)) & !(transmitPower.getCurrent(i)));
@@ -138,6 +138,10 @@ void acquireTelemetry(COMMSTelemetryContainer *tc)
     tc->setAmplifierCurrent(i);
     tc->setAmplifierTMPStatus(!amplifierTemperature.getTemperature(t));
     tc->setAmplifierTemperature(t);
+
+    i = rx.GetRssi(ModemType::MODEM_FSK);
+    Console::log("-%d dBm", -i);
+    tc->setReceiverRSSI(i);
 }
 
 void txcallback()

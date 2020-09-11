@@ -5,7 +5,7 @@
 
 #include "TelemetryContainer.h"
 
-#define COMMS_CONTAINER_SIZE  35
+#define COMMS_CONTAINER_SIZE  37
 
 class COMMSTelemetryContainer : public TelemetryContainer
 {
@@ -63,6 +63,9 @@ public:
 
     short getTemperature();
     void setTemperature(short var);
+
+    short getReceiverRSSI();
+    void setReceiverRSSI(short var);
 
     short getTransmitVoltage();
     void setTransmitVoltage(short var);
