@@ -340,6 +340,14 @@ void COMMRadio::init(){
     Console::log("Configure Timer module..");
     MAP_Timer32_initModule(TIMER32_1_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT,
                     TIMER32_PERIODIC_MODE);
+
+    Console::log("Configure PA Pins");
+    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_ENABLE_PIN);
+    MAP_GPIO_setAsOutputPin(PA_PORT, PA_ENABLE_PIN);
+    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_27_PIN);
+    MAP_GPIO_setAsOutputPin(PA_PORT, PA_27_PIN);
+    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_30_PIN);
+    MAP_GPIO_setAsOutputPin(PA_PORT, PA_30_PIN);
 };
 
 void COMMRadio::initTX(){
@@ -482,4 +490,11 @@ void COMMRadio::popFrame(){
 
 signed short COMMRadio::getRXRSSI(){
     return rxRadio->GetRssi(ModemType::MODEM_FSK);
+}
+
+void COMMRadio::disablePA(){
+    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_ENABLE_PIN);
+    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_27_PIN);
+    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_30_PIN);
+    __delay_cycles(48000000/(1000L/30)); // @suppress("Function cannot be resolved")
 }

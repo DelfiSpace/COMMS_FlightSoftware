@@ -21,6 +21,11 @@
 #define COMMS_RESET_PORT GPIO_PORT_P9
 #define COMMS_RESET_PIN  GPIO_PIN1
 
+#define PA_PORT GPIO_PORT_P2
+#define PA_ENABLE_PIN GPIO_PIN7
+#define PA_27_PIN GPIO_PIN0
+#define PA_30_PIN GPIO_PIN6
+
 #define TX_MAX_FRAMES 300
 #define RX_MAX_FRAMES 300
 #define OVERRIDE_MAX_FRAMES 300
@@ -98,6 +103,8 @@ public:
     uint8_t getSizeOfRXFrame();
     uint8_t* getRXFrame();
     void popFrame();
+
+    void disablePA();
 
     signed short getRXRSSI();
 

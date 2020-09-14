@@ -117,6 +117,31 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             workingBuffer.setPayloadSize(1);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             break;
+        case RADIO_CMD_SET_PA:
+            Console::log("RadioService: Set PA Mode to: %d", command.getDataPayload()[1]);
+            radio->disablePA();
+            switch(command.getDataPayload()[1]){
+            case 0:
+                Console::log("PA OFF");
+                //nothing, already disabled
+                break;
+            case 1:
+                Console::log("PA ENABLED");
+                MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_ENABLE_PIN);
+                break;
+            case 2:
+                Console::log("PA 27 dBm");
+                MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_27_PIN);
+                MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_ENABLE_PIN);
+                break;
+            case 3:
+                Console::log("PA 30 dBm");
+                MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_30_PIN);
+                MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_ENABLE_PIN);
+                break;
+            }
+
+            break;
         default:
             Console::log("RadioService: Unknown command!");
             workingBuffer.setPayloadSize(1);
