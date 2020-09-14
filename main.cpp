@@ -122,6 +122,7 @@ void acquireTelemetry(COMMSTelemetryContainer *tc)
     tc->setINAStatus(!(powerBus.getVoltage(v)) & !(powerBus.getCurrent(i)));
     tc->setVoltage(v);
     tc->setCurrent(i);
+
     tc->setTMPStatus(!(CommsTemperature.getTemperature(t)));
     tc->setTemperature(t);
     tc->setTransmitINAStatus(!(transmitPower.getVoltage(v)) & !(transmitPower.getCurrent(i)));
@@ -202,6 +203,13 @@ void main(void)
     // Initialize I2C masters
     I2Cinternal.setFastMode();
     I2Cinternal.begin();
+
+    // initialize the shunt resistors
+    powerBus.setShuntResistor(33);
+    transmitPower.setShuntResistor(33);
+    amplifierPower.setShuntResistor(33);
+
+
 
     // Initialize SPI master
     controlSPI.initMaster(DSPI::MODE0, DSPI::MSBFirst, 1000000);
