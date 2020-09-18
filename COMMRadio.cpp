@@ -18,7 +18,7 @@ void onReceiveWrapper(uint8_t data){
 void sendPacketWrapper(){
     MAP_Timer32_clearInterruptFlag(TIMER32_1_BASE);
     radioStub->txTimeout = false;
-    radioStub->enableTransmit();
+    radioStub->doEnableFlag = true;
 }
 void taskWrapper(){
     radioStub->runTask();
@@ -46,6 +46,12 @@ bool COMMRadio::notified(){
 
 
 void COMMRadio::runTask(){
+    //check for enable flag:
+    if(doEnableFlag){
+        this->enableTransmit();
+        this->doEnableFlag = false;
+    }
+
     // Process busOverride command Handler:
     if(busOverride->checkPending()){
         //Handle Receive and Pop Override Buffer Frame
@@ -530,7 +536,7 @@ void COMMRadio::disablePA(){
     MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_ENABLE_PIN);
     MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_MED_PIN);
     MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_HIGH_PIN);
-    __delay_cycles(48000000/(1000L/30)); // @suppress("Function cannot be resolved")
+//    __delay_cycles(48000000/(1000L/30)); // @suppress("Function cannot be resolved")
 }
 
 void COMMRadio::enablePA(uint8_t targetPower){

@@ -83,6 +83,7 @@ public:
     RxConfig_t rxConfig;
 
     uint8_t targetPAPower = 1;
+    volatile bool doEnableFlag = false;
 
     void runTask();
     void init();
