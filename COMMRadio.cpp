@@ -237,8 +237,8 @@ uint8_t COMMRadio::onTransmit(){
                }
                else
                {
-                   txRadio->setIdleMode(false);
-                   txEnabled = false;
+                   //disable Transmit
+                   disableTransmit();
                    return 0x00;
                }
            }
@@ -315,7 +315,7 @@ uint8_t COMMRadio::onTransmit(){
     {
         //TX shouldnt be asking for this function, so turn off and pass 0
         Console::log("onTransmit: Shouldnt Happen - Transmitter should be off");
-        txRadio->setIdleMode(false);
+        disableTransmit();
         return 0x00;
     }
 };
@@ -344,10 +344,10 @@ void COMMRadio::init(){
     Console::log("Configure PA Pins");
     MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_ENABLE_PIN);
     MAP_GPIO_setAsOutputPin(PA_PORT, PA_ENABLE_PIN);
-    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_27_PIN);
-    MAP_GPIO_setAsOutputPin(PA_PORT, PA_27_PIN);
-    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_30_PIN);
-    MAP_GPIO_setAsOutputPin(PA_PORT, PA_30_PIN);
+    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_MED_PIN);
+    MAP_GPIO_setAsOutputPin(PA_PORT, PA_MED_PIN);
+    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_HIGH_PIN);
+    MAP_GPIO_setAsOutputPin(PA_PORT, PA_HIGH_PIN);
 };
 
 void COMMRadio::initTX(){
@@ -362,9 +362,9 @@ void COMMRadio::initTX(){
         txConfig.bandwidth = 15000;
         txConfig.fdev = 4800;
         txConfig.datarate = 9600;
+        txConfig.power = 0x00;
 
         txRadio->setFrequency(435000000);
-
         txRadio->enableBitMode(*bitSPI_tx, 0, onTransmitWrapper);
         txRadio->setTxConfig(&txConfig);
 
@@ -374,6 +374,31 @@ void COMMRadio::initTX(){
         Console::log("TX Radio not Found");
     }
 };
+
+void COMMRadio::initTXPower(uint8_t powerByte){
+    // Initialise TX values
+    // Modem set to FSK, deviation set to 1/2 datarate, gaussian filter enabled
+    txRadio->init();
+
+    if(txRadio->ping()){
+
+        txConfig.modem = MODEM_FSK;
+        txConfig.filtertype = BT_0_5;
+        txConfig.bandwidth = 15000;
+        txConfig.fdev = 4800;
+        txConfig.datarate = 9600;
+        txConfig.power = powerByte;
+
+        txRadio->setFrequency(435000000);
+        txRadio->enableBitMode(*bitSPI_tx, 0, onTransmitWrapper);
+        txRadio->setTxConfig(&txConfig);
+
+        Console::log("TX Radio Settings Set");
+    }
+    else{
+        Console::log("TX Radio not Found");
+    }
+}
 
 void COMMRadio::initRX(){
     // Initialise RX values
@@ -435,6 +460,8 @@ bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
 
 void COMMRadio::enableTransmit(){
     Console::log("Enabling Transmitter!");
+    this->enablePA(this->targetPAPower);
+
     txFlagQue += UPRAMP_BYTES;
     txEnabled = true;
     txRadio->setIdleMode(true);
@@ -442,6 +469,13 @@ void COMMRadio::enableTransmit(){
 
     //rxPrint = true;
     //rxReady = false;
+}
+
+void COMMRadio::disableTransmit(){
+    this->disablePA();
+    txRadio->setIdleMode(false);
+    txEnabled = false;
+    txIdleMode = false;
 }
 
 
@@ -494,7 +528,32 @@ signed short COMMRadio::getRXRSSI(){
 
 void COMMRadio::disablePA(){
     MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_ENABLE_PIN);
-    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_27_PIN);
-    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_30_PIN);
+    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_MED_PIN);
+    MAP_GPIO_setOutputLowOnPin(PA_PORT, PA_HIGH_PIN);
     __delay_cycles(48000000/(1000L/30)); // @suppress("Function cannot be resolved")
+}
+
+void COMMRadio::enablePA(uint8_t targetPower){
+    disablePA();
+    switch(targetPower){
+    case 0:
+        Console::log("PA ON LOW POWER");
+        initTXPower(1);
+        MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_ENABLE_PIN);
+        break;
+    case 1:
+        Console::log("PA ON MED POWER");
+        initTXPower(3);
+        MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_MED_PIN);
+        MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_ENABLE_PIN);
+        break;
+    case 2:
+        Console::log("PA ON HIGH POWER;");
+        initTXPower(5);
+        MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_HIGH_PIN);
+        MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_ENABLE_PIN);
+        break;
+    default:
+        Console::log("PA ON UNKNOWN POWER?!");
+    }
 }

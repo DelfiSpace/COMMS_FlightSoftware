@@ -23,8 +23,8 @@
 
 #define PA_PORT GPIO_PORT_P2
 #define PA_ENABLE_PIN GPIO_PIN7
-#define PA_27_PIN GPIO_PIN0
-#define PA_30_PIN GPIO_PIN6
+#define PA_MED_PIN GPIO_PIN6
+#define PA_HIGH_PIN GPIO_PIN0
 
 #define TX_MAX_FRAMES 300
 #define RX_MAX_FRAMES 300
@@ -39,14 +39,10 @@ protected:
     DSPI *bitSPI_rx;
     DSPI *packetSPI;
 
-    SX1276 *txRadio;
-    SX1276 *rxRadio;
 
     InternalCommandHandler<PQ9Frame,PQ9Message> *cmdHandler;
     BusMaster<PQ9Frame, PQ9Message> *busOverride;
 
-    TxConfig_t txConfig;
-    RxConfig_t rxConfig;
 
     volatile bool txEnabled = false;
     volatile bool txPacketReady = false;
@@ -81,9 +77,18 @@ public:
 
     bool notified( void );
 
+    SX1276 *txRadio;
+    SX1276 *rxRadio;
+    TxConfig_t txConfig;
+    RxConfig_t rxConfig;
+
+    uint8_t targetPAPower = 1;
+
     void runTask();
     void init();
     void initTX();
+    void initTXPower(uint8_t powerByte);
+
     void initRX();
 
     void onReceive(uint8_t data);
@@ -94,6 +99,9 @@ public:
 
     bool quePacketAX25(uint8_t dataIn[], uint8_t size);
     void enableTransmit();
+    void disableTransmit();
+    void enablePA(uint8_t targetLevel);
+    void disablePA();
 
     uint8_t TXDestination[7] = {('G' & 0x0F) << 1,('R' & 0x0F) << 1,('O' & 0x0F) << 1,('U' & 0x0F) << 1,('N' & 0x0F) << 1,('D' & 0x0F) << 1,0xFF};
     uint8_t TXSource[7]      = {('D' & 0x0F) << 1,('L' & 0x0F) << 1,('F' & 0x0F) << 1,('I' & 0x0F) << 1,('P' & 0x0F) << 1,('Q' & 0x0F) << 1,0xFF};
@@ -104,7 +112,6 @@ public:
     uint8_t* getRXFrame();
     void popFrame();
 
-    void disablePA();
 
     signed short getRXRSSI();
 

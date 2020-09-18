@@ -24,6 +24,7 @@
 #define RADIO_CMD_SET_TX_IDLE_STATE 13
 #define RADIO_CMD_SET_TX_BITRATE    14
 #define RADIO_CMD_SET_PA            15
+#define RADIO_CMD_SET_TX_POWER  16
 
 #define RADIO_CMD_NO_ERROR          0
 #define RADIO_CMD_UNKNOWN_COMMAND   1

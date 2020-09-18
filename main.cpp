@@ -139,9 +139,14 @@ void acquireTelemetry(COMMSTelemetryContainer *tc)
     tc->setAmplifierCurrent(i);
     tc->setAmplifierTMPStatus(!amplifierTemperature.getTemperature(t));
     tc->setAmplifierTemperature(t);
+    if(!tc->getAmplifierTMPStatus() && t > 400){
+        Console::log("PA TOO HOT!!! TURN OFF");
+        commRadio.disablePA();
+    }
+
 
     i = rx.GetRssi(ModemType::MODEM_FSK);
-    Console::log("-%d dBm", -i);
+//    Console::log("-%d dBm", -i);
     tc->setReceiverRSSI(i);
 }
 

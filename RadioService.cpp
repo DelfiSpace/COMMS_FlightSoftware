@@ -119,28 +119,28 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             break;
         case RADIO_CMD_SET_PA:
             Console::log("RadioService: Set PA Mode to: %d", command.getDataPayload()[1]);
-            radio->disablePA();
             switch(command.getDataPayload()[1]){
             case 0:
-                Console::log("PA OFF");
-                //nothing, already disabled
+                Console::log("PA TARGET - LOW");
+                radio->targetPAPower = 0;
                 break;
             case 1:
-                Console::log("PA ENABLED");
-                MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_ENABLE_PIN);
+                Console::log("PA TARGET - MED");
+                radio->targetPAPower = 1;
                 break;
             case 2:
-                Console::log("PA 27 dBm");
-                MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_27_PIN);
-                MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_ENABLE_PIN);
+                Console::log("PA TARGET - HIGH");
+                radio->targetPAPower = 2;
                 break;
-            case 3:
-                Console::log("PA 30 dBm");
-                MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_30_PIN);
-                MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_ENABLE_PIN);
+            default:
+                Console::log("PA TARGET - UNKNOWN");
+                radio->targetPAPower = 1;
                 break;
             }
-
+            break;
+        case RADIO_CMD_SET_TX_POWER:
+            Console::log("RadioService: Set TXPower to: 0x%x", command.getDataPayload()[1]);
+            radio->initTXPower(command.getDataPayload()[1]);
             break;
         default:
             Console::log("RadioService: Unknown command!");
