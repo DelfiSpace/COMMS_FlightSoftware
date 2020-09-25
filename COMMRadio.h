@@ -59,8 +59,8 @@ protected:
     AX25Encoder encoder;
 
     PQPacket txPacketBuffer[TX_MAX_FRAMES];
-    int txPacketsInBuffer = 0;
-    int txPacketBufferIndex = 0;
+    int txPacketBufferWriteIndex = 0;
+    int txPacketBufferReadIndex = 0;
 
     PQPacket rxPacketBuffer[RX_MAX_FRAMES];
     int rxPacketsInBuffer = 0;
@@ -82,13 +82,15 @@ public:
 
     bool notified( void );
 
+    int txPacketsInBuffer();
+
     SX1276 *txRadio;
     SX1276 *rxRadio;
     TxConfig_t txConfig;
     RxConfig_t rxConfig;
 
-    unsigned int txBitrate = 1200;
-    unsigned int rxBitrate = 9600;
+    unsigned int txBitrate = PQPACKET_DOWNLINK_BITRATE;
+    unsigned int rxBitrate = PQPACKET_UPLINK_BITRATE;
 
     uint8_t targetPAPower = 1;
     volatile bool doEnableFlag = false;

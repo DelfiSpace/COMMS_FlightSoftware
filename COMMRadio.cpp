@@ -234,7 +234,7 @@ uint8_t COMMRadio::onTransmit(){
     {
        for(int i = 0; i < 8; i++) // Send 8bits per call
        {
-           if(!txFlagQue && !txPacketsInBuffer) //if no idle flags are qued, and no data is ready.
+           if(!txFlagQue && !txPacketsInBuffer()) //if no idle flags are qued, and no data is ready.
            {
                if(txIdleMode)
                {
@@ -272,15 +272,16 @@ uint8_t COMMRadio::onTransmit(){
                }
 
            }
-           else if(txPacketsInBuffer) //no flags, but tx packet buffered
+           else if(txPacketsInBuffer() > 0) //no flags, but tx packet buffered
            {
+
                if(encoder.StuffBitsInBuffer)
                { // send stuffing bit first
                    outputByte = outputByte | (encoder.txBit(0, true) << (7-i));
                }
                else
                { //send next bit of packet
-                   uint8_t inBit = (txPacketBuffer[mod((txPacketBufferIndex - txPacketsInBuffer), TX_MAX_FRAMES)].getBytes()[txIndex] >> txBitIndex) & 0x01;
+                   uint8_t inBit = (txPacketBuffer[txPacketBufferReadIndex].getBytes()[txIndex] >> txBitIndex) & 0x01;
                    outputByte = outputByte | (encoder.txBit( inBit , true) << (7-i));
                    txBitIndex++;
                }
@@ -292,12 +293,13 @@ uint8_t COMMRadio::onTransmit(){
                    txBitIndex = 0;
 //                   Console::log("TX: Byte: %d, Packet: %d", txIndex, txPacketBufferIndex);
                    //check if we are out of bytes in packet
-                   if(txIndex >= (txPacketBuffer[mod((txPacketBufferIndex - txPacketsInBuffer), TX_MAX_FRAMES)]).getSize())
+                   if(txIndex >= (txPacketBuffer[txPacketBufferReadIndex]).getSize())
                    {
                        //roll over to next packet
                       txIndex = 0;
-                      txPacketsInBuffer--;
-                      if(txPacketsInBuffer != 0)
+                      txPacketBufferReadIndex = (txPacketBufferReadIndex + 1) % TX_MAX_FRAMES;
+//                      Console::log("R%d", txPacketBufferReadIndex);
+                      if(txPacketsInBuffer() > 0)
                       {
                           txFlagQue += 10; //if next packet available add, 2 flags to stack
                       }
@@ -426,20 +428,19 @@ void COMMRadio::initRX(){
 
 bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
     //return false is unsuccesful
-    if(size < MAX_PACKET_SIZE && this->txPacketsInBuffer < TX_MAX_FRAMES){
+    if(size < MAX_PACKET_SIZE && txPacketsInBuffer() < TX_MAX_FRAMES){
 
-        AX25Frame::setAdress(txPacketBuffer[txPacketBufferIndex], TXDestination, TXSource);
-        AX25Frame::setControl(txPacketBuffer[txPacketBufferIndex], false);
-        AX25Frame::setPID(txPacketBuffer[txPacketBufferIndex], 0xF0);
-        AX25Frame::setPacket(txPacketBuffer[txPacketBufferIndex], data, size);
-        AX25Frame::calculateFCS(txPacketBuffer[txPacketBufferIndex]);
+        AX25Frame::setAdress(txPacketBuffer[txPacketBufferWriteIndex], TXDestination, TXSource);
+        AX25Frame::setControl(txPacketBuffer[txPacketBufferWriteIndex], false);
+        AX25Frame::setPID(txPacketBuffer[txPacketBufferWriteIndex], 0xF0);
+        AX25Frame::setPacket(txPacketBuffer[txPacketBufferWriteIndex], data, size);
+        AX25Frame::calculateFCS(txPacketBuffer[txPacketBufferWriteIndex]);
 
-        txPacketBufferIndex = mod(txPacketBufferIndex + 1, TX_MAX_FRAMES);
-        txPacketsInBuffer++;
+        txPacketBufferWriteIndex = (txPacketBufferWriteIndex + 1) % TX_MAX_FRAMES;
 
-        Console::log("TX - packetsInBuffer : %d", txPacketsInBuffer);
+        Console::log("TX - packetsInBuffer : %d, W:%d", txPacketsInBuffer(), txPacketBufferWriteIndex);
 
-        if(!txTimeout && !txEnabled){
+        if(!txTimeout && !txEnabled && !doEnableFlag){
             Console::log("Setting Timer");
 
             MAP_Timer32_registerInterrupt(TIMER32_1_INTERRUPT, &sendPacketWrapper);
@@ -452,6 +453,10 @@ bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
     }else{
         return false;
     }
+}
+
+int COMMRadio::txPacketsInBuffer(){
+    return mod(txPacketBufferWriteIndex - txPacketBufferReadIndex, TX_MAX_FRAMES);
 }
 
 void COMMRadio::enableTransmit(){
@@ -468,6 +473,7 @@ void COMMRadio::enableTransmit(){
 }
 
 void COMMRadio::disableTransmit(){
+    Console::log("TRANSMIT DISABLED");
     this->disablePA();
     txRadio->setIdleMode(false);
     txEnabled = false;
