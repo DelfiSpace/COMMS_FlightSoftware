@@ -154,8 +154,7 @@ void COMMRadio::runTask(){
             {
             case 0xAA:  //RESET COMMAND
                 //process and put pointer one back
-                rxPacketBufferIndex = mod(rxPacketBufferIndex - 1, RX_MAX_FRAMES);
-                Console::log("RESET COMMAND! (Size: %d)", rxPacketBuffer[rxPacketBufferIndex].getSize());
+                Console::log("RESET COMMAND! (Size: %d)", AX25Sync.rcvdFrame.getSize()-18);
                 MAP_GPIO_setOutputHighOnPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
                 break;
             case 0x01:  //Internal Command

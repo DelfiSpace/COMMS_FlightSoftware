@@ -4,9 +4,7 @@
 int AX25Synchronizer::mod(int a, int b)
 { return a<0 ? (a%b+b)%b : a%b; }
 
-AX25Synchronizer::AX25Synchronizer(PQPacket AX25FrameBuffer[], int &AX25RXbufferIndex){
-    this->receivedFrameBuffer = AX25FrameBuffer;
-    this->AX25RXbufferIndex = &AX25RXbufferIndex;
+AX25Synchronizer::AX25Synchronizer(){
 }
 
 bool AX25Synchronizer::queByte(uint8_t inByte){

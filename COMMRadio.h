@@ -70,7 +70,7 @@ protected:
     int overridePacketBufferIndex = 0;
     int overridePacketsInBuffer = 0;
 
-    AX25Synchronizer AX25Sync = AX25Synchronizer(rxPacketBuffer, rxPacketBufferIndex);
+    AX25Synchronizer AX25Sync = AX25Synchronizer();
 
 
 
