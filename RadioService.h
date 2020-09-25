@@ -6,7 +6,7 @@
 #ifndef RADIOSERVICE_H_
 #define RADIOSERVICE_H_
 
-#define RADIO_SERVICE               20
+#define RADIO_SERVICE               25
 #define RADIO_CMD_INIT_TX           1
 #define RADIO_CMD_INIT_RX           2
 

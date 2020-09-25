@@ -112,10 +112,17 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             }
             break;
         case RADIO_CMD_SET_TX_BITRATE:
-            //todo
-            Console::log("#TODO# RadioService: Set TX bitrate to: %d", 0);
-            workingBuffer.setPayloadSize(1);
-            workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
+            if(command.getPayloadSize() == 3){
+                short targetBitrate = ((command.getDataPayload()[1] << 8) & 0xFF00) | ((command.getDataPayload()[2]) & 0x00FF);
+                Console::log("RadioService: Set TX bitrate to: %d", targetBitrate);
+                radio->txBitrate = targetBitrate;
+                workingBuffer.setPayloadSize(1);
+                workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
+            }else{
+                Console::log("RadioService: Unknown command!");
+                workingBuffer.setPayloadSize(1);
+                workingBuffer.getDataPayload()[0] = RADIO_CMD_UNKNOWN_COMMAND;
+            }
             break;
         case RADIO_CMD_SET_PA:
             Console::log("RadioService: Set PA Mode to: %d", command.getDataPayload()[1]);
@@ -140,8 +147,11 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             break;
         case RADIO_CMD_SET_TX_POWER:
             Console::log("RadioService: Set TXPower to: 0x%x", command.getDataPayload()[1]);
-            radio->initTXPower(command.getDataPayload()[1]);
+            radio->targetPAPower = command.getDataPayload()[1];
             break;
+        case 99:
+            Console::log("RESET COMMAND!");
+            MAP_GPIO_setOutputHighOnPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
         default:
             Console::log("RadioService: Unknown command!");
             workingBuffer.setPayloadSize(1);

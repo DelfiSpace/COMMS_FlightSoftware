@@ -127,6 +127,7 @@ void COMMRadio::runTask(){
     // Process bits out of buffer:
     if(AX25Sync.rxBit())
     {
+//        Console::log("PACKET!!");
         if(AX25Sync.rcvdFrame.checkValidCRC())
         {
             lastRSSI = getRXRSSI();
@@ -299,7 +300,7 @@ uint8_t COMMRadio::onTransmit(){
                       txPacketsInBuffer--;
                       if(txPacketsInBuffer != 0)
                       {
-                          txFlagQue += 3; //if next packet available add, 3 flags to stack
+                          txFlagQue += 10; //if next packet available add, 2 flags to stack
                       }
                       else
                       {
@@ -336,6 +337,22 @@ void COMMRadio::init(){
     Console::log("Radio Object Starting...");
     Console::log("Drive Reset Pin Low (9.1)");
 
+    TXDestination[0] = 0x8E;//('G' & 0x0F) << 1;
+    TXDestination[1] = 0xA4;//('R' & 0x0F) << 1;
+    TXDestination[2] = 0x9E;//('O' & 0x0F) << 1;
+    TXDestination[3] = 0xAA;//('U' & 0x0F) << 1;
+    TXDestination[4] = 0x9C;//('N' & 0x0F) << 1;
+    TXDestination[5] = 0x88;//('D' & 0x0F) << 1;
+    TXDestination[6] = 0xE0;//(('A' & 0x0F) << 1) | 0xE0;
+
+    TXSource[0]      = 0x88;//('D' & 0x0F) << 1;
+    TXSource[1]      = 0x98;//('L' & 0x0F) << 1;
+    TXSource[2]      = 0x8C;//('F' & 0x0F) << 1;
+    TXSource[3]      = 0x92;//('I' & 0x0F) << 1;
+    TXSource[4]      = 0xa0;//('P' & 0x0F) << 1;
+    TXSource[5]      = 0xa2;//('Q' & 0x0F) << 1;
+    TXSource[6]      = 0x61;//(('B' & 0x0F) << 1) | 0x61;
+
     MAP_GPIO_setOutputLowOnPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
     MAP_GPIO_setAsOutputPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
 
@@ -365,12 +382,12 @@ void COMMRadio::initTX(){
 
         txConfig.modem = MODEM_FSK;
         txConfig.filtertype = BT_0_5;
-        txConfig.bandwidth = 15000;
-        txConfig.fdev = 4800;
-        txConfig.datarate = 9600;
-        txConfig.power = 0x00;
+        txConfig.bandwidth = 0; //not necessary for tx
+        txConfig.fdev = txBitrate/2;
+        txConfig.datarate = txBitrate;
+        txConfig.power = powerByte;
 
-        txRadio->setFrequency(435000000);
+        txRadio->setFrequency(PQPACKET_DOWNLINK_FREQ);
         txRadio->enableBitMode(*bitSPI_tx, 0, onTransmitWrapper);
         txRadio->setTxConfig(&txConfig);
 
@@ -381,31 +398,6 @@ void COMMRadio::initTX(){
     }
 };
 
-void COMMRadio::initTXPower(uint8_t powerByte){
-    // Initialise TX values
-    // Modem set to FSK, deviation set to 1/2 datarate, gaussian filter enabled
-    txRadio->init();
-
-    if(txRadio->ping()){
-
-        txConfig.modem = MODEM_FSK;
-        txConfig.filtertype = BT_0_5;
-        txConfig.bandwidth = 15000;
-        txConfig.fdev = 4800;
-        txConfig.datarate = 9600;
-        txConfig.power = powerByte;
-
-        txRadio->setFrequency(435000000);
-        txRadio->enableBitMode(*bitSPI_tx, 0, onTransmitWrapper);
-        txRadio->setTxConfig(&txConfig);
-
-        Console::log("TX Radio Settings Set");
-    }
-    else{
-        Console::log("TX Radio not Found");
-    }
-}
-
 void COMMRadio::initRX(){
     // Initialise RX values
     // GMSK:
@@ -413,12 +405,12 @@ void COMMRadio::initRX(){
     if(rxRadio->ping()){
         rxConfig.modem = MODEM_FSK;
         rxConfig.filtertype = BT_0_5;
-        rxConfig.bandwidth = 15000;
+        rxConfig.bandwidth = 10000;
         rxConfig.bandwidthAfc = 83333;
-        rxConfig.fdev = 9600/2;
-        rxConfig.datarate = 9600;
+        rxConfig.fdev = rxBitrate/2;
+        rxConfig.datarate = rxBitrate;
 
-        rxRadio->setFrequency(145000000);
+        rxRadio->setFrequency(PQPACKET_UPLINK_FREQ);
 
         rxRadio->RxChainCalibration();
         rxRadio->enableBitMode(*bitSPI_rx, onReceiveWrapper, 0);
@@ -436,8 +428,7 @@ void COMMRadio::initRX(){
 bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
     //return false is unsuccesful
     if(size < MAX_PACKET_SIZE && this->txPacketsInBuffer < TX_MAX_FRAMES){
-        TXDestination[6] = 0xE0;//(('A' & 0x0F) << 1) | 0xE0;
-        TXSource[6] = 0x61;//(('B' & 0x0F) << 1) | 0x61;
+
         AX25Frame::setAdress(txPacketBuffer[txPacketBufferIndex], TXDestination, TXSource);
         AX25Frame::setControl(txPacketBuffer[txPacketBufferIndex], false);
         AX25Frame::setPID(txPacketBuffer[txPacketBufferIndex], 0xF0);
@@ -466,9 +457,9 @@ bool COMMRadio::quePacketAX25(uint8_t data[], uint8_t size){
 
 void COMMRadio::enableTransmit(){
     Console::log("Enabling Transmitter!");
-    this->enablePA(this->targetPAPower);
-
     txFlagQue += UPRAMP_BYTES;
+
+    this->enablePA(this->targetPAPower);
     txEnabled = true;
     txRadio->setIdleMode(true);
     // else the radio is already on.
@@ -544,22 +535,27 @@ void COMMRadio::enablePA(uint8_t targetPower){
     switch(targetPower){
     case 0:
         Console::log("PA ON LOW POWER");
-        initTXPower(1);
+        powerByte = 1;
+        initTX();
         MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_ENABLE_PIN);
         break;
     case 1:
         Console::log("PA ON MED POWER");
-        initTXPower(3);
+        powerByte = 3;
+        initTX();
         MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_MED_PIN);
         MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_ENABLE_PIN);
         break;
     case 2:
         Console::log("PA ON HIGH POWER;");
-        initTXPower(5);
+        powerByte = 5;
+        initTX();
         MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_HIGH_PIN);
         MAP_GPIO_setOutputHighOnPin(PA_PORT, PA_ENABLE_PIN);
         break;
     default:
-        Console::log("PA ON UNKNOWN POWER?!");
+        Console::log("PA ON UNKNOWN POWER?! -> set to LOW");
+        enablePA(0);
+        break;
     }
 }

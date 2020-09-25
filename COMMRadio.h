@@ -15,7 +15,7 @@
 #ifndef COMMRADIO_H_
 #define COMMRADIO_H_
 #define PACKET_SIZE    100
-#define UPRAMP_BYTES   100
+#define UPRAMP_BYTES   200
 #define DOWNRAMP_BYTES 20
 
 #define COMMS_RESET_PORT GPIO_PORT_P9
@@ -47,6 +47,10 @@ protected:
     volatile bool txEnabled = false;
     volatile bool txPacketReady = false;
 
+    //txRadioSettings:
+    uint8_t powerByte = 0;
+
+
     int txIndex = 0;    //current byte index in TX frame
     int txBitIndex = 0; //current bit index in TX frame
     int txFlagQue = 0;  //how many flags are qued. (priority over frame)
@@ -59,14 +63,15 @@ protected:
     int txPacketBufferIndex = 0;
 
     PQPacket rxPacketBuffer[RX_MAX_FRAMES];
-    int rxPacketBufferIndex = 0;
     int rxPacketsInBuffer = 0;
+    int rxPacketBufferIndex = 0;
 
     PQPacket overridePacketBuffer[OVERRIDE_MAX_FRAMES];
     int overridePacketBufferIndex = 0;
     int overridePacketsInBuffer = 0;
 
     AX25Synchronizer AX25Sync = AX25Synchronizer(rxPacketBuffer, rxPacketBufferIndex);
+
 
 
 
@@ -82,14 +87,15 @@ public:
     TxConfig_t txConfig;
     RxConfig_t rxConfig;
 
+    unsigned int txBitrate = 1200;
+    unsigned int rxBitrate = 9600;
+
     uint8_t targetPAPower = 1;
     volatile bool doEnableFlag = false;
 
     void runTask();
     void init();
     void initTX();
-    void initTXPower(uint8_t powerByte);
-
     void initRX();
 
     void onReceive(uint8_t data);
