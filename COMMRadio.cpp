@@ -301,7 +301,7 @@ uint8_t COMMRadio::onTransmit(){
 //                      Console::log("R%d", txPacketBufferReadIndex);
                       if(txPacketsInBuffer() > 0)
                       {
-                          txFlagQue += 10; //if next packet available add, 2 flags to stack
+                          txFlagQue += 2; //if next packet available add, 2 flags to stack
                       }
                       else
                       {
