@@ -40,6 +40,13 @@ void COMMRadio::setbusMaster(BusMaster<PQ9Frame, PQ9Message> &busmstr)
     busOverride = &busmstr;
 }
 
+void COMMRadio::resetEPS(){
+    Console::log("RESET EPS: Enable P9.1");
+    MAP_GPIO_setOutputHighOnPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
+    __delay_cycles(48000000/(1000L/10)); // @suppress("Function cannot be resolved"
+    MAP_GPIO_setOutputLowOnPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
+    Console::log("Disable P9.1");
+}
 bool COMMRadio::notified(){
     return (AX25Sync.bytesInQue() > 1) || busOverride->waitingForReply || overridePacketsInBuffer;  //return true if bytes in Queue.
 }
@@ -155,7 +162,7 @@ void COMMRadio::runTask(){
             case 0xAA:  //RESET COMMAND
                 //process and put pointer one back
                 Console::log("RESET COMMAND! (Size: %d)", AX25Sync.rcvdFrame.getSize()-18);
-                MAP_GPIO_setOutputHighOnPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
+                resetEPS();
                 break;
             case 0x01:  //Internal Command
                 //process command in internal commandHandler

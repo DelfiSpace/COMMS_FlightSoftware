@@ -144,6 +144,8 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
                 radio->targetPAPower = 1;
                 break;
             }
+            workingBuffer.setPayloadSize(1);
+            workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             break;
         case RADIO_CMD_SET_TX_POWER:
             Console::log("RadioService: Set TXPower to: 0x%x", command.getDataPayload()[1]);
@@ -151,7 +153,10 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             break;
         case 99:
             Console::log("RESET COMMAND!");
-            MAP_GPIO_setOutputHighOnPin(COMMS_RESET_PORT, COMMS_RESET_PIN);
+            workingBuffer.setPayloadSize(1);
+            workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
+            radio->resetEPS();
+            break;
         default:
             Console::log("RadioService: Unknown command!");
             workingBuffer.setPayloadSize(1);

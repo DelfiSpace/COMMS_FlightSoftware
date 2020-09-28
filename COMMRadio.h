@@ -80,6 +80,8 @@ public:
     void setcmdHandler(InternalCommandHandler<PQ9Frame,PQ9Message> &cmdhand);
     void setbusMaster(BusMaster<PQ9Frame, PQ9Message> &busmstr);
 
+    void resetEPS();
+
     bool notified( void );
 
     int txPacketsInBuffer();
