@@ -50,20 +50,20 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             radio->popFrame();
             break;
         case RADIO_CMD_GET_RSSI_RX:
-            Console::log("RadioService: get Instantaneous RX RSSI");
             workingBuffer.setPayloadSize(3); //OK + short
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             signed short rssi = radio->getRXRSSI();
-            workingBuffer.getDataPayload()[1] = ((uint8_t*) &rssi)[0];
+            workingBuffer.getDataPayload()[1] = ((uint8_t*) &rssi)[1];
             workingBuffer.getDataPayload()[2] = ((uint8_t*) &rssi)[0];
+            Console::log("RadioService: get Instantaneous RX RSSI : -%d", -rssi);
             break;
         case RADIO_CMD_GET_LAST_RSSI_RX:
-            Console::log("RadioService: get RX RSSI of last packet");
             workingBuffer.setPayloadSize(3); //OK + short
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
             signed short lastrssi = radio->lastRSSI;
-            workingBuffer.getDataPayload()[1] = ((uint8_t*) &lastrssi)[0];
+            workingBuffer.getDataPayload()[1] = ((uint8_t*) &lastrssi)[1];
             workingBuffer.getDataPayload()[2] = ((uint8_t*) &lastrssi)[0];
+            Console::log("RadioService: get RX RSSI of last packet: -%d", -lastrssi);
             break;
         case RADIO_CMD_GET_LAST_FREQERROR_RX:
             Console::log("RadioService: get RX Frequency Error of last packet");

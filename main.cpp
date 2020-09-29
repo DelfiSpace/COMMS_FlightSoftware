@@ -6,7 +6,7 @@ INA226 powerBus(I2Cinternal, 0x40);
 INA226 transmitPower(I2Cinternal, 0x41);
 INA226 amplifierPower(I2Cinternal, 0x42);
 TMP100 CommsTemperature(I2Cinternal, 0x4F);
-TMP100 phasingTemperature(I2Cinternal, 0x4C);
+TMP100 phasingTemperature(I2Cinternal, 0x48);
 TMP100 amplifierTemperature(I2Cinternal, 0x4B);
 
 
@@ -213,6 +213,7 @@ void main(void)
     powerBus.setShuntResistor(33);
     transmitPower.setShuntResistor(33);
     amplifierPower.setShuntResistor(33);
+    phasingTemperature.init();
 
 
 
