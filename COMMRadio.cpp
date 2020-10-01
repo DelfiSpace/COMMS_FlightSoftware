@@ -390,16 +390,17 @@ void COMMRadio::initTX(){
 
         txConfig.modem = MODEM_FSK;
         txConfig.filtertype = BT_0_5;
-        txConfig.bandwidth = 0; //not necessary for tx
+        txConfig.bandwidth = 10000; //not necessary for tx
         txConfig.fdev = txBitrate/2;
         txConfig.datarate = txBitrate;
         txConfig.power = powerByte;
 
-        txRadio->setFrequency(PQPACKET_DOWNLINK_FREQ);
+
+        txRadio->setFrequency(txFrequency);
         txRadio->enableBitMode(*bitSPI_tx, 0, onTransmitWrapper);
         txRadio->setTxConfig(&txConfig);
 
-        Console::log("TX Radio Settings Set");
+        Console::log("TX Radio Settings Set (Bitrate : %d)", txBitrate);
     }
     else{
         Console::log("TX Radio not Found");
@@ -413,12 +414,16 @@ void COMMRadio::initRX(){
     if(rxRadio->ping()){
         rxConfig.modem = MODEM_FSK;
         rxConfig.filtertype = BT_0_5;
-        rxConfig.bandwidth = 10000;
+        if(rxBitrate >= 9600){
+            rxConfig.bandwidth = 15000;
+        }else{
+            rxConfig.bandwidth = 10000;
+        }
         rxConfig.bandwidthAfc = 83333;
         rxConfig.fdev = rxBitrate/2;
         rxConfig.datarate = rxBitrate;
 
-        rxRadio->setFrequency(PQPACKET_UPLINK_FREQ);
+        rxRadio->setFrequency(rxFrequency);
 
         rxRadio->RxChainCalibration();
         rxRadio->RxLockPll();

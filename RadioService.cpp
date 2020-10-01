@@ -124,6 +124,20 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
                 workingBuffer.getDataPayload()[0] = RADIO_CMD_UNKNOWN_COMMAND;
             }
             break;
+        case RADIO_CMD_SET_RX_BITRATE:
+            if(command.getPayloadSize() == 3){
+                short targetBitrate = ((command.getDataPayload()[1] << 8) & 0xFF00) | ((command.getDataPayload()[2]) & 0x00FF);
+                Console::log("RadioService: Set RX bitrate to: %d", targetBitrate);
+                radio->rxBitrate = targetBitrate;
+                radio->initRX();
+                workingBuffer.setPayloadSize(1);
+                workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
+            }else{
+                Console::log("RadioService: Unknown command!");
+                workingBuffer.setPayloadSize(1);
+                workingBuffer.getDataPayload()[0] = RADIO_CMD_UNKNOWN_COMMAND;
+            }
+            break;
         case RADIO_CMD_SET_PA:
             Console::log("RadioService: Set PA Mode to: %d", command.getDataPayload()[1]);
             switch(command.getDataPayload()[1]){
@@ -146,6 +160,51 @@ bool RadioService::process(DataMessage &command, DataMessage &workingBuffer)
             }
             workingBuffer.setPayloadSize(1);
             workingBuffer.getDataPayload()[0] = RADIO_CMD_NO_ERROR;
+            break;
+        case RADIO_CMD_SET_TX_FREQ:
+            Console::log("RadioService: set TX freq :");
+            if(command.getPayloadSize() == 5)
+            {
+                workingBuffer.setPayloadSize(2);
+                workingBuffer.getDataPayload()[0] = RADIO_CMD_SET_TX_FREQ;
+                workingBuffer.getDataPayload()[1] = RADIO_CMD_NO_ERROR;
+                unsigned long ulong;
+                ((unsigned char *)&ulong)[3] = command.getDataPayload()[1];
+                ((unsigned char *)&ulong)[2] = command.getDataPayload()[2];
+                ((unsigned char *)&ulong)[1] = command.getDataPayload()[3];
+                ((unsigned char *)&ulong)[0] = command.getDataPayload()[4];
+                Console::log("NEW FREQUENCY: %d", ulong);
+                radio->txFrequency = ulong;
+            }
+            else
+            {
+                workingBuffer.setPayloadSize(2);
+                workingBuffer.getDataPayload()[0] = RADIO_CMD_SET_TX_FREQ;
+                workingBuffer.getDataPayload()[1] = RADIO_CMD_INVALID_VALUE;
+            }
+            break;
+        case RADIO_CMD_SET_RX_FREQ:
+            Console::log("RadioService: set RX freq :");
+            if(command.getPayloadSize() == 5)
+            {
+                workingBuffer.setPayloadSize(2);
+                workingBuffer.getDataPayload()[0] = RADIO_CMD_SET_RX_FREQ;
+                workingBuffer.getDataPayload()[1] = RADIO_CMD_NO_ERROR;
+                unsigned long ulong;
+                ((unsigned char *)&ulong)[3] = command.getDataPayload()[1];
+                ((unsigned char *)&ulong)[2] = command.getDataPayload()[2];
+                ((unsigned char *)&ulong)[1] = command.getDataPayload()[3];
+                ((unsigned char *)&ulong)[0] = command.getDataPayload()[4];
+                Console::log("NEW FREQUENCY: %d", ulong);
+                radio->rxFrequency = ulong;
+                radio->initRX();
+            }
+            else
+            {
+                workingBuffer.setPayloadSize(2);
+                workingBuffer.getDataPayload()[0] = RADIO_CMD_SET_RX_FREQ;
+                workingBuffer.getDataPayload()[1] = RADIO_CMD_INVALID_VALUE;
+            }
             break;
         case RADIO_CMD_SET_TX_POWER:
             Console::log("RadioService: Set TXPower to: 0x%x", command.getDataPayload()[1]);

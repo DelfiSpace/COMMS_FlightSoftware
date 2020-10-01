@@ -94,6 +94,9 @@ public:
     unsigned int txBitrate = PQPACKET_DOWNLINK_BITRATE;
     unsigned int rxBitrate = PQPACKET_UPLINK_BITRATE;
 
+    unsigned int txFrequency = PQPACKET_DOWNLINK_FREQ;
+    unsigned int rxFrequency = PQPACKET_UPLINK_FREQ;
+
     uint8_t targetPAPower = 1;
     volatile bool doEnableFlag = false;
 
