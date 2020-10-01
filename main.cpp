@@ -63,7 +63,7 @@ Task* tasks[] = { &cmdHandler, &timerTask, &commRadio};
 
 // system uptime
 unsigned long uptime = 0;
-FRAMVar<unsigned long> totalUptime;
+FRAMBackedVar<unsigned long> totalUptime;
 
 
 void receivedCommand(DataFrame &newFrame)
@@ -98,6 +98,15 @@ void periodicTask()
 //    {
 //        Console::log("Received Command! Current RSSI: %d dBm", rssi);
 //    }
+    if(!hk.getTelemetry()->getAmplifierTMPStatus() && hk.getTelemetry()->getAmplifierTemperature() > 750){
+          Console::log("PA TOO HOT!!! TURN OFF");
+          commRadio.disableTransmit();
+      }
+      if(uptime % RX_RELOCK_INTERVAL == 0){
+          commRadio.initRX();
+      }
+//    rx.RxLockPll();
+//    Console::log("-RXFREQ-");
 }
 
 void acquireTelemetry(COMMSTelemetryContainer *tc)
@@ -139,11 +148,6 @@ void acquireTelemetry(COMMSTelemetryContainer *tc)
     tc->setAmplifierCurrent(i);
     tc->setAmplifierTMPStatus(!amplifierTemperature.getTemperature(t));
     tc->setAmplifierTemperature(t);
-    if(!tc->getAmplifierTMPStatus() && t > 400){
-        Console::log("PA TOO HOT!!! TURN OFF");
-        commRadio.disablePA();
-    }
-
 
     i = rx.GetRssi(ModemType::MODEM_FSK);
 //    Console::log("-%d dBm", -i);
@@ -182,7 +186,7 @@ void main(void)
 
     // Initialize fram and fram-variables
     fram.init();
-    totalUptime.init(fram, FRAM_TOTAL_UPTIME);
+    totalUptime.init(fram, FRAM_TOTAL_UPTIME, true, true);
 
 
     Console::init( 115200 );                // baud rate: 115200 bps

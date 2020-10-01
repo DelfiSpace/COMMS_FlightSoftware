@@ -39,11 +39,12 @@
 #include "HWMonitor.h"
 #include "ADCManager.h"
 #include "InternalCommandHandler.h"
-#include "FRAMVar.h"
+#include "FRAMBackedVar.h"
 
 #define FCLOCK 48000000
 
-#define COMMS_ADDRESS     4
+#define COMMS_ADDRESS      4
+#define RX_RELOCK_INTERVAL 300
 
 // callback functions
 void acquireTelemetry(COMMSTelemetryContainer *tc);

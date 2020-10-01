@@ -421,6 +421,7 @@ void COMMRadio::initRX(){
         rxRadio->setFrequency(PQPACKET_UPLINK_FREQ);
 
         rxRadio->RxChainCalibration();
+        rxRadio->RxLockPll();
         rxRadio->enableBitMode(*bitSPI_rx, onReceiveWrapper, 0);
 
         rxRadio->setRxConfig(&rxConfig);
