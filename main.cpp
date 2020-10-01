@@ -62,6 +62,7 @@ PeriodicTaskNotifier taskNotifier = PeriodicTaskNotifier(periodicTasks, 1);
 Task* tasks[] = { &cmdHandler, &timerTask, &commRadio};
 
 // system uptime
+uint8_t curSlot = 0;
 unsigned long uptime = 0;
 FRAMBackedVar<unsigned long> totalUptime;
 
@@ -118,7 +119,7 @@ void acquireTelemetry(COMMSTelemetryContainer *tc)
     //Set Telemetry:
 
     //HouseKeeping Header:
-    tc->setStatus(Bootloader::getCurrentSlot());
+    tc->setStatus(curSlot);
     fram.read(FRAM_RESET_COUNTER + Bootloader::getCurrentSlot(), &uc, 1);
     tc->setBootCounter(uc);
     tc->setResetCause(hwMonitor.getResetStatus());
@@ -258,7 +259,8 @@ void main(void)
     commRadio.setcmdHandler(internalCmdHandler);
     commRadio.setbusMaster(busHandler);
 
-    Console::log("COMMS booting...SLOT: %d", (int) Bootloader::getCurrentSlot());
+    curSlot = Bootloader::getCurrentSlot();
+    Console::log("COMMS booting...SLOT: %d", (int) curSlot);
 
     if(HAS_SW_VERSION == 1)
     {
